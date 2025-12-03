@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { useSearchParams } from "react-router-dom";
 import type { Stage, Scenario } from "@/data/types";
 
 export interface FilterState {
@@ -18,13 +19,34 @@ const defaultFilters: FilterState = {
   products: [],
   stages: [],
   dateRange: "3months",
-  scenario: "all",
+  scenario: "optimized", // Default to optimized for demo
 };
 
 const FilterContext = createContext<FilterContextType | undefined>(undefined);
 
 export function FilterProvider({ children }: { children: ReactNode }) {
-  const [filters, setFiltersState] = useState<FilterState>(defaultFilters);
+  const [searchParams] = useSearchParams();
+  
+  const getInitialFilters = (): FilterState => {
+    const scenarioParam = searchParams.get("scenario");
+    const validScenarios: (Scenario | "all")[] = ["baseline", "optimized", "all"];
+    
+    return {
+      ...defaultFilters,
+      scenario: validScenarios.includes(scenarioParam as Scenario | "all") 
+        ? (scenarioParam as Scenario | "all")
+        : "optimized",
+    };
+  };
+
+  const [filters, setFiltersState] = useState<FilterState>(getInitialFilters);
+
+  useEffect(() => {
+    const scenarioParam = searchParams.get("scenario");
+    if (scenarioParam === "baseline" || scenarioParam === "optimized" || scenarioParam === "all") {
+      setFiltersState(prev => ({ ...prev, scenario: scenarioParam }));
+    }
+  }, [searchParams]);
 
   const setFilters = (newFilters: Partial<FilterState>) => {
     setFiltersState((prev) => ({ ...prev, ...newFilters }));
