@@ -73,37 +73,44 @@ function generateBatches(bioreactors: Bioreactor[]): Batch[] {
 
   let batchCounter = 1;
 
-  // Generate 35-40 batches
-  for (let i = 0; i < 38; i++) {
+  // Generate 40 batches with clearer baseline vs optimized differentiation
+  for (let i = 0; i < 40; i++) {
     const bioreactor = randomChoice(bioreactors);
     const scenario: Scenario = i < 20 ? "baseline" : "optimized";
     
-    const batchStart = addDays(startDate, i * 2.5);
+    const batchStart = addDays(startDate, i * 2.3);
     const batchEnd = addDays(batchStart, 10 + seededRandom() * 4);
 
-    // Optimized scenario has better pass rates
+    // Much clearer differentiation: baseline has many more failures
     let resultStatus: "Pass" | "Fail" | "At Risk";
     if (scenario === "optimized") {
       const rand = seededRandom();
-      resultStatus = rand < 0.85 ? "Pass" : rand < 0.95 ? "At Risk" : "Fail";
+      // Optimized: 90% pass, 8% at risk, 2% fail
+      resultStatus = rand < 0.90 ? "Pass" : rand < 0.98 ? "At Risk" : "Fail";
     } else {
       const rand = seededRandom();
-      resultStatus = rand < 0.60 ? "Pass" : rand < 0.85 ? "At Risk" : "Fail";
+      // Baseline: 45% pass, 30% at risk, 25% fail - clearly worse
+      resultStatus = rand < 0.45 ? "Pass" : rand < 0.75 ? "At Risk" : "Fail";
     }
 
+    // Create specific featured batch BR-2025-017 as at-risk manufacturing
+    const isFeaturedBatch = batchCounter === 17;
+    const batchId = isFeaturedBatch ? "BR-2025-017" : `B-${String(batchCounter).padStart(4, "0")}`;
+    const mfgBioreactor = bioreactors.find(b => b.stage === "Manufacturing");
+
     batches.push({
-      id: `B-${String(batchCounter).padStart(4, "0")}`,
-      bioreactorId: bioreactor.id,
-      product: randomChoice(products),
-      cellLine: randomChoice(cellLines),
-      media: randomChoice(medias),
-      recipeVersion: randomChoice(recipes),
-      stage: bioreactor.stage,
-      site: bioreactor.site,
+      id: batchId,
+      bioreactorId: isFeaturedBatch && mfgBioreactor ? mfgBioreactor.id : bioreactor.id,
+      product: isFeaturedBatch ? "mAb-01" : randomChoice(products),
+      cellLine: isFeaturedBatch ? "CL-27" : randomChoice(cellLines),
+      media: isFeaturedBatch ? "Media-A" : randomChoice(medias),
+      recipeVersion: isFeaturedBatch ? "v3.2" : randomChoice(recipes),
+      stage: isFeaturedBatch ? "Manufacturing" : bioreactor.stage,
+      site: isFeaturedBatch ? "Site A" : bioreactor.site,
       startTime: batchStart.toISOString(),
       endTime: batchEnd.toISOString(),
-      resultStatus,
-      scenario,
+      resultStatus: isFeaturedBatch ? "At Risk" : resultStatus,
+      scenario: isFeaturedBatch ? "baseline" : scenario,
     });
 
     batchCounter++;
@@ -153,15 +160,20 @@ function generateCppData(batch: Batch): CppPoint[] {
   return points;
 }
 
-// Generate CQA results
+// Generate CQA results with clearer baseline vs optimized differentiation
 function generateCqaResults(batch: Batch): CqaResult[] {
   const results: CqaResult[] = [];
   const scenario = batch.scenario;
+  const isFeaturedBatch = batch.id === "BR-2025-017";
 
-  // Titer
-  const titerMean = scenario === "optimized" ? 4.5 : 3.8;
-  const titerStd = scenario === "optimized" ? 0.3 : 0.6;
-  const titerValue = titerMean + randomBetween(-titerStd, titerStd);
+  // Titer - much larger difference between scenarios
+  const titerMean = scenario === "optimized" ? 4.8 : 3.4;
+  const titerStd = scenario === "optimized" ? 0.25 : 0.8; // Optimized is much more consistent
+  let titerValue = titerMean + randomBetween(-titerStd, titerStd);
+  
+  // Featured batch has borderline low titer
+  if (isFeaturedBatch) titerValue = 3.15;
+  
   results.push({
     batchId: batch.id,
     cqaName: "Titer",
@@ -171,10 +183,12 @@ function generateCqaResults(batch: Batch): CqaResult[] {
     inSpec: titerValue >= 3.0 && titerValue <= 5.5,
   });
 
-  // Glycan Quality
-  const glycanMean = scenario === "optimized" ? 88 : 78;
-  const glycanStd = scenario === "optimized" ? 4 : 8;
-  const glycanValue = glycanMean + randomBetween(-glycanStd, glycanStd);
+  // Glycan Quality - larger gap
+  const glycanMean = scenario === "optimized" ? 92 : 74;
+  const glycanStd = scenario === "optimized" ? 3 : 10;
+  let glycanValue = glycanMean + randomBetween(-glycanStd, glycanStd);
+  if (isFeaturedBatch) glycanValue = 72;
+  
   results.push({
     batchId: batch.id,
     cqaName: "GlycanQuality",
@@ -184,10 +198,12 @@ function generateCqaResults(batch: Batch): CqaResult[] {
     inSpec: glycanValue >= 70,
   });
 
-  // Aggregation
-  const aggMean = scenario === "optimized" ? 2.5 : 4.0;
-  const aggStd = scenario === "optimized" ? 0.5 : 1.0;
-  const aggValue = aggMean + randomBetween(-aggStd, aggStd);
+  // Aggregation - larger gap
+  const aggMean = scenario === "optimized" ? 1.8 : 4.5;
+  const aggStd = scenario === "optimized" ? 0.4 : 1.2;
+  let aggValue = aggMean + randomBetween(-aggStd, aggStd);
+  if (isFeaturedBatch) aggValue = 4.8;
+  
   results.push({
     batchId: batch.id,
     cqaName: "Aggregation",
@@ -200,24 +216,33 @@ function generateCqaResults(batch: Batch): CqaResult[] {
   return results;
 }
 
-// Generate ML output
+// Generate ML output with clearer risk differentiation
 function generateMlOutput(batch: Batch, cqaResults: CqaResult[]): MlOutput {
   const titerResult = cqaResults.find((r) => r.cqaName === "Titer");
   const glycanResult = cqaResults.find((r) => r.cqaName === "GlycanQuality");
+  const isFeaturedBatch = batch.id === "BR-2025-017";
 
   const predictedTiter = (titerResult?.value || 3.5) * (1 + randomBetween(-0.05, 0.05));
   const predictedGlycanScore = glycanResult?.value || 75;
 
-  // Risk score based on scenario
-  const baseRisk = batch.scenario === "optimized" ? 0.15 : 0.45;
-  const riskScore = Math.max(0, Math.min(1, baseRisk + randomBetween(-0.1, 0.1)));
+  // Much clearer risk differentiation between scenarios
+  let baseRisk = batch.scenario === "optimized" ? 0.12 : 0.55;
+  if (isFeaturedBatch) baseRisk = 0.72; // High risk for featured batch
+  
+  const riskScore = Math.max(0, Math.min(1, baseRisk + randomBetween(-0.08, 0.08)));
 
   const riskLevel: "Low" | "Medium" | "High" =
     riskScore < 0.3 ? "Low" : riskScore < 0.6 ? "Medium" : "High";
 
-  // Top drivers
-  const drivers = [
-    { parameter: "DO Phase 3", impact: "Positive" as const, contribution: 28 },
+  // Top drivers - more varied for featured batch
+  const doImpact: "Positive" | "Negative" = batch.scenario === "optimized" ? "Positive" : "Negative";
+  const drivers = isFeaturedBatch ? [
+    { parameter: "DO below 30% in Phase 3", impact: "Negative" as const, contribution: 38 },
+    { parameter: "Temp above 37°C in Phase 2", impact: "Negative" as const, contribution: 28 },
+    { parameter: "Late feed start", impact: "Negative" as const, contribution: 22 },
+    { parameter: "pH drift in Phase 3", impact: "Negative" as const, contribution: 12 },
+  ] : [
+    { parameter: "DO Phase 3", impact: doImpact, contribution: 28 },
     { parameter: "pH Stability", impact: "Positive" as const, contribution: 22 },
     { parameter: "Feed Rate Phase 4", impact: "Negative" as const, contribution: 18 },
     { parameter: "Temperature Drift", impact: "Negative" as const, contribution: 15 },
@@ -308,22 +333,60 @@ function generateExperiments(batches: Batch[]): Experiment[] {
   return experiments;
 }
 
-// Generate audit events
+// Generate audit events with specific entries for featured batch
 function generateAuditEvents(batches: Batch[]): AuditEvent[] {
   const events: AuditEvent[] = [];
   const users = ["Dr. Smith", "Dr. Jones", "Dr. Lee", "J. Williams"];
   const roles = ["Scientist", "Process Engineer", "QA Manager", "Manufacturing Lead"];
-  const actions = [
-    "Accepted recommended CPP profile",
-    "Modified batch parameters",
-    "Reviewed CQA results",
-    "Approved scale-up transfer",
-    "Updated recipe version",
-    "Exported batch data",
-  ];
 
+  // Add specific events for the featured batch BR-2025-017
+  const featuredBatch = batches.find(b => b.id === "BR-2025-017");
+  if (featuredBatch) {
+    const baseTime = new Date(featuredBatch.startTime).getTime();
+    events.push({
+      id: "AE-0001",
+      timestamp: new Date(baseTime + 1 * 24 * 60 * 60 * 1000).toISOString(),
+      user: "Dr. Smith",
+      role: "Process Engineer",
+      action: "Viewed model results for Batch BR-2025-017",
+      entityType: "Batch",
+      entityId: "BR-2025-017",
+      details: "Reviewed ML predictions showing elevated risk due to DO excursion in Phase 3",
+    });
+    events.push({
+      id: "AE-0002",
+      timestamp: new Date(baseTime + 1.5 * 24 * 60 * 60 * 1000).toISOString(),
+      user: "Dr. Jones",
+      role: "QA Manager",
+      action: "Flagged batch for review",
+      entityType: "Batch",
+      entityId: "BR-2025-017",
+      details: "Batch flagged due to predicted titer below target threshold",
+    });
+    events.push({
+      id: "AE-0003",
+      timestamp: new Date(baseTime + 2 * 24 * 60 * 60 * 1000).toISOString(),
+      user: "Dr. Lee",
+      role: "Manufacturing Lead",
+      action: "Accepted recommended CPP profile for Batch BR-2025-017 (demo e-signature)",
+      entityType: "Batch",
+      entityId: "BR-2025-017",
+      details: "Applied recommended DO and temperature adjustments for remaining phases",
+    });
+  }
+
+  // Generate other audit events
   batches.forEach((batch, idx) => {
-    if (idx % 3 === 0) {
+    if (idx % 4 === 0 && batch.id !== "BR-2025-017") {
+      const actions = [
+        { action: "Reviewed CQA results", detail: `Verified CQA compliance for ${batch.product}` },
+        { action: "Approved scale-up transfer", detail: `Transfer approved from ${batch.stage} to next scale` },
+        { action: "Updated recipe version", detail: `Recipe updated to ${batch.recipeVersion}` },
+        { action: "Exported batch data", detail: `Data exported for regulatory submission` },
+        { action: "Changed spec limits for Titer (pending QA review)", detail: `Spec adjustment proposed for ${batch.product}` },
+      ];
+      const selectedAction = randomChoice(actions);
+      
       events.push({
         id: `AE-${String(events.length + 1).padStart(4, "0")}`,
         timestamp: new Date(
@@ -331,15 +394,16 @@ function generateAuditEvents(batches: Batch[]): AuditEvent[] {
         ).toISOString(),
         user: randomChoice(users),
         role: randomChoice(roles),
-        action: randomChoice(actions),
+        action: selectedAction.action,
         entityType: "Batch",
         entityId: batch.id,
-        details: `Action performed on batch ${batch.id} for ${batch.product}`,
+        details: selectedAction.detail,
       });
     }
   });
 
-  return events;
+  // Sort by timestamp descending
+  return events.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 }
 
 // Main data generator

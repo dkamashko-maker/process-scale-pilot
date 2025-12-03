@@ -120,7 +120,7 @@ export default function BatchDetailPage() {
   return (
     <div className="p-6 space-y-6">
       {/* Header Strip */}
-      <div className="flex flex-wrap items-center justify-between gap-4 p-4 bg-card rounded-lg border">
+      <div className="flex flex-wrap items-center justify-between gap-4 p-4 bg-card rounded-lg border opacity-0 animate-fade-in">
         <div className="flex flex-wrap items-center gap-4">
           <div>
             <span className="text-sm text-muted-foreground">Batch ID</span>
@@ -161,25 +161,28 @@ export default function BatchDetailPage() {
         <KpiCard
           label="Predicted Titer"
           value={`${mlOutput.predictedTiter.toFixed(2)} g/L`}
-          subtitle={titerSpec ? `Spec: ${titerSpec.specLow}-${titerSpec.specHigh}` : ""}
+          subtitle={titerSpec ? `Spec: ${titerSpec.specLow}–${titerSpec.specHigh} g/L` : ""}
           trend={titerSpec?.inSpec ? "up" : "down"}
+          animationDelay={100}
         />
         <KpiCard
           label="Predicted Glycan Score"
           value={mlOutput.predictedGlycanScore.toFixed(0)}
-          subtitle={glycanSpec ? `Spec: ${glycanSpec.specLow}-${glycanSpec.specHigh}` : ""}
+          subtitle={glycanSpec ? `Spec: ${glycanSpec.specLow}–${glycanSpec.specHigh}` : ""}
           trend={glycanSpec?.inSpec ? "up" : "down"}
+          animationDelay={150}
         />
         <KpiCard
           label="Risk Score"
           value={(mlOutput.riskScore * 100).toFixed(0) + "%"}
           trend={mlOutput.riskScore < 0.3 ? "up" : mlOutput.riskScore > 0.6 ? "down" : "neutral"}
+          animationDelay={200}
         />
         <KpiCard
           label="Hours DO < 30% (Phase 3)"
-          value={cppData.filter((c) => c.phase === 3 && c.DO < 30).length * 2}
-          subtitle="hours"
+          value={`${cppData.filter((c) => c.phase === 3 && c.DO < 30).length * 2} h`}
           trend={cppData.filter((c) => c.phase === 3 && c.DO < 30).length > 3 ? "down" : "up"}
+          animationDelay={250}
         />
       </div>
 
@@ -194,6 +197,7 @@ export default function BatchDetailPage() {
               <InfoTooltip content="Multi-parameter view showing pH, DO, Temperature, and Feed Rate. Colored bands indicate process phases. Shaded areas highlight out-of-spec conditions." />
             </span>
           }
+          animationDelay={300}
         >
           <ResponsiveContainer width="100%" height={400}>
             <LineChart data={timelineData}>
@@ -223,7 +227,7 @@ export default function BatchDetailPage() {
         {/* Right: Insights & What-if */}
         <div className="space-y-4">
           {/* ML Insight Card */}
-          <Card>
+          <Card className="opacity-0 animate-fade-in" style={{ animationDelay: "350ms" }}>
             <CardHeader className="pb-2">
               <CardTitle className="text-base flex items-center gap-2">
                 ML Insight
@@ -244,7 +248,7 @@ export default function BatchDetailPage() {
           </Card>
 
           {/* Top Drivers Chart */}
-          <ChartCard title="Top Drivers" subtitle="Impact contribution (%)">
+          <ChartCard title="Top Drivers" subtitle="Impact contribution (%)" animationDelay={400}>
             <ResponsiveContainer width="100%" height={150}>
               <BarChart data={driversData} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
@@ -261,7 +265,7 @@ export default function BatchDetailPage() {
           </ChartCard>
 
           {/* What-if Panel */}
-          <Card>
+          <Card className="opacity-0 animate-fade-in" style={{ animationDelay: "450ms" }}>
             <CardHeader className="pb-2">
               <CardTitle className="text-base flex items-center gap-2">
                 What-if Analysis
@@ -282,7 +286,7 @@ export default function BatchDetailPage() {
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium">Temperature Offset: {tempOffset > 0 ? "+" : ""}{tempOffset}°C</label>
+                  <label className="text-sm font-medium">Temp Offset: {tempOffset > 0 ? "+" : ""}{tempOffset.toFixed(1)}°C</label>
                   <Slider
                     value={[tempOffset]}
                     onValueChange={(v) => setTempOffset(v[0])}
@@ -293,7 +297,7 @@ export default function BatchDetailPage() {
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium">Feed Rate Offset: {feedOffset > 0 ? "+" : ""}{feedOffset} mL/h</label>
+                  <label className="text-sm font-medium">Feed Rate Offset: {feedOffset > 0 ? "+" : ""}{feedOffset.toFixed(1)} mL/h</label>
                   <Slider
                     value={[feedOffset]}
                     onValueChange={(v) => setFeedOffset(v[0])}
@@ -306,7 +310,7 @@ export default function BatchDetailPage() {
               </div>
 
               {whatIfResult && (
-                <div className="p-3 bg-muted rounded-lg">
+                <div className="p-3 bg-muted rounded-lg transition-all">
                   <h4 className="text-sm font-semibold mb-2">What-if Result</h4>
                   <div className="grid grid-cols-2 gap-2 text-sm">
                     <div>

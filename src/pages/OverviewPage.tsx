@@ -135,7 +135,12 @@ export default function OverviewPage() {
       label: "Risk Level",
       render: (item: typeof atRiskBatches[0]) => <StatusBadge status={item.riskLevel} />,
     },
-    { key: "predictedTiter", label: "Predicted Titer (g/L)", sortable: true },
+    { 
+      key: "predictedTiter", 
+      label: "Predicted Titer", 
+      sortable: true,
+      render: (item: typeof atRiskBatches[0]) => `${item.predictedTiter} g/L`,
+    },
   ];
 
   const sites = [...new Set(batches.map((b) => b.site))];
@@ -145,39 +150,45 @@ export default function OverviewPage() {
       {/* KPI Row */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <KpiCard
-          label="Avg Titer (g/L)"
-          value={kpis.avgTiter}
+          label="Avg Titer"
+          value={`${kpis.avgTiter} g/L`}
           trend="up"
           trendValue="+5%"
           subtitle="Selected period"
+          animationDelay={0}
         />
         <KpiCard
           label="Batch Pass Rate"
           value={`${kpis.passRate}%`}
           trend={parseFloat(kpis.passRate) > 70 ? "up" : "down"}
           trendValue=""
+          animationDelay={50}
         />
         <KpiCard
           label="Titer CV%"
           value={`${kpis.titerCV}%`}
           trend={parseFloat(kpis.titerCV) < 15 ? "up" : "down"}
           subtitle="Current variability"
+          animationDelay={100}
         />
         <KpiCard
           label="Variability Reduction"
           value={`${kpis.variabilityReduction}%`}
           trend={parseFloat(kpis.variabilityReduction) > 0 ? "up" : "neutral"}
           subtitle="vs. baseline"
+          animationDelay={150}
         />
         <KpiCard
           label="Active Batches"
           value={kpis.activeBatches}
           trend="neutral"
+          animationDelay={200}
         />
         <KpiCard
           label="High-Risk Batches"
           value={kpis.highRiskBatches}
           trend={kpis.highRiskBatches > 0 ? "down" : "up"}
+          animationDelay={250}
         />
       </div>
 
@@ -191,6 +202,7 @@ export default function OverviewPage() {
               <InfoTooltip content="Shows how batches performed at each manufacturing stage. Green = Pass, Yellow = At Risk, Red = Fail." />
             </span>
           }
+          animationDelay={300}
         >
           <ResponsiveContainer width="100%" height={280}>
             <BarChart data={outcomesByStage}>
@@ -214,6 +226,7 @@ export default function OverviewPage() {
               <InfoTooltip content="Lower CV% indicates more consistent production. The optimized scenario should show reduced variability at manufacturing scale." />
             </span>
           }
+          animationDelay={350}
         >
           <ResponsiveContainer width="100%" height={280}>
             <BarChart data={titerCVByStage}>
@@ -237,6 +250,7 @@ export default function OverviewPage() {
               <InfoTooltip content="Darker colors indicate higher average risk scores. Helps identify problematic site-product combinations." />
             </span>
           }
+          animationDelay={400}
         >
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -258,7 +272,7 @@ export default function OverviewPage() {
                       return (
                         <td
                           key={site}
-                          className="p-2 text-center"
+                          className="p-2 text-center transition-colors"
                           style={{
                             backgroundColor: `hsl(0, ${intensity * 70}%, ${90 - intensity * 40}%)`,
                           }}
@@ -282,13 +296,14 @@ export default function OverviewPage() {
               <InfoTooltip content="Compares average titer performance between baseline and optimized process conditions over time." />
             </span>
           }
+          animationDelay={450}
         >
           <ResponsiveContainer width="100%" height={280}>
             <LineChart data={trendData}>
               <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
               <XAxis dataKey="month" className="text-xs" />
               <YAxis className="text-xs" unit=" g/L" />
-              <Tooltip />
+              <Tooltip formatter={(value) => [`${value} g/L`, ""]} />
               <Legend />
               <Line
                 type="monotone"
@@ -322,6 +337,7 @@ export default function OverviewPage() {
             <InfoTooltip content="Click on any row to view detailed batch analysis and recommendations." />
           </span>
         }
+        animationDelay={500}
       >
         <DataTable
           data={atRiskBatches}

@@ -87,7 +87,8 @@ export function DataTable<T extends Record<string, any>>({
               <TableRow
                 key={idx}
                 onClick={() => onRowClick?.(item)}
-                className={onRowClick ? "cursor-pointer hover:bg-muted/50" : ""}
+                className={`transition-colors ${onRowClick ? "cursor-pointer hover:bg-muted/50" : ""} opacity-0 animate-fade-in`}
+                style={{ animationDelay: `${idx * 30}ms` }}
               >
                 {columns.map((column) => (
                   <TableCell key={String(column.key)}>
