@@ -1,9 +1,9 @@
 import { ReactNode } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface ChartCardProps {
   title: string;
-  subtitle?: string;
+  subtitle?: ReactNode;
   children: ReactNode;
   className?: string;
 }
@@ -13,7 +13,7 @@ export function ChartCard({ title, subtitle, children, className }: ChartCardPro
     <Card className={className}>
       <CardHeader>
         <CardTitle className="text-base font-semibold">{title}</CardTitle>
-        {subtitle && <CardDescription className="text-sm">{subtitle}</CardDescription>}
+        {subtitle && <div className="text-sm text-muted-foreground">{subtitle}</div>}
       </CardHeader>
       <CardContent>{children}</CardContent>
     </Card>
