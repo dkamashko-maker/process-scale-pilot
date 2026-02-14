@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { PARAMETERS } from "@/data/runData";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -72,6 +72,8 @@ interface MonitoringChartsProps {
   events: (ProcessEvent & { elapsed_h: number })[];
   runStartTime: string;
   phase: string;
+  highlightedEventId?: string | null;
+  centerOnHour?: number | null;
 }
 
 // ── Individual Parameter Chart ──
@@ -81,12 +83,14 @@ function ParameterChart({
   events,
   showRanges,
   showEvents,
+  highlightedEventId,
 }: {
   param: ParameterDef;
   data: TimeseriesPoint[];
   events: (ProcessEvent & { elapsed_h: number })[];
   showRanges: boolean;
   showEvents: boolean;
+  highlightedEventId?: string | null;
 }) {
   const color = PARAM_COLORS[param.parameter_code] || "hsl(var(--chart-1))";
 
@@ -156,14 +160,17 @@ function ParameterChart({
               />
             )}
             {/* Event markers */}
-            {relevantEvents.map((e, i) => (
-              <ReferenceLine
-                key={i} x={Math.round(e.elapsed_h)}
-                stroke={EVENT_COLORS[e.event_type] || "#9ca3af"}
-                strokeWidth={1.5} strokeDasharray="4 2"
-                label={{ value: e.event_type[0], position: "top", fontSize: 9, fill: EVENT_COLORS[e.event_type] || "#9ca3af" }}
-              />
-            ))}
+            {relevantEvents.map((e, i) => {
+              const isHighlighted = highlightedEventId === e.id;
+              return (
+                <ReferenceLine
+                  key={i} x={Math.round(e.elapsed_h)}
+                  stroke={isHighlighted ? "#facc15" : (EVENT_COLORS[e.event_type] || "#9ca3af")}
+                  strokeWidth={isHighlighted ? 3 : 1.5} strokeDasharray={isHighlighted ? undefined : "4 2"}
+                  label={{ value: e.event_type[0], position: "top", fontSize: 9, fill: isHighlighted ? "#facc15" : (EVENT_COLORS[e.event_type] || "#9ca3af") }}
+                />
+              );
+            })}
             <Line type="monotone" dataKey="value" stroke={color} strokeWidth={1.5} dot={false} name={param.display_name} />
           </ComposedChart>
         </ResponsiveContainer>
@@ -271,11 +278,25 @@ function FeedStatusChart({
 }
 
 // ── Main Monitoring Charts Component ──
-export default function MonitoringCharts({ timeseries, events, runStartTime, phase }: MonitoringChartsProps) {
+export default function MonitoringCharts({ timeseries, events, runStartTime, phase, highlightedEventId, centerOnHour }: MonitoringChartsProps) {
   const [criticalOnly, setCriticalOnly] = useState(false);
   const [showRanges, setShowRanges] = useState(true);
   const [showEvents, setShowEvents] = useState(true);
   const [timeWindowIdx, setTimeWindowIdx] = useState(0); // default: last 24h
+
+  // When centerOnHour changes, switch to a window that includes it
+  useEffect(() => {
+    if (centerOnHour == null) return;
+    const total = timeseries.length > 0 ? timeseries[timeseries.length - 1].elapsed_h : 0;
+    // Find smallest window that includes the hour
+    for (let i = 0; i < TIME_WINDOWS.length; i++) {
+      const tw = TIME_WINDOWS[i];
+      if (tw.hours === Infinity || centerOnHour >= total - tw.hours) {
+        setTimeWindowIdx(i);
+        break;
+      }
+    }
+  }, [centerOnHour, timeseries]);
 
   const totalHours = timeseries.length > 0 ? timeseries[timeseries.length - 1].elapsed_h : 0;
   const timeWindow = TIME_WINDOWS[timeWindowIdx];
@@ -392,6 +413,7 @@ export default function MonitoringCharts({ timeseries, events, runStartTime, pha
             events={windowedEvents}
             showRanges={showRanges}
             showEvents={showEvents}
+            highlightedEventId={highlightedEventId}
           />
         ))}
         <FeedStatusChart events={windowedEvents} totalHours={totalHours} showEvents={showEvents} />
@@ -408,6 +430,7 @@ export default function MonitoringCharts({ timeseries, events, runStartTime, pha
               events={windowedEvents}
               showRanges={showRanges}
               showEvents={showEvents}
+              highlightedEventId={highlightedEventId}
             />
           ))}
         </div>
