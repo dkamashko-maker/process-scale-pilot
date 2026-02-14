@@ -12,6 +12,7 @@ import RunsListPage from "./pages/RunsListPage";
 import RunDetailPage from "./pages/RunDetailPage";
 import EventLogPage from "./pages/EventLogPage";
 import AdminPage from "./pages/AdminPage";
+import AnalyticsPage from "./pages/AnalyticsPage";
 import LoginPage from "./pages/LoginPage";
 import NotFound from "./pages/NotFound";
 
@@ -44,6 +45,7 @@ const App = () => (
                 <Route path="/experiments" element={<RunsListPage />} />
                 <Route path="/experiments/:runId" element={<RunDetailPage />} />
                 <Route path="/events" element={<EventLogPage />} />
+                <Route path="/analytics" element={<AnalyticsPage />} />
                 <Route path="/admin" element={<AdminPage />} />
               </Route>
               <Route path="*" element={<NotFound />} />
