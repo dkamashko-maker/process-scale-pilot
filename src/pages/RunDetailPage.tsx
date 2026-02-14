@@ -27,11 +27,25 @@ import {
 import { format } from "date-fns";
 import {
   FlaskConical, Thermometer, User, Dna, Target, Beaker, Utensils,
-  Calendar, Pencil, Plus, ExternalLink, SlidersHorizontal,
+  Calendar, Pencil, Plus, ExternalLink, SlidersHorizontal, Droplets, FlaskRound, Info,
 } from "lucide-react";
 import type { ParameterDef, ProcessEvent, Run } from "@/data/runTypes";
 
 const EVENT_TYPES = ["FEED", "BASE_ADDITION", "ANTIFOAM", "INDUCER", "ADDITIVE", "HARVEST", "GAS", "SAMPLE", "NOTE"];
+const ADDITIVE_TYPES = ["INDUCER", "ADDITIVE", "ANTIFOAM"];
+const CONTROL_TYPES = ["FEED", "BASE_ADDITION", "GAS", "HARVEST", "SAMPLE", "NOTE"];
+
+const EVENT_GUIDANCE: Record<string, string> = {
+  FEED: "Record feed additions. Include volume and medium type. Verify feed bag/bottle lot if applicable.",
+  BASE_ADDITION: "Log base additions for pH control. Note target pH and volume added.",
+  ANTIFOAM: "Record antifoam additions. Excessive antifoam can affect oxygen transfer — use sparingly.",
+  INDUCER: "Log inducer additions (e.g., IPTG, methanol). Confirm concentration and induction timing per protocol.",
+  ADDITIVE: "Record any supplementary additives. Specify the compound name in subtype.",
+  HARVEST: "Log harvest events. Note harvest volume and any observations on cell culture state.",
+  GAS: "Record gas composition changes. Specify gas type (O₂, CO₂, N₂) and flow rate.",
+  SAMPLE: "Log sampling events. Note sample volume and purpose (analytics, retention, QC).",
+  NOTE: "General observation or note. Use for any events not covered by specific types.",
+};
 const PHASES = ["Inoculation", "Growth", "Transition", "Production", "Harvest"] as const;
 
 // ── Chip definitions ──
@@ -149,6 +163,17 @@ export default function RunDetailPage() {
     timestamp: new Date().toISOString().slice(0, 16),
   });
 
+  const [showAdditiveModal, setShowAdditiveModal] = useState(false);
+  const [showControlModal, setShowControlModal] = useState(false);
+  const [additiveForm, setAdditiveForm] = useState({
+    event_type: "INDUCER", subtype: "", amount: "", amount_unit: "mL", notes: "",
+    timestamp: new Date().toISOString().slice(0, 16),
+  });
+  const [controlForm, setControlForm] = useState({
+    event_type: "FEED", subtype: "", amount: "", amount_unit: "mL", notes: "",
+    timestamp: new Date().toISOString().slice(0, 16),
+  });
+
   const CONTROL_FILTER_MAP: Record<string, string[]> = {
     all: [],
     feed: ["FEED"],
@@ -214,6 +239,37 @@ export default function RunDetailPage() {
     setHighlightedEventId(evt.id);
     setCenterOnHour(elapsedH);
   };
+  const handleSaveAdditive = () => {
+    addEvent({
+      run_id: run.run_id,
+      timestamp: new Date(additiveForm.timestamp).toISOString(),
+      event_type: additiveForm.event_type,
+      subtype: additiveForm.subtype,
+      amount: additiveForm.amount ? parseFloat(additiveForm.amount) : null,
+      amount_unit: additiveForm.amount_unit,
+      actor: user?.name || "unknown",
+      entry_mode: "manual",
+      notes: additiveForm.notes,
+    });
+    setShowAdditiveModal(false);
+    setAdditiveForm({ event_type: "INDUCER", subtype: "", amount: "", amount_unit: "mL", notes: "", timestamp: new Date().toISOString().slice(0, 16) });
+  };
+
+  const handleSaveControl = () => {
+    addEvent({
+      run_id: run.run_id,
+      timestamp: new Date(controlForm.timestamp).toISOString(),
+      event_type: controlForm.event_type,
+      subtype: controlForm.subtype,
+      amount: controlForm.amount ? parseFloat(controlForm.amount) : null,
+      amount_unit: controlForm.amount_unit,
+      actor: user?.name || "unknown",
+      entry_mode: "manual",
+      notes: controlForm.notes,
+    });
+    setShowControlModal(false);
+    setControlForm({ event_type: "FEED", subtype: "", amount: "", amount_unit: "mL", notes: "", timestamp: new Date().toISOString().slice(0, 16) });
+  };
 
 
   return (
@@ -267,9 +323,21 @@ export default function RunDetailPage() {
       {/* ── Monitoring Charts with Control Actions button ── */}
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-medium text-muted-foreground">Monitoring</h2>
-        <Button variant="outline" size="sm" onClick={() => setShowControlActions(true)}>
-          <SlidersHorizontal className="h-3.5 w-3.5 mr-1.5" /> Control Actions
-        </Button>
+        <div className="flex items-center gap-2">
+          {canLogEvents && (
+            <>
+              <Button variant="outline" size="sm" onClick={() => { setAdditiveForm((f) => ({ ...f, timestamp: new Date().toISOString().slice(0, 16) })); setShowAdditiveModal(true); }}>
+                <Droplets className="h-3.5 w-3.5 mr-1.5" /> Add Additive / Inducer
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => { setControlForm((f) => ({ ...f, timestamp: new Date().toISOString().slice(0, 16) })); setShowControlModal(true); }}>
+                <FlaskRound className="h-3.5 w-3.5 mr-1.5" /> Log Control Action
+              </Button>
+            </>
+          )}
+          <Button variant="outline" size="sm" onClick={() => setShowControlActions(true)}>
+            <SlidersHorizontal className="h-3.5 w-3.5 mr-1.5" /> Control Actions
+          </Button>
+        </div>
       </div>
       <MonitoringCharts
         timeseries={timeseries}
@@ -435,6 +503,132 @@ export default function RunDetailPage() {
           </div>
         </SheetContent>
       </Sheet>
+
+      {/* ── Add Additive/Inducer Modal ── */}
+      <Dialog open={showAdditiveModal} onOpenChange={setShowAdditiveModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Droplets className="h-4 w-4" /> Log Additive / Inducer
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-xs text-muted-foreground flex items-center gap-1">
+            <Info className="h-3 w-3" /> This records a log entry — it does not send commands to instruments.
+          </p>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label>Type</Label>
+                <Select value={additiveForm.event_type} onValueChange={(v) => setAdditiveForm((f) => ({ ...f, event_type: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {ADDITIVE_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Timestamp</Label>
+                <Input type="datetime-local" value={additiveForm.timestamp}
+                  onChange={(e) => setAdditiveForm((f) => ({ ...f, timestamp: e.target.value }))} />
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-1.5">
+                <Label>Subtype</Label>
+                <Input value={additiveForm.subtype} placeholder="e.g. IPTG"
+                  onChange={(e) => setAdditiveForm((f) => ({ ...f, subtype: e.target.value }))} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Amount</Label>
+                <Input type="number" step="0.01" value={additiveForm.amount}
+                  onChange={(e) => setAdditiveForm((f) => ({ ...f, amount: e.target.value }))} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Unit</Label>
+                <Input value={additiveForm.amount_unit} placeholder="mL"
+                  onChange={(e) => setAdditiveForm((f) => ({ ...f, amount_unit: e.target.value }))} />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Notes</Label>
+              <Textarea value={additiveForm.notes} rows={2}
+                onChange={(e) => setAdditiveForm((f) => ({ ...f, notes: e.target.value }))} />
+            </div>
+            {/* Guidance */}
+            <div className="rounded-md border bg-muted/50 p-3 space-y-1">
+              <p className="text-xs font-medium flex items-center gap-1"><Info className="h-3 w-3" /> Guidance</p>
+              <p className="text-xs text-muted-foreground">{EVENT_GUIDANCE[additiveForm.event_type] || "No guidance available."}</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAdditiveModal(false)}>Cancel</Button>
+            <Button onClick={handleSaveAdditive}>Log Entry</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Log Control Action Modal ── */}
+      <Dialog open={showControlModal} onOpenChange={setShowControlModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FlaskRound className="h-4 w-4" /> Log Control Action
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-xs text-muted-foreground flex items-center gap-1">
+            <Info className="h-3 w-3" /> This records a log entry — it does not send commands to instruments.
+          </p>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label>Action Type</Label>
+                <Select value={controlForm.event_type} onValueChange={(v) => setControlForm((f) => ({ ...f, event_type: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {CONTROL_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Timestamp</Label>
+                <Input type="datetime-local" value={controlForm.timestamp}
+                  onChange={(e) => setControlForm((f) => ({ ...f, timestamp: e.target.value }))} />
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-1.5">
+                <Label>Subtype</Label>
+                <Input value={controlForm.subtype} placeholder="e.g. NaHCO3"
+                  onChange={(e) => setControlForm((f) => ({ ...f, subtype: e.target.value }))} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Amount</Label>
+                <Input type="number" step="0.01" value={controlForm.amount}
+                  onChange={(e) => setControlForm((f) => ({ ...f, amount: e.target.value }))} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Unit</Label>
+                <Input value={controlForm.amount_unit} placeholder="mL"
+                  onChange={(e) => setControlForm((f) => ({ ...f, amount_unit: e.target.value }))} />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Notes</Label>
+              <Textarea value={controlForm.notes} rows={2}
+                onChange={(e) => setControlForm((f) => ({ ...f, notes: e.target.value }))} />
+            </div>
+            {/* Guidance */}
+            <div className="rounded-md border bg-muted/50 p-3 space-y-1">
+              <p className="text-xs font-medium flex items-center gap-1"><Info className="h-3 w-3" /> Guidance</p>
+              <p className="text-xs text-muted-foreground">{EVENT_GUIDANCE[controlForm.event_type] || "No guidance available."}</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowControlModal(false)}>Cancel</Button>
+            <Button onClick={handleSaveControl}>Log Entry</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* ── Event Dialog ── */}
       <Dialog open={showEventDialog} onOpenChange={setShowEventDialog}>
