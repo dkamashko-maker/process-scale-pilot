@@ -4,10 +4,10 @@ import { RUNS, PARAMETERS, getTimeseries } from "@/data/runData";
 import { useEvents } from "@/contexts/EventsContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { InfoTooltip } from "@/components/shared/InfoTooltip";
+import MonitoringCharts from "@/components/monitoring/MonitoringCharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -23,25 +23,14 @@ import {
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
-  ResponsiveContainer, ReferenceLine,
-} from "recharts";
 import { format } from "date-fns";
 import {
   FlaskConical, Thermometer, User, Dna, Target, Beaker, Utensils,
-  Calendar, Pencil, Plus, ExternalLink, X,
+  Calendar, Pencil, Plus, ExternalLink,
 } from "lucide-react";
 import type { ParameterDef, ProcessEvent, Run } from "@/data/runTypes";
 
-// ── Colors ──
-const COLORS = [
-  "hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-3))",
-  "hsl(var(--chart-4))", "hsl(var(--chart-5))", "#6366f1", "#ec4899",
-  "#14b8a6", "#f97316", "#8b5cf6", "#06b6d4", "#84cc16", "#ef4444", "#a855f7",
-];
-
-const EVENT_TYPES = ["FEED", "BASE_ADDITION", "ANTIFOAM", "INDUCER", "ADDITIVE", "HARVEST", "SAMPLE", "NOTE"];
+const EVENT_TYPES = ["FEED", "BASE_ADDITION", "ANTIFOAM", "INDUCER", "ADDITIVE", "HARVEST", "GAS", "SAMPLE", "NOTE"];
 const PHASES = ["Inoculation", "Growth", "Transition", "Production", "Harvest"] as const;
 
 // ── Chip definitions ──
@@ -138,12 +127,15 @@ export default function RunDetailPage() {
     [events, runId]
   );
 
+  const eventMarkers = useMemo(() => {
+    if (!run) return [];
+    const runStart = new Date(run.start_time).getTime();
+    return runEvents.map((e) => ({ ...e, elapsed_h: (new Date(e.timestamp).getTime() - runStart) / 3600000 }));
+  }, [runEvents, run]);
+
   // UI state
   const [activeDrawer, setActiveDrawer] = useState<ChipDef | null>(null);
   const [phase, setPhase] = useState<string>("Growth");
-  const [selectedParams, setSelectedParams] = useState<string[]>(
-    PARAMETERS.filter((p) => p.is_critical).map((p) => p.parameter_code)
-  );
   const [showEventDialog, setShowEventDialog] = useState(false);
   const [editingEvent, setEditingEvent] = useState<ProcessEvent | null>(null);
   const [showMetadataEdit, setShowMetadataEdit] = useState(false);
@@ -151,41 +143,6 @@ export default function RunDetailPage() {
     event_type: "NOTE", subtype: "", amount: "", amount_unit: "", notes: "",
     timestamp: new Date().toISOString().slice(0, 16),
   });
-
-  const normalize = (value: number, param: ParameterDef) => {
-    const range = param.max_value - param.min_value;
-    return range === 0 ? 50 : ((value - param.min_value) / range) * 100;
-  };
-
-  const chartData = useMemo(() =>
-    timeseries.map((point) => {
-      const row: Record<string, number | string> = { elapsed_h: point.elapsed_h, timestamp: point.timestamp };
-      selectedParams.forEach((code) => {
-        const param = PARAMETERS.find((p) => p.parameter_code === code);
-        if (param) {
-          row[code] = ((point[code] as number) - param.min_value) / (param.max_value - param.min_value || 1) * 100;
-          row[`${code}_raw`] = point[code] as number;
-        }
-      });
-      return row;
-    }),
-    [timeseries, selectedParams]
-  );
-
-  const eventMarkers = useMemo(() => {
-    if (!run) return [];
-    const runStart = new Date(run.start_time).getTime();
-    return runEvents.map((e) => ({ ...e, elapsed_h: (new Date(e.timestamp).getTime() - runStart) / 3600000 }));
-  }, [runEvents, run]);
-
-  const paramGroups = useMemo(() => {
-    const groups: Record<string, ParameterDef[]> = {};
-    PARAMETERS.forEach((p) => {
-      if (!groups[p.type_priority]) groups[p.type_priority] = [];
-      groups[p.type_priority].push(p);
-    });
-    return groups;
-  }, []);
 
   if (!run) {
     return (
@@ -196,10 +153,6 @@ export default function RunDetailPage() {
       </div>
     );
   }
-
-  // ── Helpers ──
-  const toggleParam = (code: string) =>
-    setSelectedParams((prev) => prev.includes(code) ? prev.filter((p) => p !== code) : [...prev, code]);
 
   // ── Event handlers ──
   const handleSaveEvent = () => {
@@ -236,24 +189,7 @@ export default function RunDetailPage() {
     setShowEventDialog(true);
   };
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (!active || !payload?.length) return null;
-    return (
-      <div className="bg-card border rounded-lg p-3 shadow-lg text-sm max-w-xs">
-        <p className="font-medium mb-1">Hour {label}</p>
-        {payload.map((entry: any) => {
-          const code = entry.dataKey as string;
-          const param = PARAMETERS.find((p) => p.parameter_code === code);
-          const raw = entry.payload[`${code}_raw`];
-          return (
-            <p key={code} style={{ color: entry.color }}>
-              {param?.display_name}: {typeof raw === "number" ? raw.toFixed(2) : "—"} {param?.unit}
-            </p>
-          );
-        })}
-      </div>
-    );
-  };
+
 
   return (
     <div className="p-4 space-y-4 animate-fade-in">
@@ -303,68 +239,13 @@ export default function RunDetailPage() {
         <Badge variant="secondary" className="text-xs">UI state only</Badge>
       </div>
 
-      {/* ── Parameter Selector ── */}
-      <Card>
-        <CardContent className="p-3">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-sm font-medium">Parameters</span>
-            <InfoTooltip content="Select parameters to overlay on the chart. Values are normalized to % of operating range." />
-          </div>
-          <div className="flex flex-wrap gap-4">
-            {Object.entries(paramGroups).map(([group, params]) => (
-              <div key={group} className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs font-medium text-muted-foreground min-w-fit">{group}:</span>
-                {params.map((p) => (
-                  <label key={p.parameter_code} className="flex items-center gap-1 text-xs cursor-pointer whitespace-nowrap">
-                    <Checkbox
-                      checked={selectedParams.includes(p.parameter_code)}
-                      onCheckedChange={() => toggleParam(p.parameter_code)}
-                      className="h-3.5 w-3.5"
-                    />
-                    {p.display_name}
-                  </label>
-                ))}
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* ── Monitoring Chart (first viewport) ── */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base flex items-center gap-2">
-            Process Monitoring
-            <InfoTooltip content="Parameters normalized to operating range. Hover for actual readings. Dashed lines = events." />
-          </CardTitle>
-          <p className="text-xs text-muted-foreground">
-            Phase: <strong>{phase}</strong> · {selectedParams.length} parameter{selectedParams.length !== 1 ? "s" : ""} selected
-          </p>
-        </CardHeader>
-        <CardContent className="p-2">
-          <ResponsiveContainer width="100%" height={400}>
-            <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-              <XAxis dataKey="elapsed_h" label={{ value: "Hours", position: "bottom", offset: -5 }} className="text-xs" />
-              <YAxis domain={[-10, 110]} label={{ value: "% of range", angle: -90, position: "insideLeft" }} className="text-xs" />
-              <Tooltip content={<CustomTooltip />} />
-              <Legend />
-              {selectedParams.map((code, i) => {
-                const param = PARAMETERS.find((p) => p.parameter_code === code);
-                return (
-                  <Line key={code} type="monotone" dataKey={code}
-                    stroke={COLORS[i % COLORS.length]} strokeWidth={1.5} dot={false}
-                    name={param?.display_name || code} />
-                );
-              })}
-              {eventMarkers.filter((e) => e.elapsed_h >= 0).map((e, i) => (
-                <ReferenceLine key={i} x={Math.round(e.elapsed_h)}
-                  stroke="hsl(var(--muted-foreground))" strokeDasharray="3 3" strokeOpacity={0.4} />
-              ))}
-            </LineChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
+      {/* ── Monitoring Charts ── */}
+      <MonitoringCharts
+        timeseries={timeseries}
+        events={eventMarkers}
+        runStartTime={run.start_time}
+        phase={phase}
+      />
 
       {/* ── Event Log ── */}
       <Card>
