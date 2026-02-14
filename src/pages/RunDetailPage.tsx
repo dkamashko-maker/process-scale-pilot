@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -26,7 +27,7 @@ import {
 import { format } from "date-fns";
 import {
   FlaskConical, Thermometer, User, Dna, Target, Beaker, Utensils,
-  Calendar, Pencil, Plus, ExternalLink,
+  Calendar, Pencil, Plus, ExternalLink, SlidersHorizontal,
 } from "lucide-react";
 import type { ParameterDef, ProcessEvent, Run } from "@/data/runTypes";
 
@@ -139,10 +140,28 @@ export default function RunDetailPage() {
   const [showEventDialog, setShowEventDialog] = useState(false);
   const [editingEvent, setEditingEvent] = useState<ProcessEvent | null>(null);
   const [showMetadataEdit, setShowMetadataEdit] = useState(false);
+  const [showControlActions, setShowControlActions] = useState(false);
+  const [highlightedEventId, setHighlightedEventId] = useState<string | null>(null);
+  const [centerOnHour, setCenterOnHour] = useState<number | null>(null);
+  const [controlFilter, setControlFilter] = useState("all");
   const [eventForm, setEventForm] = useState({
     event_type: "NOTE", subtype: "", amount: "", amount_unit: "", notes: "",
     timestamp: new Date().toISOString().slice(0, 16),
   });
+
+  const CONTROL_FILTER_MAP: Record<string, string[]> = {
+    all: [],
+    feed: ["FEED"],
+    ph: ["BASE_ADDITION"],
+    gas: ["GAS"],
+    additives: ["ANTIFOAM", "INDUCER", "ADDITIVE"],
+  };
+
+  const filteredControlEvents = useMemo(() => {
+    const types = CONTROL_FILTER_MAP[controlFilter];
+    if (!types || types.length === 0) return runEvents;
+    return runEvents.filter((e) => types.includes(e.event_type));
+  }, [runEvents, controlFilter]);
 
   if (!run) {
     return (
@@ -189,6 +208,12 @@ export default function RunDetailPage() {
     setShowEventDialog(true);
   };
 
+  const handleSelectControlEvent = (evt: ProcessEvent) => {
+    const runStart = new Date(run.start_time).getTime();
+    const elapsedH = (new Date(evt.timestamp).getTime() - runStart) / 3600000;
+    setHighlightedEventId(evt.id);
+    setCenterOnHour(elapsedH);
+  };
 
 
   return (
@@ -239,12 +264,20 @@ export default function RunDetailPage() {
         <Badge variant="secondary" className="text-xs">UI state only</Badge>
       </div>
 
-      {/* ── Monitoring Charts ── */}
+      {/* ── Monitoring Charts with Control Actions button ── */}
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-medium text-muted-foreground">Monitoring</h2>
+        <Button variant="outline" size="sm" onClick={() => setShowControlActions(true)}>
+          <SlidersHorizontal className="h-3.5 w-3.5 mr-1.5" /> Control Actions
+        </Button>
+      </div>
       <MonitoringCharts
         timeseries={timeseries}
         events={eventMarkers}
         runStartTime={run.start_time}
         phase={phase}
+        highlightedEventId={highlightedEventId}
+        centerOnHour={centerOnHour}
       />
 
       {/* ── Event Log ── */}
@@ -335,6 +368,71 @@ export default function RunDetailPage() {
               </div>
             </>
           )}
+        </SheetContent>
+      </Sheet>
+
+      {/* ── Control Actions Sheet ── */}
+      <Sheet open={showControlActions} onOpenChange={(open) => { if (!open) { setShowControlActions(false); setHighlightedEventId(null); setCenterOnHour(null); } }}>
+        <SheetContent className="w-[480px] sm:w-[540px] flex flex-col">
+          <SheetHeader>
+            <SheetTitle className="flex items-center gap-2">
+              <SlidersHorizontal className="h-4 w-4" />
+              Control Actions
+            </SheetTitle>
+          </SheetHeader>
+          <Tabs value={controlFilter} onValueChange={setControlFilter} className="mt-4">
+            <TabsList className="w-full">
+              <TabsTrigger value="all" className="flex-1 text-xs">All</TabsTrigger>
+              <TabsTrigger value="feed" className="flex-1 text-xs">Feed</TabsTrigger>
+              <TabsTrigger value="ph" className="flex-1 text-xs">pH</TabsTrigger>
+              <TabsTrigger value="gas" className="flex-1 text-xs">Gas</TabsTrigger>
+              <TabsTrigger value="additives" className="flex-1 text-xs">Additives</TabsTrigger>
+            </TabsList>
+          </Tabs>
+          <div className="flex-1 overflow-auto mt-3">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-xs">Time</TableHead>
+                  <TableHead className="text-xs">Action</TableHead>
+                  <TableHead className="text-xs">Amount</TableHead>
+                  <TableHead className="text-xs">Mode</TableHead>
+                  <TableHead className="text-xs">Actor</TableHead>
+                  <TableHead className="text-xs">Notes</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredControlEvents.map((evt) => (
+                  <TableRow
+                    key={evt.id}
+                    className={`cursor-pointer transition-colors ${highlightedEventId === evt.id ? "bg-accent" : "hover:bg-muted/50"}`}
+                    onClick={() => handleSelectControlEvent(evt)}
+                  >
+                    <TableCell className="text-xs whitespace-nowrap">{format(new Date(evt.timestamp), "MM-dd HH:mm")}</TableCell>
+                    <TableCell className="text-xs">
+                      <Badge variant="outline" className="text-[10px]">{evt.event_type}</Badge>
+                      {evt.subtype && <span className="ml-1 text-muted-foreground">{evt.subtype}</span>}
+                    </TableCell>
+                    <TableCell className="text-xs">{evt.amount != null ? `${evt.amount} ${evt.amount_unit}` : "—"}</TableCell>
+                    <TableCell className="text-xs">
+                      <Badge variant={evt.entry_mode === "manual" ? "secondary" : "outline"} className="text-[10px]">
+                        {evt.entry_mode || "manual"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-xs">{evt.actor}</TableCell>
+                    <TableCell className="text-xs max-w-[120px] truncate">{evt.notes}</TableCell>
+                  </TableRow>
+                ))}
+                {filteredControlEvents.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center text-muted-foreground py-8 text-sm">
+                      No events match this filter.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </SheetContent>
       </Sheet>
 
