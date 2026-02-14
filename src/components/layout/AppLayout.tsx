@@ -10,7 +10,7 @@ import { LogOut } from "lucide-react";
 function SidebarAutoCollapse() {
   const location = useLocation();
   const { setOpen } = useSidebar();
-  const isMonitorPage = location.pathname.startsWith("/run/");
+  const isMonitorPage = location.pathname.startsWith("/run/") || location.pathname.startsWith("/experiments/");
 
   useEffect(() => {
     if (isMonitorPage) {
@@ -30,7 +30,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const defaultOpen = !location.pathname.startsWith("/run/");
+  const defaultOpen = !location.pathname.startsWith("/run/") && !location.pathname.match(/^\/experiments\//);
 
   const handleLogout = () => {
     logout();
