@@ -8,6 +8,7 @@ import { EventsProvider } from "@/contexts/EventsContext";
 import { AppLayout } from "@/components/layout/AppLayout";
 import OverviewPage from "./pages/OverviewPage";
 import RunMonitorPage from "./pages/RunMonitorPage";
+import RunsListPage from "./pages/RunsListPage";
 import EventLogPage from "./pages/EventLogPage";
 import AdminPage from "./pages/AdminPage";
 import LoginPage from "./pages/LoginPage";
@@ -39,6 +40,8 @@ const App = () => (
                 <Route path="/" element={<Navigate to="/dashboard" replace />} />
                 <Route path="/dashboard" element={<OverviewPage />} />
                 <Route path="/run/:runId" element={<RunMonitorPage />} />
+                <Route path="/experiments" element={<RunsListPage />} />
+                <Route path="/experiments/:runId" element={<RunMonitorPage />} />
                 <Route path="/events" element={<EventLogPage />} />
                 <Route path="/admin" element={<AdminPage />} />
               </Route>

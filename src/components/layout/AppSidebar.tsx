@@ -1,4 +1,4 @@
-import { LayoutDashboard, ClipboardList, Settings, Activity } from "lucide-react";
+import { LayoutDashboard, ClipboardList, Settings, Activity, FlaskConical } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { RUNS } from "@/data/runData";
 import {
@@ -15,6 +15,7 @@ import {
 
 const navItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
+  { title: "Runs", url: "/experiments", icon: FlaskConical },
   { title: "Event Log", url: "/events", icon: ClipboardList },
   { title: "Admin", url: "/admin", icon: Settings },
 ];
