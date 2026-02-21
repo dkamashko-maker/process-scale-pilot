@@ -3,6 +3,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import { RUNS, PARAMETERS, getTimeseries } from "@/data/runData";
 import { useEvents } from "@/contexts/EventsContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { ProcessChart } from "@/components/monitoring/ProcessChart";
+import { ControlActionsPanel } from "@/components/monitoring/ControlActionsPanel";
 import { ChartCard } from "@/components/shared/ChartCard";
 import { DataTable } from "@/components/shared/DataTable";
 import { InfoTooltip } from "@/components/shared/InfoTooltip";
@@ -10,22 +12,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
-  ResponsiveContainer, ReferenceLine,
-} from "recharts";
 import { format } from "date-fns";
 import type { ParameterDef, ProcessEvent } from "@/data/runTypes";
 
-const COLORS = [
-  "hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-3))",
-  "hsl(var(--chart-4))", "hsl(var(--chart-5))", "#6366f1", "#ec4899",
-  "#14b8a6", "#f97316", "#8b5cf6", "#06b6d4", "#84cc16", "#ef4444", "#a855f7",
-];
 const EVENT_TYPES = ["FEED", "BASE_ADDITION", "ANTIFOAM", "INDUCER", "ADDITIVE", "HARVEST", "SAMPLE", "NOTE"];
 
 export default function RunMonitorPage() {
@@ -44,12 +38,38 @@ export default function RunMonitorPage() {
   const [selectedParams, setSelectedParams] = useState<string[]>(
     PARAMETERS.filter((p) => p.is_critical).map((p) => p.parameter_code)
   );
+  const [showRangeBands, setShowRangeBands] = useState(true);
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [showEventDialog, setShowEventDialog] = useState(false);
   const [editingEvent, setEditingEvent] = useState<ProcessEvent | null>(null);
   const [eventForm, setEventForm] = useState({
     event_type: "NOTE", subtype: "", amount: "", amount_unit: "", notes: "",
     timestamp: new Date().toISOString().slice(0, 16),
   });
+
+  const eventMarkers = useMemo(() => {
+    if (!run) return [];
+    const runStart = new Date(run.start_time).getTime();
+    return runEvents.map((e) => ({
+      ...e,
+      elapsed_h: (new Date(e.timestamp).getTime() - runStart) / 3600000,
+    }));
+  }, [runEvents, run]);
+
+  const highlightedEventH = useMemo(() => {
+    if (!selectedEventId) return null;
+    const marker = eventMarkers.find((m) => m.id === selectedEventId);
+    return marker ? marker.elapsed_h : null;
+  }, [selectedEventId, eventMarkers]);
+
+  const paramGroups = useMemo(() => {
+    const groups: Record<string, ParameterDef[]> = {};
+    PARAMETERS.forEach((p) => {
+      if (!groups[p.type_priority]) groups[p.type_priority] = [];
+      groups[p.type_priority].push(p);
+    });
+    return groups;
+  }, []);
 
   if (!run) {
     return (
@@ -63,53 +83,6 @@ export default function RunMonitorPage() {
   const toggleParam = (code: string) => {
     setSelectedParams((prev) =>
       prev.includes(code) ? prev.filter((p) => p !== code) : [...prev, code]
-    );
-  };
-
-  const normalize = (value: number, param: ParameterDef) => {
-    const range = param.max_value - param.min_value;
-    if (range === 0) return 50;
-    return ((value - param.min_value) / range) * 100;
-  };
-
-  const chartData = useMemo(() => {
-    return timeseries.map((point) => {
-      const row: Record<string, number | string> = { elapsed_h: point.elapsed_h, timestamp: point.timestamp };
-      selectedParams.forEach((code) => {
-        const param = PARAMETERS.find((p) => p.parameter_code === code);
-        if (param) {
-          row[code] = normalize(point[code] as number, param);
-          row[`${code}_raw`] = point[code] as number;
-        }
-      });
-      return row;
-    });
-  }, [timeseries, selectedParams]);
-
-  const eventMarkers = useMemo(() => {
-    const runStart = new Date(run.start_time).getTime();
-    return runEvents.map((e) => ({
-      ...e,
-      elapsed_h: (new Date(e.timestamp).getTime() - runStart) / 3600000,
-    }));
-  }, [runEvents, run]);
-
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (!active || !payload?.length) return null;
-    return (
-      <div className="bg-card border rounded-lg p-3 shadow-lg text-sm max-w-xs">
-        <p className="font-medium mb-1">Hour {label}</p>
-        {payload.map((entry: any) => {
-          const code = entry.dataKey as string;
-          const param = PARAMETERS.find((p) => p.parameter_code === code);
-          const raw = entry.payload[`${code}_raw`];
-          return (
-            <p key={code} style={{ color: entry.color }}>
-              {param?.display_name}: {typeof raw === "number" ? raw.toFixed(2) : "—"} {param?.unit}
-            </p>
-          );
-        })}
-      </div>
     );
   };
 
@@ -150,14 +123,6 @@ export default function RunMonitorPage() {
     setShowEventDialog(true);
   };
 
-  const paramGroups = useMemo(() => {
-    const groups: Record<string, ParameterDef[]> = {};
-    PARAMETERS.forEach((p) => {
-      if (!groups[p.type_priority]) groups[p.type_priority] = [];
-      groups[p.type_priority].push(p);
-    });
-    return groups;
-  }, []);
 
   const eventColumns = [
     { key: "timestamp", label: "Time", sortable: true as const,
@@ -211,9 +176,15 @@ export default function RunMonitorPage() {
       {/* Parameter Selector */}
       <Card>
         <CardContent className="p-3">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-sm font-medium">Parameters</span>
-            <InfoTooltip content="Select parameters to overlay on the monitoring chart. Values are normalized to % of operating range. Hover for actual readings with units." />
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium">Parameters</span>
+              <InfoTooltip content="Select parameters to overlay on the monitoring chart. Values are normalized to % of operating range." />
+            </div>
+            <label className="flex items-center gap-2 text-xs cursor-pointer">
+              <Switch checked={showRangeBands} onCheckedChange={setShowRangeBands} className="h-4 w-7" />
+              Range Bands
+            </label>
           </div>
           <div className="flex flex-wrap gap-4">
             {Object.entries(paramGroups).map(([group, params]) => (
@@ -235,38 +206,38 @@ export default function RunMonitorPage() {
         </CardContent>
       </Card>
 
-      {/* Timeseries Chart */}
-      <ChartCard
-        title="Process Monitoring"
-        subtitle={
-          <span className="flex items-center gap-1">
-            Parameter readings over time (% of operating range)
-            <InfoTooltip content="Each parameter is normalized to its operating range for overlay display. Hover for actual values. Vertical markers = logged events." />
-          </span>
-        }
-      >
-        <ResponsiveContainer width="100%" height={420}>
-          <LineChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-            <XAxis dataKey="elapsed_h" label={{ value: "Hours", position: "bottom", offset: -5 }} className="text-xs" />
-            <YAxis domain={[-10, 110]} label={{ value: "% of range", angle: -90, position: "insideLeft" }} className="text-xs" />
-            <Tooltip content={<CustomTooltip />} />
-            <Legend />
-            {selectedParams.map((code, i) => {
-              const param = PARAMETERS.find((p) => p.parameter_code === code);
-              return (
-                <Line key={code} type="monotone" dataKey={code}
-                  stroke={COLORS[i % COLORS.length]} strokeWidth={1.5} dot={false}
-                  name={param?.display_name || code} />
-              );
-            })}
-            {eventMarkers.filter((e) => e.elapsed_h >= 0 && e.elapsed_h <= timeseries.length).map((e, i) => (
-              <ReferenceLine key={i} x={Math.round(e.elapsed_h)}
-                stroke="hsl(var(--muted-foreground))" strokeDasharray="3 3" strokeOpacity={0.4} />
-            ))}
-          </LineChart>
-        </ResponsiveContainer>
-      </ChartCard>
+      {/* Chart + Control Actions Side Panel */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-4">
+        <ChartCard
+          title="Process Monitoring"
+          subtitle={
+            <span className="flex items-center gap-1">
+              Parameter readings over time (% of operating range)
+              <InfoTooltip content="Each parameter is normalized to its operating range. Hover for actual values. Shaded band = acceptable range. Vertical markers = logged events." />
+            </span>
+          }
+        >
+          <ProcessChart
+            timeseries={timeseries}
+            selectedParams={selectedParams}
+            parameters={PARAMETERS}
+            eventMarkers={eventMarkers}
+            highlightedEventH={highlightedEventH}
+            showRangeBands={showRangeBands}
+          />
+        </ChartCard>
+
+        <Card className="overflow-hidden">
+          <ControlActionsPanel
+            events={runEvents}
+            runStartTime={run.start_time}
+            selectedEventId={selectedEventId}
+            onSelectEvent={setSelectedEventId}
+            canLogEvents={canLogEvents}
+            onLogEvent={openNewEvent}
+          />
+        </Card>
+      </div>
 
       {/* Event Log */}
       <ChartCard
@@ -275,7 +246,7 @@ export default function RunMonitorPage() {
           <div className="flex items-center justify-between w-full">
             <span className="flex items-center gap-1">
               Recorded events for this run
-              <InfoTooltip content="All logged events including feeds, base additions, and operator notes." />
+              <InfoTooltip content="All logged events including feeds, base additions, and operator notes. Read-only for Viewer role." />
             </span>
             {canLogEvents && (
               <Button size="sm" onClick={openNewEvent}>Log Event</Button>
