@@ -47,3 +47,20 @@ export interface ProcessEvent {
   entry_mode: string;
   notes: string;
 }
+
+export type InterfaceCategory = "Production" | "Analytical" | "System";
+export type InterfaceStatus = "Connected" | "Degraded" | "Offline";
+export type InterfaceDataType = "timeseries" | "events" | "files";
+
+export interface InstrumentInterface {
+  id: string;
+  display_name: string;
+  category: InterfaceCategory;
+  status: InterfaceStatus;
+  last_polled_at: string;
+  poll_frequency_sec: number;
+  data_types: InterfaceDataType[];
+  description: string;
+  /** For bioreactor interfaces, maps to runs.reactor_id */
+  linked_reactor_id?: string;
+}
