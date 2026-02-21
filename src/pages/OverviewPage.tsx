@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import { Activity, FlaskConical, Droplets, Beaker } from "lucide-react";
+import { Activity, FlaskConical, Droplets, Beaker, Database, Brain, Construction } from "lucide-react";
 import { format } from "date-fns";
 
 export default function OverviewPage() {
@@ -28,7 +28,6 @@ export default function OverviewPage() {
     return events.filter((e) => new Date(e.timestamp).getTime() > cutoff);
   }, [events, now]);
 
-  // Per-run at-a-glance stats
   const runStats = useMemo(() => {
     return RUNS.map((run) => {
       const re = events.filter((e) => e.run_id === run.run_id);
@@ -56,8 +55,68 @@ export default function OverviewPage() {
   return (
     <div className="p-6 space-y-6 animate-fade-in">
       <div className="flex items-center gap-2">
-        <h2 className="text-xl font-semibold">Runs Overview</h2>
-        <InfoTooltip content="Summary of all bioreactor runs and logged process events." />
+        <h2 className="text-xl font-semibold">General View</h2>
+        <InfoTooltip content="Overview of Data Vest modules and bioreactor monitoring data." />
+      </div>
+
+      {/* ── Module Cards ── */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card
+          className="cursor-pointer hover:border-primary/50 transition-colors opacity-0 animate-fade-in"
+          style={{ animationDelay: "50ms" }}
+          onClick={() => navigate("/run/" + RUNS[0]?.run_id)}
+        >
+          <CardContent className="p-5 flex items-start gap-4">
+            <div className="rounded-md bg-primary/10 p-3">
+              <Activity className="h-6 w-6 text-primary" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-sm">Bioreactor Monitoring</h3>
+              <p className="text-xs text-muted-foreground mt-1">
+                Real-time parameter viewing, event recording, and run-centric data visualization.
+              </p>
+              <Badge variant="secondary" className="mt-2 text-[10px]">{activeRuns.length > 0 ? `${activeRuns.length} active` : `${RUNS.length} demo runs`}</Badge>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card
+          className="cursor-pointer hover:border-primary/50 transition-colors opacity-0 animate-fade-in"
+          style={{ animationDelay: "100ms" }}
+          onClick={() => navigate("/data-storage")}
+        >
+          <CardContent className="p-5 flex items-start gap-4">
+            <div className="rounded-md bg-primary/10 p-3">
+              <Database className="h-6 w-6 text-primary" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-sm">Data Storage</h3>
+              <p className="text-xs text-muted-foreground mt-1">
+                Browse and manage stored instrumental data across all recorded runs.
+              </p>
+              <Badge variant="secondary" className="mt-2 text-[10px]">{events.length} records</Badge>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card
+          className="cursor-pointer hover:border-primary/50 transition-colors opacity-0 animate-fade-in"
+          style={{ animationDelay: "150ms" }}
+          onClick={() => navigate("/ai")}
+        >
+          <CardContent className="p-5 flex items-start gap-4">
+            <div className="rounded-md bg-primary/10 p-3">
+              <Brain className="h-6 w-6 text-primary" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-sm">AI Analytics</h3>
+              <p className="text-xs text-muted-foreground mt-1">
+                Intelligent insights, anomaly detection, and trend forecasting from collected data.
+              </p>
+              <Badge variant="secondary" className="mt-2 text-[10px]">Concept</Badge>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* ── KPI Cards ── */}
@@ -66,31 +125,31 @@ export default function OverviewPage() {
           label="Active Runs"
           value={activeRuns.length > 0 ? activeRuns.length : `${RUNS.length} demo runs`}
           trend="neutral"
-          animationDelay={0}
+          animationDelay={200}
         />
         <KpiCard
           label="Events (Last 24h)"
           value={events24h.length}
           trend="neutral"
-          animationDelay={50}
+          animationDelay={250}
         />
         <KpiCard
-          label="Total Events"
+          label="Total Recorded Events"
           value={events.length}
           trend="neutral"
-          animationDelay={100}
+          animationDelay={300}
         />
         <KpiCard
           label="Runs Tracked"
           value={RUNS.length}
           trend="neutral"
-          animationDelay={150}
+          animationDelay={350}
         />
       </div>
 
       {/* ── At-a-Glance Widgets ── */}
       <div className="grid grid-cols-3 gap-4">
-        <Card className="opacity-0 animate-fade-in" style={{ animationDelay: "200ms" }}>
+        <Card className="opacity-0 animate-fade-in" style={{ animationDelay: "400ms" }}>
           <CardContent className="p-4 flex items-center gap-3">
             <div className="rounded-md bg-green-500/10 p-2">
               <FlaskConical className="h-5 w-5 text-green-600" />
@@ -101,7 +160,7 @@ export default function OverviewPage() {
             </div>
           </CardContent>
         </Card>
-        <Card className="opacity-0 animate-fade-in" style={{ animationDelay: "250ms" }}>
+        <Card className="opacity-0 animate-fade-in" style={{ animationDelay: "450ms" }}>
           <CardContent className="p-4 flex items-center gap-3">
             <div className="rounded-md bg-blue-500/10 p-2">
               <Beaker className="h-5 w-5 text-blue-600" />
@@ -112,7 +171,7 @@ export default function OverviewPage() {
             </div>
           </CardContent>
         </Card>
-        <Card className="opacity-0 animate-fade-in" style={{ animationDelay: "300ms" }}>
+        <Card className="opacity-0 animate-fade-in" style={{ animationDelay: "500ms" }}>
           <CardContent className="p-4 flex items-center gap-3">
             <div className="rounded-md bg-purple-500/10 p-2">
               <Droplets className="h-5 w-5 text-purple-600" />
@@ -151,7 +210,7 @@ export default function OverviewPage() {
                 <TableRow
                   key={run.run_id}
                   className="cursor-pointer hover:bg-muted/50 transition-colors opacity-0 animate-fade-in"
-                  style={{ animationDelay: `${350 + idx * 60}ms` }}
+                  style={{ animationDelay: `${550 + idx * 60}ms` }}
                   onClick={() => navigate(`/experiments/${run.run_id}`)}
                 >
                   <TableCell className="font-medium text-sm text-primary hover:underline">

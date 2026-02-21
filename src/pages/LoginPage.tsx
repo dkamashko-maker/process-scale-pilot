@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FlaskConical } from "lucide-react";
+import { Database } from "lucide-react";
 import type { UserRole } from "@/data/runTypes";
 
 export default function LoginPage() {
@@ -31,10 +31,10 @@ export default function LoginPage() {
       <Card className="w-full max-w-md animate-fade-in">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4 h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
-            <FlaskConical className="h-6 w-6 text-primary" />
+            <Database className="h-6 w-6 text-primary" />
           </div>
-          <CardTitle className="text-2xl">BioProcess Monitor</CardTitle>
-          <CardDescription>Run-centric monitoring &amp; event logging</CardDescription>
+          <CardTitle className="text-2xl">Data Vest</CardTitle>
+          <CardDescription>AI-based Integrated Instrumental Data Collection &amp; Analytics</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">

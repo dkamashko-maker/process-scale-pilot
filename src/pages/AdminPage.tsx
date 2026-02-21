@@ -20,7 +20,7 @@ const ROLE_INFO: Record<string, { label: string; icon: typeof Eye; permissions: 
   operator: {
     label: "Operator",
     icon: Pencil,
-    permissions: ["All Viewer permissions", "Log new process events", "Add additives / control actions"],
+    permissions: ["All Viewer permissions", "Log new process events", "Record additive additions"],
   },
   manager: {
     label: "Manager",
