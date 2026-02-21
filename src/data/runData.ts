@@ -1,4 +1,103 @@
-import type { Run, ParameterDef, TimeseriesPoint, ProcessEvent } from "./runTypes";
+import type { Run, ParameterDef, TimeseriesPoint, ProcessEvent, InstrumentInterface } from "./runTypes";
+
+// ── INTERFACES ──
+export const INTERFACES: InstrumentInterface[] = [
+  {
+    id: "BR-003-p",
+    display_name: "Bioreactor 003-p",
+    category: "Production",
+    status: "Connected",
+    last_polled_at: "2026-02-21T14:59:42",
+    poll_frequency_sec: 60,
+    data_types: ["timeseries", "events"],
+    description: "Primary bioreactor interface providing real-time temperature, pH, DO, agitation, and gas flow timeseries at 1-min resolution.",
+    linked_reactor_id: "003-p",
+  },
+  {
+    id: "BR-004-p",
+    display_name: "Bioreactor 004-p",
+    category: "Production",
+    status: "Connected",
+    last_polled_at: "2026-02-21T14:59:41",
+    poll_frequency_sec: 60,
+    data_types: ["timeseries", "events"],
+    description: "Primary bioreactor interface providing real-time temperature, pH, DO, agitation, and gas flow timeseries at 1-min resolution.",
+    linked_reactor_id: "004-p",
+  },
+  {
+    id: "BR-005-p",
+    display_name: "Bioreactor 005-p",
+    category: "Production",
+    status: "Degraded",
+    last_polled_at: "2026-02-21T14:58:12",
+    poll_frequency_sec: 60,
+    data_types: ["timeseries", "events"],
+    description: "Primary bioreactor interface providing real-time temperature, pH, DO, agitation, and gas flow timeseries at 1-min resolution.",
+    linked_reactor_id: "005-p",
+  },
+  {
+    id: "GAS-MFC-RACK",
+    display_name: "Gas Mix / MFC Rack",
+    category: "Production",
+    status: "Connected",
+    last_polled_at: "2026-02-21T14:59:40",
+    poll_frequency_sec: 30,
+    data_types: ["timeseries"],
+    description: "Mass flow controller rack managing O₂, N₂, CO₂, and air supply. Produces gas composition and flow rate timeseries.",
+  },
+  {
+    id: "PUMP-MODULE",
+    display_name: "Feed / Base / Antifoam Pumps",
+    category: "Production",
+    status: "Connected",
+    last_polled_at: "2026-02-21T14:59:38",
+    poll_frequency_sec: 10,
+    data_types: ["timeseries", "events"],
+    description: "Peristaltic pump module recording feed, base, and antifoam delivery volumes and event timestamps.",
+  },
+  {
+    id: "METAB-ANALYZER",
+    display_name: "Metabolite Analyzer",
+    category: "Analytical",
+    status: "Connected",
+    last_polled_at: "2026-02-21T14:45:00",
+    poll_frequency_sec: 900,
+    data_types: ["timeseries", "events"],
+    description: "Off-line metabolite analyzer producing glucose, lactate, glutamine, and ammonia readings per sample.",
+  },
+  {
+    id: "CELL-COUNTER",
+    display_name: "Cell Counter / Viability Analyzer",
+    category: "Analytical",
+    status: "Connected",
+    last_polled_at: "2026-02-21T14:30:00",
+    poll_frequency_sec: 1800,
+    data_types: ["timeseries", "events"],
+    description: "Automated cell counter providing viable cell density (VCD), total cell density, and viability percentage per sample.",
+  },
+  {
+    id: "HPLC-01",
+    display_name: "HPLC System 01",
+    category: "Analytical",
+    status: "Offline",
+    last_polled_at: "2026-02-21T10:15:00",
+    poll_frequency_sec: 3600,
+    data_types: ["files"],
+    description: "HPLC interface ingesting chromatography result files (CDF/CSV). Produces titer and purity measurements per injection.",
+  },
+];
+
+/** Get interfaces linked to a specific reactor ID */
+export function getInterfacesForReactor(reactorId: string): InstrumentInterface[] {
+  return INTERFACES.filter((i) => i.linked_reactor_id === reactorId);
+}
+
+/** Get the run associated with a bioreactor interface */
+export function getRunForInterface(interfaceId: string): Run | undefined {
+  const iface = INTERFACES.find((i) => i.id === interfaceId);
+  if (!iface?.linked_reactor_id) return undefined;
+  return RUNS.find((r) => r.reactor_id === iface.linked_reactor_id);
+}
 
 // ── RUNS ──
 export const RUNS: Run[] = [
