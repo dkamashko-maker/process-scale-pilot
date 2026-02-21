@@ -61,6 +61,51 @@ export interface InstrumentInterface {
   poll_frequency_sec: number;
   data_types: InterfaceDataType[];
   description: string;
-  /** For bioreactor interfaces, maps to runs.reactor_id */
   linked_reactor_id?: string;
+}
+
+// ── Data Records (canonical ALCOA storage ledger) ──
+
+export type DataRecordType = "timeseries" | "event" | "file" | "correction";
+
+export type QualityFlag =
+  | "in_spec"
+  | "out_of_range"
+  | "missing_field"
+  | "late_ingestion"
+  | "manually_entered"
+  | "corrected"
+  | "flagged_for_review";
+
+export interface DataRecord {
+  /** Immutable unique identifier */
+  record_id: string;
+  /** Timestamp when the data was originally measured */
+  measured_at: string;
+  /** Timestamp when Data Vest ingested the record */
+  ingested_at: string;
+  /** Source interface that produced this record */
+  interface_id: string;
+  /** Record type */
+  data_type: DataRecordType;
+  /** Human-readable summary of the record content */
+  summary: string;
+  /** Reference to original payload / file (opaque id) */
+  raw_ref: string;
+  /** Display-only integrity hash (SHA-256 prefix) */
+  hash: string;
+  /** Device or actor who produced the data */
+  attributable_to: string;
+  /** How the data entered the system */
+  entry_mode: "auto" | "manual" | "derived";
+  /** Arbitrary key-value labels */
+  labels: Record<string, string>;
+  /** Completeness score 0–100 */
+  completeness_score: number;
+  /** Quality flags */
+  quality_flags: QualityFlag[];
+  /** Optional linked run */
+  linked_run_id?: string;
+  /** For corrections: the record_id this corrects */
+  corrects_record_id?: string;
 }
