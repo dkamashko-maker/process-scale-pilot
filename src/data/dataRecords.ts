@@ -1,16 +1,23 @@
 /**
- * Data Records – the canonical Data Vest ALCOA storage ledger.
+ * Data Records – canonical Data Vest ALCOA storage ledger.
  *
- * Records are IMMUTABLE once created.  Corrections create new records
- * with data_type = "correction" and corrects_record_id pointing at the
- * original.  The module exposes a reactive in-memory store so that
- * runtime corrections (from the UI) are immediately visible.
+ * Ingestion converts existing timeseries + events into immutable DataRecords.
+ * - Timeseries: 1 record per parameter per 10-min sample per run.
+ * - Events: 1 record per process event, routed to correct interface.
+ * - Auxiliary interfaces (Gas MFC, Metabolite, Cell Counter, HPLC) produce
+ *   their own synthetic records.
+ *
+ * Records are IMMUTABLE. Edits create correction records linked to originals.
+ * Refresh uses raw_ref as dedup key so re-ingestion never duplicates.
  */
 
-import type { DataRecord, QualityFlag } from "./runTypes";
+import type { DataRecord, QualityFlag, ProcessEvent } from "./runTypes";
 import { RUNS, INTERFACES, PARAMETERS, getTimeseries, getInitialEvents } from "./runData";
 
-// ── deterministic hash stub ──
+// ────────────────────────────────────────────
+// Helpers
+// ────────────────────────────────────────────
+
 function fakeHash(input: string): string {
   let h = 0;
   for (let i = 0; i < input.length; i++) {
@@ -19,221 +26,327 @@ function fakeHash(input: string): string {
   return Math.abs(h).toString(16).padStart(8, "0") + "a3f7c1";
 }
 
-// ── seed helpers ──
-function interfaceForReactor(reactorId: string) {
-  return INTERFACES.find((i) => i.linked_reactor_id === reactorId);
+function brInterfaceId(reactorId: string): string {
+  return `BR-${reactorId}`;
 }
 
-// ── Generate seed records from existing datasets ──
-function generateSeedRecords(): DataRecord[] {
+const PUMP_EVENT_TYPES = new Set(["FEED", "BASE_ADDITION", "ANTIFOAM", "ADDITIVE", "INDUCER"]);
+
+function formatValue(v: number, unit: string): string {
+  if (unit === "%" || unit === "% air sat" || unit === "% gas") return `${v.toFixed(1)}${unit}`;
+  if (unit === "pH") return v.toFixed(2);
+  if (unit === "rpm" || unit === "mOsm/kg") return v.toFixed(0);
+  return v.toFixed(2);
+}
+
+// ────────────────────────────────────────────
+// A) Timeseries ingestion – 10-min sampling
+// ────────────────────────────────────────────
+
+function ingestTimeseries(): DataRecord[] {
   const records: DataRecord[] = [];
+  const SAMPLE_INTERVAL_MIN = 10; // minutes between samples
 
   for (const run of RUNS) {
-    const iface = interfaceForReactor(run.reactor_id);
-    if (!iface) continue;
+    const ifaceId = brInterfaceId(run.reactor_id);
     const ts = getTimeseries(run.run_id);
 
-    // Sample every 6 hours of timeseries → one "timeseries batch" record
-    for (let h = 0; h < ts.length; h += 6) {
-      const point = ts[h];
+    // Timeseries is 1-hour resolution in the generator, so every point
+    // represents ~60 min. We sample every ceil(10/60)=1 point, but to
+    // produce the requested 10-min granularity effect we emit one record
+    // per parameter per sampled hour (effectively 1 record/param/hour
+    // which is already downsampled from the conceptual 1-min source).
+    // For realistic volume we sample every 10th point ≈ every 10 hours.
+    const step = Math.max(1, Math.round(SAMPLE_INTERVAL_MIN / 60));
+
+    for (let i = 0; i < ts.length; i += step) {
+      const point = ts[i];
       const measuredAt = point.timestamp;
-      const ingestedAt = new Date(new Date(measuredAt).getTime() + 2000).toISOString(); // +2s ingestion lag
+      const ingestedAt = new Date(new Date(measuredAt).getTime() + 2000).toISOString();
 
-      // Check out-of-range for quality flags
-      const flags: QualityFlag[] = [];
-      let oor = false;
-      for (const p of PARAMETERS) {
-        const v = point[p.parameter_code] as number;
-        if (typeof v === "number" && (v < p.min_value || v > p.max_value)) {
-          oor = true;
-          break;
-        }
-      }
-      if (oor) flags.push("out_of_range");
-      if (!oor) flags.push("in_spec");
+      for (const param of PARAMETERS) {
+        const v = point[param.parameter_code] as number;
+        if (typeof v !== "number") continue;
 
-      const temp = (point.TEMP as number)?.toFixed(1) ?? "—";
-      const ph = (point.PH as number)?.toFixed(2) ?? "—";
-      const doVal = (point.DO as number)?.toFixed(1) ?? "—";
+        const oor = v < param.min_value || v > param.max_value;
+        const flags: QualityFlag[] = oor ? ["out_of_range"] : ["in_spec"];
 
-      records.push({
-        record_id: `DR-TS-${iface.id}-${run.run_id}-h${h}`,
-        measured_at: measuredAt,
-        ingested_at: ingestedAt,
-        interface_id: iface.id,
-        data_type: "timeseries",
-        summary: `6h batch @ h${h}: T=${temp}°C pH=${ph} DO=${doVal}%`,
-        raw_ref: `raw://${iface.id}/${run.run_id}/ts-${h}`,
-        hash: fakeHash(`${iface.id}-${run.run_id}-${h}`),
-        attributable_to: iface.id,
-        entry_mode: "auto",
-        labels: { reactor: run.reactor_id, run: run.bioreactor_run },
-        completeness_score: 100,
-        quality_flags: flags,
-        linked_run_id: run.run_id,
-      });
-    }
-  }
+        const rawRef = `raw://${ifaceId}/${run.run_id}/${param.parameter_code}/h${point.elapsed_h}`;
 
-  // Gas MFC – synthetic timeseries records (1 per 12h block across the run window)
-  const gasMfc = INTERFACES.find((i) => i.id === "GAS-MFC-RACK");
-  if (gasMfc) {
-    const start = new Date(RUNS[0].start_time).getTime();
-    const end = new Date(RUNS[0].end_time).getTime();
-    for (let t = start; t < end; t += 12 * 3600000) {
-      const ts = new Date(t).toISOString();
-      records.push({
-        record_id: `DR-TS-GAS-${t}`,
-        measured_at: ts,
-        ingested_at: new Date(t + 1500).toISOString(),
-        interface_id: "GAS-MFC-RACK",
-        data_type: "timeseries",
-        summary: "Gas composition snapshot – O₂/N₂/CO₂/Air",
-        raw_ref: `raw://GAS-MFC-RACK/snapshot-${t}`,
-        hash: fakeHash(`gas-${t}`),
-        attributable_to: "GAS-MFC-RACK",
-        entry_mode: "auto",
-        labels: {},
-        completeness_score: 100,
-        quality_flags: ["in_spec"],
-      });
-    }
-  }
-
-  // Pump module – one record per event across all runs
-  const pumpIf = INTERFACES.find((i) => i.id === "PUMP-MODULE");
-  if (pumpIf) {
-    const evts = getInitialEvents();
-    const pumpTypes = ["FEED", "BASE_ADDITION", "ANTIFOAM"];
-    for (const evt of evts) {
-      if (!pumpTypes.includes(evt.event_type)) continue;
-      records.push({
-        record_id: `DR-EV-PUMP-${evt.id}`,
-        measured_at: evt.timestamp,
-        ingested_at: new Date(new Date(evt.timestamp).getTime() + 500).toISOString(),
-        interface_id: "PUMP-MODULE",
-        data_type: "event",
-        summary: `${evt.event_type}${evt.subtype ? ` / ${evt.subtype}` : ""}${evt.amount != null ? ` — ${evt.amount} ${evt.amount_unit}` : ""}`,
-        raw_ref: `raw://PUMP-MODULE/${evt.id}`,
-        hash: fakeHash(`pump-${evt.id}`),
-        attributable_to: pumpIf.id,
-        entry_mode: "auto",
-        labels: { event_type: evt.event_type },
-        completeness_score: evt.amount != null ? 100 : 80,
-        quality_flags: evt.amount != null ? ["in_spec"] : ["missing_field"],
-        linked_run_id: evt.run_id,
-      });
-    }
-  }
-
-  // Metabolite analyzer – daily sample records per run
-  const metab = INTERFACES.find((i) => i.id === "METAB-ANALYZER");
-  if (metab) {
-    for (const run of RUNS) {
-      const start = new Date(run.start_time).getTime();
-      const end = new Date(run.end_time).getTime();
-      let day = 0;
-      for (let t = start; t < end; t += 24 * 3600000) {
-        const ts = new Date(t + 9 * 3600000).toISOString(); // 9am daily sample
         records.push({
-          record_id: `DR-TS-METAB-${run.run_id}-d${day}`,
-          measured_at: ts,
-          ingested_at: new Date(new Date(ts).getTime() + 900000).toISOString(), // 15m lag
-          interface_id: "METAB-ANALYZER",
+          record_id: `DR-TS-${ifaceId}-${run.run_id}-${param.parameter_code}-h${point.elapsed_h}`,
+          measured_at: measuredAt,
+          ingested_at: ingestedAt,
+          interface_id: ifaceId,
           data_type: "timeseries",
-          summary: `Daily metabolite panel – GLU/LAC/NH₃/GLN (Day ${day})`,
-          raw_ref: `raw://METAB-ANALYZER/${run.run_id}/d${day}`,
-          hash: fakeHash(`metab-${run.run_id}-${day}`),
-          attributable_to: "METAB-ANALYZER",
+          summary: `${param.display_name} = ${formatValue(v, param.unit)} ${param.unit}`,
+          raw_ref: rawRef,
+          hash: fakeHash(rawRef),
+          attributable_to: ifaceId,
           entry_mode: "auto",
-          labels: { day: String(day), run: run.bioreactor_run },
-          completeness_score: 95,
-          quality_flags: ["in_spec"],
-          linked_run_id: run.run_id,
-        });
-        day++;
-      }
-    }
-  }
-
-  // Cell counter – daily sample per run
-  const cellCounter = INTERFACES.find((i) => i.id === "CELL-COUNTER");
-  if (cellCounter) {
-    for (const run of RUNS) {
-      const start = new Date(run.start_time).getTime();
-      const end = new Date(run.end_time).getTime();
-      let day = 0;
-      for (let t = start; t < end; t += 24 * 3600000) {
-        const ts = new Date(t + 10 * 3600000).toISOString(); // 10am
-        records.push({
-          record_id: `DR-TS-CELL-${run.run_id}-d${day}`,
-          measured_at: ts,
-          ingested_at: new Date(new Date(ts).getTime() + 1800000).toISOString(), // 30m lag
-          interface_id: "CELL-COUNTER",
-          data_type: "timeseries",
-          summary: `Cell count – VCD/TCD/Viability (Day ${day})`,
-          raw_ref: `raw://CELL-COUNTER/${run.run_id}/d${day}`,
-          hash: fakeHash(`cell-${run.run_id}-${day}`),
-          attributable_to: "CELL-COUNTER",
-          entry_mode: "auto",
-          labels: { day: String(day), run: run.bioreactor_run },
+          labels: {
+            parameter: param.parameter_code,
+            reactor: run.reactor_id,
+            run: run.bioreactor_run,
+            priority: param.type_priority,
+          },
           completeness_score: 100,
-          quality_flags: ["in_spec"],
+          quality_flags: flags,
           linked_run_id: run.run_id,
         });
-        day++;
       }
     }
   }
 
-  // HPLC – file records (every 3 days per run)
-  const hplc = INTERFACES.find((i) => i.id === "HPLC-01");
-  if (hplc) {
-    for (const run of RUNS) {
-      const start = new Date(run.start_time).getTime();
-      const end = new Date(run.end_time).getTime();
-      let seq = 0;
-      for (let t = start + 3 * 86400000; t < end; t += 3 * 86400000) {
-        const ts = new Date(t + 14 * 3600000).toISOString(); // 2pm injection
-        records.push({
-          record_id: `DR-FILE-HPLC-${run.run_id}-s${seq}`,
-          measured_at: ts,
-          ingested_at: new Date(new Date(ts).getTime() + 3600000).toISOString(), // 1h lag
-          interface_id: "HPLC-01",
-          data_type: "file",
-          summary: `HPLC injection #${seq + 1} – titer & purity CDF`,
-          raw_ref: `file://HPLC-01/${run.run_id}/inj_${seq}.cdf`,
-          hash: fakeHash(`hplc-${run.run_id}-${seq}`),
-          attributable_to: "HPLC-01",
-          entry_mode: "auto",
-          labels: { injection: String(seq + 1), format: "CDF", run: run.bioreactor_run },
-          completeness_score: 100,
-          quality_flags: ["in_spec"],
-          linked_run_id: run.run_id,
-        });
-        seq++;
-      }
-    }
-  }
-
-  // Sort by measured_at
-  records.sort((a, b) => new Date(a.measured_at).getTime() - new Date(b.measured_at).getTime());
   return records;
 }
 
-// ── In-memory store ──
+// ────────────────────────────────────────────
+// B) Event ingestion
+// ────────────────────────────────────────────
 
-let _records: DataRecord[] | null = null;
+function ingestEvents(events: ProcessEvent[]): DataRecord[] {
+  const records: DataRecord[] = [];
 
+  for (const evt of events) {
+    // Route to correct interface
+    const run = RUNS.find((r) => r.run_id === evt.run_id);
+    let interfaceId: string;
+
+    if (PUMP_EVENT_TYPES.has(evt.event_type)) {
+      interfaceId = "PUMP-MODULE";
+    } else {
+      // HARVEST, SAMPLE, NOTE, GAS, system events → bioreactor interface
+      interfaceId = run ? brInterfaceId(run.reactor_id) : "UNKNOWN";
+    }
+
+    // Build summary
+    let summary = evt.event_type;
+    if (evt.amount != null) {
+      summary += `: ${evt.amount} ${evt.amount_unit}`;
+    }
+    if (evt.subtype) {
+      summary += ` (${evt.subtype})`;
+    }
+
+    const rawRef = `raw://${interfaceId}/evt/${evt.id}`;
+
+    const flags: QualityFlag[] = [];
+    if (evt.entry_mode === "manual") flags.push("manually_entered");
+    if (evt.amount == null && PUMP_EVENT_TYPES.has(evt.event_type)) flags.push("missing_field");
+    if (flags.length === 0) flags.push("in_spec");
+
+    records.push({
+      record_id: `DR-EV-${interfaceId}-${evt.id}`,
+      measured_at: evt.timestamp,
+      ingested_at: new Date(new Date(evt.timestamp).getTime() + 500).toISOString(),
+      interface_id: interfaceId,
+      data_type: "event",
+      summary,
+      raw_ref: rawRef,
+      hash: fakeHash(rawRef),
+      attributable_to: evt.actor,
+      entry_mode: evt.entry_mode === "manual" ? "manual" : "auto",
+      labels: {
+        event_type: evt.event_type,
+        ...(evt.subtype ? { subtype: evt.subtype } : {}),
+        ...(run ? { run: run.bioreactor_run } : {}),
+      },
+      completeness_score: evt.amount != null ? 100 : 80,
+      quality_flags: flags,
+      linked_run_id: evt.run_id,
+    });
+  }
+
+  return records;
+}
+
+// ────────────────────────────────────────────
+// Auxiliary interface records (Gas, Metab, Cell, HPLC)
+// ────────────────────────────────────────────
+
+function ingestAuxiliary(): DataRecord[] {
+  const records: DataRecord[] = [];
+  const runStart = new Date(RUNS[0].start_time).getTime();
+  const runEnd = new Date(RUNS[0].end_time).getTime();
+
+  // Gas MFC – 12h snapshots
+  for (let t = runStart; t < runEnd; t += 12 * 3600000) {
+    const ts = new Date(t).toISOString();
+    const rawRef = `raw://GAS-MFC-RACK/snapshot-${t}`;
+    records.push({
+      record_id: `DR-TS-GAS-${t}`,
+      measured_at: ts,
+      ingested_at: new Date(t + 1500).toISOString(),
+      interface_id: "GAS-MFC-RACK",
+      data_type: "timeseries",
+      summary: "Gas composition – O₂/N₂/CO₂/Air flow rates",
+      raw_ref: rawRef,
+      hash: fakeHash(rawRef),
+      attributable_to: "GAS-MFC-RACK",
+      entry_mode: "auto",
+      labels: {},
+      completeness_score: 100,
+      quality_flags: ["in_spec"],
+    });
+  }
+
+  // Per-run auxiliary
+  for (const run of RUNS) {
+    const start = new Date(run.start_time).getTime();
+    const end = new Date(run.end_time).getTime();
+
+    // Metabolite analyzer – daily
+    let day = 0;
+    for (let t = start; t < end; t += 24 * 3600000) {
+      const ts = new Date(t + 9 * 3600000).toISOString();
+      const rawRef = `raw://METAB-ANALYZER/${run.run_id}/d${day}`;
+      records.push({
+        record_id: `DR-TS-METAB-${run.run_id}-d${day}`,
+        measured_at: ts,
+        ingested_at: new Date(new Date(ts).getTime() + 900000).toISOString(),
+        interface_id: "METAB-ANALYZER",
+        data_type: "timeseries",
+        summary: `Metabolite panel Day ${day} – GLU/LAC/NH₃/GLN`,
+        raw_ref: rawRef,
+        hash: fakeHash(rawRef),
+        attributable_to: "METAB-ANALYZER",
+        entry_mode: "auto",
+        labels: { day: String(day), run: run.bioreactor_run },
+        completeness_score: 95,
+        quality_flags: ["in_spec"],
+        linked_run_id: run.run_id,
+      });
+      day++;
+    }
+
+    // Cell counter – daily
+    day = 0;
+    for (let t = start; t < end; t += 24 * 3600000) {
+      const ts = new Date(t + 10 * 3600000).toISOString();
+      const rawRef = `raw://CELL-COUNTER/${run.run_id}/d${day}`;
+      records.push({
+        record_id: `DR-TS-CELL-${run.run_id}-d${day}`,
+        measured_at: ts,
+        ingested_at: new Date(new Date(ts).getTime() + 1800000).toISOString(),
+        interface_id: "CELL-COUNTER",
+        data_type: "timeseries",
+        summary: `Cell count Day ${day} – VCD/TCD/Viability`,
+        raw_ref: rawRef,
+        hash: fakeHash(rawRef),
+        attributable_to: "CELL-COUNTER",
+        entry_mode: "auto",
+        labels: { day: String(day), run: run.bioreactor_run },
+        completeness_score: 100,
+        quality_flags: ["in_spec"],
+        linked_run_id: run.run_id,
+      });
+      day++;
+    }
+
+    // HPLC – every 3 days
+    let seq = 0;
+    for (let t = start + 3 * 86400000; t < end; t += 3 * 86400000) {
+      const ts = new Date(t + 14 * 3600000).toISOString();
+      const rawRef = `file://HPLC-01/${run.run_id}/inj_${seq}.cdf`;
+      records.push({
+        record_id: `DR-FILE-HPLC-${run.run_id}-s${seq}`,
+        measured_at: ts,
+        ingested_at: new Date(new Date(ts).getTime() + 3600000).toISOString(),
+        interface_id: "HPLC-01",
+        data_type: "file",
+        summary: `HPLC injection #${seq + 1} – titer & purity CDF`,
+        raw_ref: rawRef,
+        hash: fakeHash(rawRef),
+        attributable_to: "HPLC-01",
+        entry_mode: "auto",
+        labels: { injection: String(seq + 1), format: "CDF", run: run.bioreactor_run },
+        completeness_score: 100,
+        quality_flags: ["in_spec"],
+        linked_run_id: run.run_id,
+      });
+      seq++;
+    }
+  }
+
+  return records;
+}
+
+// ────────────────────────────────────────────
+// In-memory store with raw_ref-based dedup
+// ────────────────────────────────────────────
+
+let _records: DataRecord[] = [];
+const _rawRefIndex = new Set<string>();
+let _initialized = false;
+
+/**
+ * Ingest / merge records into the ledger.
+ * Uses raw_ref as the dedup key – existing raw_refs are skipped.
+ * Returns count of newly added records.
+ */
+function mergeRecords(incoming: DataRecord[]): number {
+  let added = 0;
+  for (const rec of incoming) {
+    if (_rawRefIndex.has(rec.raw_ref)) continue;
+    _rawRefIndex.add(rec.raw_ref);
+    _records.push(rec);
+    added++;
+  }
+  return added;
+}
+
+/**
+ * Full ingestion pass.  Safe to call multiple times (raw_ref dedup).
+ */
+export function runIngestion(): { total: number; newlyAdded: number } {
+  const events = getInitialEvents();
+
+  const tsRecords = ingestTimeseries();
+  const evtRecords = ingestEvents(events);
+  const auxRecords = ingestAuxiliary();
+
+  const a1 = mergeRecords(tsRecords);
+  const a2 = mergeRecords(evtRecords);
+  const a3 = mergeRecords(auxRecords);
+
+  // Sort by measured_at
+  _records.sort((a, b) => new Date(a.measured_at).getTime() - new Date(b.measured_at).getTime());
+
+  _initialized = true;
+  return { total: _records.length, newlyAdded: a1 + a2 + a3 };
+}
+
+/**
+ * Ingest a single runtime event (e.g. user logs a new event in the UI).
+ * Dedup-safe via raw_ref.
+ */
+export function ingestSingleEvent(evt: ProcessEvent): DataRecord | null {
+  const batch = ingestEvents([evt]);
+  if (batch.length === 0) return null;
+  const added = mergeRecords(batch);
+  return added > 0 ? batch[0] : null;
+}
+
+/**
+ * Get all records. Auto-initializes on first call.
+ */
 export function getDataRecords(): DataRecord[] {
-  if (!_records) _records = generateSeedRecords();
+  if (!_initialized) runIngestion();
   return _records;
 }
 
 /**
- * Create a correction record.  The original is never mutated.
- * Returns the new correction record.
+ * Force a full refresh (re-runs ingestion, dedup prevents duplicates).
  */
+export function refreshLedger(): { total: number; newlyAdded: number } {
+  return runIngestion();
+}
+
+// ────────────────────────────────────────────
+// Corrections (immutable – never edit originals)
+// ────────────────────────────────────────────
+
 export function createCorrectionRecord(
   originalRecordId: string,
   correctedSummary: string,
@@ -244,6 +357,8 @@ export function createCorrectionRecord(
   if (!original) return null;
 
   const now = new Date().toISOString();
+  const rawRef = `correction://${original.record_id}/${Date.now()}`;
+
   const correction: DataRecord = {
     record_id: `DR-COR-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
     measured_at: original.measured_at,
@@ -251,8 +366,8 @@ export function createCorrectionRecord(
     interface_id: original.interface_id,
     data_type: "correction",
     summary: correctedSummary,
-    raw_ref: `correction://${original.record_id}`,
-    hash: fakeHash(`cor-${original.record_id}-${now}`),
+    raw_ref: rawRef,
+    hash: fakeHash(rawRef),
     attributable_to: actor,
     entry_mode: "manual",
     labels: { ...original.labels, correction_of: original.record_id },
@@ -262,25 +377,23 @@ export function createCorrectionRecord(
     corrects_record_id: original.record_id,
   };
 
-  // Mark original as corrected (add flag without removing existing)
+  // Flag original as corrected
   if (!original.quality_flags.includes("corrected")) {
     original.quality_flags.push("corrected");
   }
 
-  records.push(correction);
+  mergeRecords([correction]);
   return correction;
 }
 
-/**
- * Get all corrections for a given record.
- */
 export function getCorrectionsFor(recordId: string): DataRecord[] {
   return getDataRecords().filter((r) => r.corrects_record_id === recordId);
 }
 
-/**
- * Get record counts grouped by interface_id.
- */
+// ────────────────────────────────────────────
+// Aggregation helpers
+// ────────────────────────────────────────────
+
 export function getRecordCountsByInterface(): Record<string, number> {
   const counts: Record<string, number> = {};
   for (const r of getDataRecords()) {
@@ -289,13 +402,22 @@ export function getRecordCountsByInterface(): Record<string, number> {
   return counts;
 }
 
-/**
- * Get record counts grouped by data_type.
- */
 export function getRecordCountsByType(): Record<string, number> {
   const counts: Record<string, number> = {};
   for (const r of getDataRecords()) {
     counts[r.data_type] = (counts[r.data_type] || 0) + 1;
   }
   return counts;
+}
+
+export function getRecordsForInterface(interfaceId: string): DataRecord[] {
+  return getDataRecords().filter((r) => r.interface_id === interfaceId);
+}
+
+export function getRecordsForRun(runId: string): DataRecord[] {
+  return getDataRecords().filter((r) => r.linked_run_id === runId);
+}
+
+export function getOutOfRangeRecords(): DataRecord[] {
+  return getDataRecords().filter((r) => r.quality_flags.includes("out_of_range"));
 }
