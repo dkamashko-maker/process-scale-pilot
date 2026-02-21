@@ -45,7 +45,7 @@ export function AppLayout({ children }: AppLayoutProps) {
         <div className="flex-1 flex flex-col">
           <header className="h-14 border-b bg-background flex items-center px-4 gap-4">
             <SidebarTrigger />
-            <h1 className="text-lg font-semibold">BioProcess Monitor</h1>
+            <h1 className="text-lg font-semibold">Data Vest</h1>
             <div className="ml-auto flex items-center gap-3">
               {user && (
                 <>

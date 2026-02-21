@@ -330,12 +330,12 @@ export default function RunDetailPage() {
                 <Droplets className="h-3.5 w-3.5 mr-1.5" /> Add Additive / Inducer
               </Button>
               <Button variant="outline" size="sm" onClick={() => { setControlForm((f) => ({ ...f, timestamp: new Date().toISOString().slice(0, 16) })); setShowControlModal(true); }}>
-                <FlaskRound className="h-3.5 w-3.5 mr-1.5" /> Log Control Action
+                <FlaskRound className="h-3.5 w-3.5 mr-1.5" /> Record Process Action
               </Button>
             </>
           )}
           <Button variant="outline" size="sm" onClick={() => setShowControlActions(true)}>
-            <SlidersHorizontal className="h-3.5 w-3.5 mr-1.5" /> Control Actions
+            <SlidersHorizontal className="h-3.5 w-3.5 mr-1.5" /> Recorded Actions
           </Button>
         </div>
       </div>
@@ -445,7 +445,7 @@ export default function RunDetailPage() {
           <SheetHeader>
             <SheetTitle className="flex items-center gap-2">
               <SlidersHorizontal className="h-4 w-4" />
-              Control Actions
+              Recorded Actions
             </SheetTitle>
           </SheetHeader>
           <Tabs value={controlFilter} onValueChange={setControlFilter} className="mt-4">
@@ -572,7 +572,7 @@ export default function RunDetailPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <FlaskRound className="h-4 w-4" /> Log Control Action
+              <FlaskRound className="h-4 w-4" /> Record Process Action
             </DialogTitle>
           </DialogHeader>
           <p className="text-xs text-muted-foreground flex items-center gap-1">

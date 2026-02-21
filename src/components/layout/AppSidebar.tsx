@@ -1,4 +1,4 @@
-import { LayoutDashboard, ClipboardList, Settings, Activity, FlaskConical, BarChart3 } from "lucide-react";
+import { LayoutDashboard, Database, Construction, BarChart3, Brain, Activity } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { RUNS } from "@/data/runData";
 import {
@@ -14,11 +14,11 @@ import {
 } from "@/components/ui/sidebar";
 
 const navItems = [
-  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
-  { title: "Runs", url: "/experiments", icon: FlaskConical },
+  { title: "General View", url: "/dashboard", icon: LayoutDashboard },
+  { title: "Data Storage", url: "/data-storage", icon: Database },
+  { title: "Metadata Constructor", url: "/metadata", icon: Construction },
   { title: "Analytics", url: "/analytics", icon: BarChart3 },
-  { title: "Event Log", url: "/events", icon: ClipboardList },
-  { title: "Admin", url: "/admin", icon: Settings },
+  { title: "AI", url: "/ai", icon: Brain },
 ];
 
 export function AppSidebar() {
@@ -31,8 +31,11 @@ export function AppSidebar() {
         <SidebarGroup>
           <div className="px-4 py-6">
             <h2 className={`font-bold text-lg ${collapsed ? "text-center" : ""}`}>
-              {collapsed ? "BP" : "BioProcess"}
+              {collapsed ? "DV" : "Data Vest"}
             </h2>
+            {!collapsed && (
+              <p className="text-[10px] text-muted-foreground mt-0.5">Instrumental Data Collection & Analytics</p>
+            )}
           </div>
           <SidebarGroupContent>
             <SidebarMenu>
