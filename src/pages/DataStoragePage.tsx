@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { format } from "date-fns";
-import { Database, Filter, X, ShieldCheck, FileText, Activity, AlertTriangle, ClipboardEdit, Hash, Clock, User, Tag, CheckCircle2 } from "lucide-react";
+import { Database, Filter, X, ShieldCheck, FileText, Activity, AlertTriangle, ClipboardEdit, Hash, Clock, User, Tag, CheckCircle2, Bell } from "lucide-react";
 import { InfoTooltip } from "@/components/shared/InfoTooltip";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -11,9 +11,11 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
 import { getDataRecords, createCorrectionRecord, getCorrectionsFor } from "@/data/dataRecords";
 import { INTERFACES, RUNS } from "@/data/runData";
+import { getAlerts, type Alert, type AlertSeverity } from "@/data/alertsEngine";
 import type { DataRecord, QualityFlag } from "@/data/runTypes";
 
 // ── Constants ──
@@ -38,6 +40,12 @@ const TYPE_ICONS: Record<string, React.ReactNode> = {
 };
 
 const PAGE_SIZE = 50;
+
+const SEVERITY_COLORS: Record<AlertSeverity, string> = {
+  critical: "bg-destructive/15 text-destructive",
+  warning: "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300",
+  info: "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300",
+};
 
 // ── Component ──
 
@@ -64,6 +72,7 @@ export default function DataStoragePage() {
   const [, setTick] = useState(0);
 
   const allRecords = useMemo(() => getDataRecords(), []);
+  const alerts = useMemo(() => getAlerts(), []);
 
   // Unique interface ids from records
   const interfaceIds = useMemo(() => {
@@ -166,6 +175,19 @@ export default function DataStoragePage() {
         </Card>
       </div>
 
+      <Tabs defaultValue="records" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="records">Records</TabsTrigger>
+          <TabsTrigger value="alerts" className="gap-1.5">
+            <Bell className="h-3.5 w-3.5" />
+            Alerts
+            {alerts.length > 0 && (
+              <Badge variant="destructive" className="text-[9px] px-1.5 py-0 ml-1 h-4">{alerts.length}</Badge>
+            )}
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="records" className="space-y-4">
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-2">
         <Filter className="h-4 w-4 text-muted-foreground" />
@@ -290,6 +312,63 @@ export default function DataStoragePage() {
           </div>
         </div>
       )}
+        </TabsContent>
+
+        {/* ── Alerts Tab ── */}
+        <TabsContent value="alerts" className="space-y-4">
+          {/* Severity summary */}
+          <div className="grid grid-cols-3 gap-3">
+            {(["critical", "warning", "info"] as AlertSeverity[]).map((sev) => {
+              const count = alerts.filter((a) => a.severity === sev).length;
+              return (
+                <Card key={sev}>
+                  <CardContent className="p-3 flex items-center gap-2">
+                    <AlertTriangle className={`h-4 w-4 ${sev === "critical" ? "text-destructive" : sev === "warning" ? "text-amber-500" : "text-blue-500"}`} />
+                    <div>
+                      <p className="text-lg font-bold leading-none">{count}</p>
+                      <p className="text-[10px] text-muted-foreground capitalize">{sev}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+
+          {/* Alerts list */}
+          {alerts.length === 0 ? (
+            <Card>
+              <CardContent className="p-8 text-center text-muted-foreground">
+                <CheckCircle2 className="h-8 w-8 mx-auto mb-2 text-emerald-500" />
+                <p className="text-sm font-medium">No alerts</p>
+                <p className="text-xs">All data integrity checks passed.</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-2">
+              {alerts.map((alert) => (
+                <Card key={alert.alert_id} className="overflow-hidden">
+                  <CardContent className="p-3 flex items-start gap-3">
+                    <span className={`mt-0.5 inline-flex items-center justify-center rounded px-1.5 py-0.5 text-[9px] font-bold uppercase ${SEVERITY_COLORS[alert.severity]}`}>
+                      {alert.severity}
+                    </span>
+                    <div className="flex-1 min-w-0 space-y-1">
+                      <p className="text-xs font-medium">{alert.message}</p>
+                      <div className="flex flex-wrap items-center gap-2 text-[10px] text-muted-foreground">
+                        <span className="font-mono">{alert.interface_id}</span>
+                        {alert.linked_run_id && (
+                          <span>· {RUNS.find((r) => r.run_id === alert.linked_run_id)?.bioreactor_run || alert.linked_run_id}</span>
+                        )}
+                        <span>· {alert.type.replace(/_/g, " ")}</span>
+                        <span>· {alert.affected_record_ids.length} record(s)</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
 
       {/* ALCOA Detail Drawer */}
       <Sheet open={!!selectedRecord} onOpenChange={(open) => { if (!open) setSelectedRecord(null); }}>

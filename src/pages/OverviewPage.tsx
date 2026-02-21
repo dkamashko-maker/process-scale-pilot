@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { RUNS, INTERFACES, getRunForInterface } from "@/data/runData";
 import { useEvents } from "@/contexts/EventsContext";
+import { getAlertCountsByInterface } from "@/data/alertsEngine";
 import { KpiCard } from "@/components/shared/KpiCard";
 import { InfoTooltip } from "@/components/shared/InfoTooltip";
 import { Card, CardContent } from "@/components/ui/card";
@@ -313,6 +314,8 @@ export default function OverviewPage() {
   const degradedCount = INTERFACES.filter((i) => i.status === "Degraded").length;
   const offlineCount = INTERFACES.filter((i) => i.status === "Offline").length;
 
+  const alertCounts = useMemo(() => getAlertCountsByInterface(), []);
+
   return (
     <div className="p-6 space-y-6 animate-fade-in">
       <div className="flex items-center gap-2">
@@ -341,7 +344,7 @@ export default function OverviewPage() {
               <InterfaceCard
                 key={iface.id}
                 iface={iface}
-                alertCount={iface.status === "Degraded" ? 1 : iface.status === "Offline" ? 2 : 0}
+                alertCount={alertCounts[iface.id] || 0}
                 delay={250 + catIdx * 100 + idx * 60}
                 onClick={() => setSelectedInterface(iface)}
               />
