@@ -1,20 +1,27 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import ReactMarkdown from "react-markdown";
 import {
   Brain, Lightbulb, Settings2, AlertTriangle, CheckCircle2,
   ExternalLink, Shield, Tag, TrendingUp, Zap, Info,
+  MessageSquare, Send, Trash2, Download, Loader2,
 } from "lucide-react";
 import { InfoTooltip } from "@/components/shared/InfoTooltip";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   AI_RECIPES, getInsights, toggleRecipe, generateInsights,
   type AiRecipe, type AiInsight, type InsightSeverity,
 } from "@/data/aiInsights";
+import {
+  sendMessage, getChatHistory, clearChatHistory, generateReportContent,
+  type ChatMessage,
+} from "@/data/aiAssistant";
 import { INTERFACES } from "@/data/runData";
 
 const SEVERITY_CONFIG: Record<InsightSeverity, { icon: typeof AlertTriangle; cls: string; label: string }> = {
@@ -30,6 +37,14 @@ const CATEGORY_ICONS: Record<string, typeof Shield> = {
   trend: TrendingUp,
   anomaly: Zap,
 };
+
+const QUICK_PROMPTS = [
+  "What is the current process status?",
+  "Show me pH trends and forecast",
+  "Are there any alerts or deviations?",
+  "Data quality summary",
+  "Generate a full process report",
+];
 
 export default function AIPage() {
   const navigate = useNavigate();
@@ -60,7 +75,7 @@ export default function AIPage() {
       <div className="flex items-center gap-2">
         <Brain className="h-5 w-5 text-primary" />
         <h2 className="text-xl font-semibold">AI Insights</h2>
-        <InfoTooltip content="Deterministic insights generated from alerts, data patterns, and metadata analysis. No external LLM calls." />
+        <InfoTooltip content="AI-powered process analytics, forecasting, and deterministic insights. No external LLM calls — all analysis runs locally against your data." />
       </div>
 
       {/* KPI */}
@@ -71,8 +86,12 @@ export default function AIPage() {
         <KpiMini label="Active Recipes" value={AI_RECIPES.filter((r) => r.enabled).length} />
       </div>
 
-      <Tabs defaultValue="insights" className="space-y-4">
+      <Tabs defaultValue="assistant" className="space-y-4">
         <TabsList>
+          <TabsTrigger value="assistant" className="gap-1.5">
+            <MessageSquare className="h-3.5 w-3.5" />
+            AI Assistant
+          </TabsTrigger>
           <TabsTrigger value="insights" className="gap-1.5">
             <Lightbulb className="h-3.5 w-3.5" />
             Insights Feed
@@ -82,6 +101,11 @@ export default function AIPage() {
             AI Config
           </TabsTrigger>
         </TabsList>
+
+        {/* ─── AI Assistant ─── */}
+        <TabsContent value="assistant" className="space-y-0">
+          <AiAssistantChat />
+        </TabsContent>
 
         {/* ─── Insights Feed ─── */}
         <TabsContent value="insights" className="space-y-3">
@@ -105,7 +129,6 @@ export default function AIPage() {
           <p className="text-xs text-muted-foreground">
             Enable or disable insight recipes. Changes regenerate insights immediately. Recipes apply to matching interfaces.
           </p>
-
           {AI_RECIPES.map((recipe) => (
             <RecipeCard key={recipe.id} recipe={recipe} onToggle={() => handleToggle(recipe.id)} />
           ))}
@@ -115,7 +138,181 @@ export default function AIPage() {
   );
 }
 
-// ── Sub-components ──
+// ── AI Assistant Chat ──
+
+function AiAssistantChat() {
+  const [messages, setMessages] = useState<ChatMessage[]>(() => getChatHistory());
+  const [input, setInput] = useState("");
+  const [isTyping, setIsTyping] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages]);
+
+  const handleSend = useCallback((text?: string) => {
+    const content = (text || input).trim();
+    if (!content) return;
+
+    setInput("");
+    setIsTyping(true);
+
+    // Simulate slight delay for realism
+    const userMsg: ChatMessage = {
+      id: `msg-${Date.now()}`,
+      role: "user",
+      content,
+      timestamp: new Date().toISOString(),
+    };
+    setMessages((prev) => [...prev, userMsg]);
+
+    setTimeout(() => {
+      const [, assistantMsg] = sendMessage(content);
+      // We already pushed userMsg locally, sendMessage also pushes to history.
+      // Sync state from history to avoid duplication:
+      setMessages(getChatHistory());
+      setIsTyping(false);
+    }, 400 + Math.random() * 600);
+  }, [input]);
+
+  const handleClear = useCallback(() => {
+    clearChatHistory();
+    setMessages([]);
+  }, []);
+
+  const handleDownloadReport = useCallback(() => {
+    const content = generateReportContent();
+    const blob = new Blob([content], { type: "text/markdown;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `process-report-${new Date().toISOString().slice(0, 10)}.md`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, []);
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  }, [handleSend]);
+
+  return (
+    <Card className="flex flex-col h-[600px]">
+      {/* Chat header */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+        <div className="flex items-center gap-2">
+          <Brain className="h-4 w-4 text-primary" />
+          <span className="text-sm font-semibold">Process AI Assistant</span>
+          <Badge variant="secondary" className="text-[9px]">Analytical Engine</Badge>
+        </div>
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={handleDownloadReport}>
+            <Download className="h-3 w-3" /> Report
+          </Button>
+          <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 text-muted-foreground" onClick={handleClear}>
+            <Trash2 className="h-3 w-3" /> Clear
+          </Button>
+        </div>
+      </div>
+
+      {/* Messages */}
+      <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+        {messages.length === 0 && (
+          <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
+            <Brain className="h-10 w-10 text-muted-foreground/40" />
+            <div>
+              <p className="text-sm font-medium text-foreground">Process AI Assistant</p>
+              <p className="text-xs text-muted-foreground mt-1 max-w-sm">
+                Ask questions about your bioreactor processes, request trend analysis, forecasts, or generate comprehensive reports based on all available data.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2 justify-center max-w-md">
+              {QUICK_PROMPTS.map((prompt) => (
+                <Button
+                  key={prompt}
+                  variant="outline"
+                  size="sm"
+                  className="text-xs h-auto py-1.5 px-3"
+                  onClick={() => handleSend(prompt)}
+                >
+                  {prompt}
+                </Button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {messages.map((msg) => (
+          <ChatBubble key={msg.id} message={msg} />
+        ))}
+
+        {isTyping && (
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            <span className="text-xs">Analyzing data...</span>
+          </div>
+        )}
+      </div>
+
+      {/* Input */}
+      <div className="border-t border-border p-3">
+        <div className="flex gap-2">
+          <Textarea
+            ref={inputRef}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Ask about process status, parameter trends, forecasts, or request a report..."
+            className="min-h-[40px] max-h-[120px] resize-none text-sm"
+            rows={1}
+          />
+          <Button
+            size="sm"
+            className="h-10 px-3"
+            onClick={() => handleSend()}
+            disabled={!input.trim() || isTyping}
+          >
+            <Send className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+function ChatBubble({ message }: { message: ChatMessage }) {
+  const isUser = message.role === "user";
+
+  return (
+    <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
+      <div
+        className={`max-w-[85%] rounded-lg px-4 py-3 text-sm ${
+          isUser
+            ? "bg-primary text-primary-foreground"
+            : "bg-muted"
+        }`}
+      >
+        {isUser ? (
+          <p>{message.content}</p>
+        ) : (
+          <div className="prose prose-sm dark:prose-invert max-w-none [&_table]:text-xs [&_table]:w-full [&_th]:text-left [&_th]:p-1.5 [&_td]:p-1.5 [&_th]:border-b [&_th]:border-border [&_td]:border-b [&_td]:border-border/50 [&_h2]:text-base [&_h2]:mt-0 [&_h2]:mb-2 [&_h3]:text-sm [&_h3]:mt-3 [&_h3]:mb-1 [&_p]:text-xs [&_p]:leading-relaxed [&_li]:text-xs [&_blockquote]:text-xs [&_blockquote]:border-primary/30 [&_blockquote]:bg-primary/5 [&_blockquote]:rounded [&_blockquote]:px-3 [&_blockquote]:py-2">
+            <ReactMarkdown>{message.content}</ReactMarkdown>
+          </div>
+        )}
+        <p className={`text-[9px] mt-1.5 ${isUser ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
+          {new Date(message.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ── Existing sub-components ──
 
 function InsightCard({ insight, onOpenEvidence }: { insight: AiInsight; onOpenEvidence: () => void }) {
   const cfg = SEVERITY_CONFIG[insight.severity];
@@ -134,7 +331,6 @@ function InsightCard({ insight, onOpenEvidence }: { insight: AiInsight; onOpenEv
             <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{insight.explanation}</p>
           </div>
         </div>
-
         <div className="flex items-center justify-between">
           <div className="flex flex-wrap items-center gap-2 text-[10px] text-muted-foreground">
             {insight.interface_id && (
