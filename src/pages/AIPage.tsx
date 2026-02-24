@@ -214,8 +214,8 @@ function AiAssistantChat() {
           <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={handleDownloadReport}>
             <Download className="h-3 w-3" /> Report
           </Button>
-          <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 text-muted-foreground" onClick={handleClear}>
-            <Trash2 className="h-3 w-3" /> Clear
+          <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={handleClear}>
+            <MessageSquare className="h-3 w-3" /> New Chat
           </Button>
         </div>
       </div>
@@ -259,8 +259,24 @@ function AiAssistantChat() {
         )}
       </div>
 
-      {/* Input */}
-      <div className="border-t border-border p-3">
+      {/* Input area with quick prompts */}
+      <div className="border-t border-border p-3 space-y-2">
+        {messages.length > 0 && (
+          <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+            {QUICK_PROMPTS.map((prompt) => (
+              <Button
+                key={prompt}
+                variant="outline"
+                size="sm"
+                className="text-[10px] h-auto py-1 px-2 whitespace-nowrap shrink-0"
+                onClick={() => handleSend(prompt)}
+                disabled={isTyping}
+              >
+                {prompt}
+              </Button>
+            ))}
+          </div>
+        )}
         <div className="flex gap-2">
           <Textarea
             ref={inputRef}
