@@ -13,11 +13,20 @@ import { computeCompleteness } from "./labelTemplates";
 
 // ── Types ──
 
+export interface SparklineDataset {
+  label: string;
+  unit: string;
+  min_spec: number;
+  max_spec: number;
+  points: { h: number; v: number }[];
+}
+
 export interface ChatMessage {
   id: string;
   role: "user" | "assistant";
   content: string;
   timestamp: string;
+  sparklines?: SparklineDataset[];
 }
 
 // ── Helpers ──
@@ -158,10 +167,38 @@ const QUERY_PATTERNS: QueryPattern[] = [
       };
       const paramCode = paramMatch ? paramLookup[paramMatch[1].toLowerCase()] : "PH";
 
+      // Build sparkline data for attachment
+      const sparklines: SparklineDataset[] = [];
+
       let md = `## 📈 Parameter Trend Analysis\n\n`;
       for (const run of RUNS) {
         const trend = getParameterTrend(run.run_id, paramCode || "PH");
         if (!trend) continue;
+
+        // Collect sparkline points (downsample to ~60 points for chat)
+        const ts = getTimeseries(run.run_id);
+        const code = paramCode || "PH";
+        const step = Math.max(1, Math.floor(ts.length / 60));
+        const points: { h: number; v: number }[] = [];
+        for (let i = 0; i < ts.length; i += step) {
+          const val = ts[i][code];
+          if (typeof val === "number") points.push({ h: ts[i].elapsed_h, v: val });
+        }
+        // always include last point
+        const lastTs = ts[ts.length - 1];
+        if (lastTs && typeof lastTs[code] === "number") {
+          const lastH = lastTs.elapsed_h;
+          if (!points.length || points[points.length - 1].h !== lastH) {
+            points.push({ h: lastH, v: lastTs[code] as number });
+          }
+        }
+        sparklines.push({
+          label: `${run.bioreactor_run} — ${trend.param.display_name}`,
+          unit: trend.param.unit,
+          min_spec: trend.param.min_value,
+          max_spec: trend.param.max_value,
+          points,
+        });
 
         const inSpec = trend.last >= trend.param.min_value && trend.last <= trend.param.max_value;
         md += `### ${run.bioreactor_run} — ${trend.param.display_name}\n`;
@@ -179,6 +216,9 @@ const QUERY_PATTERNS: QueryPattern[] = [
         }
       }
       md += `> 📝 Based on linear extrapolation of the last 5 data points. For a full report, ask "generate a process report".\n`;
+
+      // Stash sparklines on a module-level variable for the next sendMessage call
+      _pendingSparklines = sparklines;
       return md;
     },
   },
@@ -357,6 +397,7 @@ function fallbackResponse(query: string): string {
 // ── Public API ──
 
 const _history: ChatMessage[] = [];
+let _pendingSparklines: SparklineDataset[] | undefined;
 
 export function getChatHistory(): ChatMessage[] {
   return [..._history];
@@ -375,6 +416,9 @@ export function sendMessage(userContent: string): ChatMessage[] {
   };
   _history.push(userMsg);
 
+  // Reset pending sparklines before handler runs
+  _pendingSparklines = undefined;
+
   // Find matching pattern
   let responseContent = fallbackResponse(userContent);
   for (const qp of QUERY_PATTERNS) {
@@ -389,8 +433,10 @@ export function sendMessage(userContent: string): ChatMessage[] {
     role: "assistant",
     content: responseContent,
     timestamp: now(),
+    sparklines: _pendingSparklines,
   };
   _history.push(assistantMsg);
+  _pendingSparklines = undefined;
 
   return [userMsg, assistantMsg];
 }
