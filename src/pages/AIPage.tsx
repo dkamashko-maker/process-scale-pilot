@@ -2,6 +2,9 @@ import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import {
+  LineChart, Line, XAxis, YAxis, ReferenceLine, ResponsiveContainer, Tooltip as RechartsTooltip,
+} from "recharts";
+import {
   Brain, Lightbulb, Settings2, AlertTriangle, CheckCircle2,
   ExternalLink, Shield, Tag, TrendingUp, Zap, Info,
   MessageSquare, Send, Trash2, Download, Loader2,
@@ -20,7 +23,7 @@ import {
 } from "@/data/aiInsights";
 import {
   sendMessage, getChatHistory, clearChatHistory, generateReportContent,
-  type ChatMessage,
+  type ChatMessage, type SparklineDataset,
 } from "@/data/aiAssistant";
 import { INTERFACES } from "@/data/runData";
 
@@ -320,10 +323,69 @@ function ChatBubble({ message }: { message: ChatMessage }) {
             <ReactMarkdown>{message.content}</ReactMarkdown>
           </div>
         )}
+
+        {/* Inline sparklines for trend responses */}
+        {!isUser && message.sparklines && message.sparklines.length > 0 && (
+          <div className="mt-3 space-y-3">
+            {message.sparklines.map((spark, idx) => (
+              <InlineSparkline key={idx} data={spark} />
+            ))}
+          </div>
+        )}
+
         <p className={`text-[9px] mt-1.5 ${isUser ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
           {new Date(message.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
         </p>
       </div>
+    </div>
+  );
+}
+
+function InlineSparkline({ data }: { data: SparklineDataset }) {
+  if (!data.points.length) return null;
+
+  return (
+    <div className="rounded-md border border-border/60 bg-background/60 p-3">
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-xs font-medium text-foreground">{data.label}</span>
+        <span className="text-[10px] text-muted-foreground">
+          Spec: {data.min_spec}–{data.max_spec} {data.unit}
+        </span>
+      </div>
+      <ResponsiveContainer width="100%" height={100}>
+        <LineChart data={data.points} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
+          <ReferenceLine y={data.min_spec} stroke="hsl(var(--destructive))" strokeDasharray="4 2" strokeOpacity={0.5} />
+          <ReferenceLine y={data.max_spec} stroke="hsl(var(--destructive))" strokeDasharray="4 2" strokeOpacity={0.5} />
+          <XAxis dataKey="h" hide />
+          <YAxis
+            domain={[
+              Math.min(data.min_spec, ...data.points.map(p => p.v)) * 0.98,
+              Math.max(data.max_spec, ...data.points.map(p => p.v)) * 1.02,
+            ]}
+            hide
+          />
+          <RechartsTooltip
+            content={({ active, payload }) => {
+              if (!active || !payload?.length) return null;
+              const p = payload[0].payload as { h: number; v: number };
+              return (
+                <div className="bg-card border rounded px-2 py-1 text-[10px] shadow">
+                  <span className="font-medium">{p.v.toFixed(2)} {data.unit}</span>
+                  <span className="text-muted-foreground ml-1.5">@ {p.h.toFixed(1)}h</span>
+                </div>
+              );
+            }}
+          />
+          <Line
+            type="monotone"
+            dataKey="v"
+            stroke="hsl(var(--primary))"
+            strokeWidth={1.5}
+            dot={false}
+            activeDot={{ r: 3, fill: "hsl(var(--primary))" }}
+          />
+        </LineChart>
+      </ResponsiveContainer>
     </div>
   );
 }
