@@ -120,21 +120,29 @@ const QUERY_PATTERNS: QueryPattern[] = [
       const as = alertSummary();
       let md = "## 📊 Current Process Status\n\n";
       for (const s of statuses) {
-        md += `### ${s.run} (Reactor ${s.reactor})\n`;
-        md += `- **Cell line:** ${s.cell_line} → ${s.target}\n`;
-        md += `- **Elapsed:** ${s.elapsed_h.toFixed(1)} h\n`;
-        md += `- **Critical Parameters:**\n`;
+        md += `### ${s.run} (Reactor ${s.reactor})\n\n`;
+        md += `| Property | Value |\n|---|---|\n`;
+        md += `| Cell line | ${s.cell_line} |\n`;
+        md += `| Target protein | ${s.target} |\n`;
+        md += `| Elapsed time | ${s.elapsed_h.toFixed(1)} h |\n\n`;
+        md += `| Parameter | Value | Status |\n|---|---|---|\n`;
         for (const [name, val] of Object.entries(s.params)) {
-          md += `  - ${name}: ${val}\n`;
+          const status = val.includes("⚠️") ? "⚠️ OOR" : "✅ In spec";
+          const cleanVal = val.replace(" ✅", "").replace(" ⚠️ OUT OF RANGE", "");
+          md += `| ${name} | ${cleanVal} | ${status} |\n`;
         }
         md += "\n";
       }
-      md += `### Alert Summary\n`;
-      md += `- **Total alerts:** ${as.total} (🔴 ${as.bySeverity.critical} critical, 🟡 ${as.bySeverity.warning} warnings)\n`;
+      md += `### Alert Summary\n\n`;
+      md += `| Severity | Count |\n|---|---|\n`;
+      md += `| 🔴 Critical | ${as.bySeverity.critical} |\n`;
+      md += `| 🟡 Warning | ${as.bySeverity.warning} |\n`;
+      md += `| ℹ️ Info | ${as.bySeverity.info} |\n`;
+      md += `| **Total** | **${as.total}** |\n\n`;
       if (as.topAlerts.length > 0) {
-        md += `- **Recent:** ${as.topAlerts[0].message}\n`;
+        md += `> ⚠️ **Most recent:** ${as.topAlerts[0].message}\n\n`;
       }
-      md += "\n> 💡 Ask me about specific parameters, trends, or request a detailed report.\n";
+      md += "> 💡 Ask me about specific parameters, trends, or request a detailed report.\n";
       return md;
     },
   },
@@ -181,17 +189,22 @@ const QUERY_PATTERNS: QueryPattern[] = [
     handler: () => {
       const as = alertSummary();
       let md = "## ⚠️ Alert & Deviation Analysis\n\n";
+      md += `### Severity Breakdown\n\n`;
       md += `| Severity | Count |\n|---|---|\n`;
       md += `| 🔴 Critical | ${as.bySeverity.critical} |\n`;
       md += `| 🟡 Warning | ${as.bySeverity.warning} |\n`;
-      md += `| ℹ️ Info | ${as.bySeverity.info} |\n\n`;
-      md += `### By Type\n`;
+      md += `| ℹ️ Info | ${as.bySeverity.info} |\n`;
+      md += `| **Total** | **${as.total}** |\n\n`;
+      md += `### By Type\n\n`;
+      md += `| Alert Type | Count |\n|---|---|\n`;
       for (const [type, count] of Object.entries(as.byType)) {
-        md += `- **${type.replace(/_/g, " ")}**: ${count}\n`;
+        md += `| ${type.replace(/_/g, " ")} | ${count} |\n`;
       }
-      md += "\n### Top Alerts\n";
-      for (const a of as.topAlerts) {
-        md += `- [${a.severity.toUpperCase()}] ${a.message} *(${a.interface_id})*\n`;
+      md += "\n### Top Active Alerts\n\n";
+      md += `| # | Severity | Interface | Message |\n|---|---|---|---|\n`;
+      for (let i = 0; i < as.topAlerts.length; i++) {
+        const a = as.topAlerts[i];
+        md += `| ${i + 1} | ${a.severity.toUpperCase()} | ${a.interface_id} | ${a.message} |\n`;
       }
       md += "\n> Use **\"Open Evidence\"** in the Insights tab to navigate to supporting data records.\n";
       return md;
@@ -204,15 +217,17 @@ const QUERY_PATTERNS: QueryPattern[] = [
     handler: () => {
       const stats = recordStats();
       let md = "## 🗄️ Data Quality Report\n\n";
+      md += `### Overview\n\n`;
       md += `| Metric | Value |\n|---|---|\n`;
       md += `| Total records | ${stats.total} |\n`;
       md += `| Flagged records | ${stats.flaggedCount} |\n`;
       md += `| Out-of-range | ${stats.oorCount} |\n`;
       md += `| Label completeness | ${stats.labeledPct}% |\n\n`;
-      md += `### Records by Interface\n`;
+      md += `### Records by Interface\n\n`;
+      md += `| Interface | Records |\n|---|---|\n`;
       for (const [iface, count] of Object.entries(stats.byInterface)) {
         const name = INTERFACES.find((i) => i.id === iface)?.display_name || iface;
-        md += `- **${name}**: ${count} records\n`;
+        md += `| ${name} | ${count} |\n`;
       }
       md += "\n> All records follow ALCOA+ principles. Corrections create linked amendment records, preserving the full audit chain.\n";
       return md;
@@ -305,39 +320,38 @@ const QUERY_PATTERNS: QueryPattern[] = [
   {
     patterns: [/help|what.*can.*you|capabilit|how.*work/i],
     handler: () => {
-      return `## 🤖 AI Assistant Capabilities
-
-I analyze your bioreactor process data in real-time. Here's what you can ask me:
-
-| Command | Description |
-|---|---|
-| **"status"** or **"overview"** | Current state of all runs with critical parameters |
-| **"pH trend"** / **"temp forecast"** | Trend analysis and 4-hour forecast for any parameter |
-| **"alerts"** or **"deviations"** | Alert summary with severity breakdown |
-| **"data quality"** / **"records"** | Data integrity and completeness report |
-| **"generate report"** | Full analytical report covering all aspects |
-| **"forecast"** + parameter name | Predictive analysis with risk assessment |
-
-### Parameters I can analyze:
-${PARAMETERS.map((p) => `- **${p.display_name}** (${p.unit})`).join("\n")}
-
-> All analysis is based on the current data in the Data Vest ledger. No external API calls are made.`;
+      let md = `## 🤖 AI Assistant Capabilities\n\n`;
+      md += `I analyze your bioreactor process data in real-time. Here's what you can ask me:\n\n`;
+      md += `| Command | Description |\n|---|---|\n`;
+      md += `| **"status"** or **"overview"** | Current state of all runs with critical parameters |\n`;
+      md += `| **"pH trend"** / **"temp forecast"** | Trend analysis and 4-hour forecast for any parameter |\n`;
+      md += `| **"alerts"** or **"deviations"** | Alert summary with severity breakdown |\n`;
+      md += `| **"data quality"** / **"records"** | Data integrity and completeness report |\n`;
+      md += `| **"generate report"** | Full analytical report covering all aspects |\n`;
+      md += `| **"forecast"** + parameter name | Predictive analysis with risk assessment |\n\n`;
+      md += `### Analyzable Parameters\n\n`;
+      md += `| Parameter | Unit |\n|---|---|\n`;
+      for (const p of PARAMETERS) {
+        md += `| ${p.display_name} | ${p.unit} |\n`;
+      }
+      md += `\n> All analysis is based on the current data in the Data Vest ledger. No external API calls are made.`;
+      return md;
     },
   },
 ];
 
 // ── Fallback ──
 function fallbackResponse(query: string): string {
-  return `I understand you're asking about: *"${query}"*
-
-I can help with the following — try asking:
-- **"What is the current process status?"**
-- **"Show me the pH trend and forecast"**
-- **"Are there any alerts or deviations?"**
-- **"Generate a full process report"**
-- **"Data quality summary"**
-
-> Type **"help"** to see all available commands.`;
+  let md = `I understand you're asking about: *"${query}"*\n\n`;
+  md += `Here are the commands I support:\n\n`;
+  md += `| Command | What it does |\n|---|---|\n`;
+  md += `| "status" / "overview" | Current process state with critical parameters |\n`;
+  md += `| "pH trend" / "temp forecast" | Trend analysis and 4-hour forecast |\n`;
+  md += `| "alerts" / "deviations" | Alert summary with severity breakdown |\n`;
+  md += `| "generate report" | Full analytical process report |\n`;
+  md += `| "data quality" | Data integrity and completeness report |\n\n`;
+  md += `> Type **"help"** to see all available commands.`;
+  return md;
 }
 
 // ── Public API ──
