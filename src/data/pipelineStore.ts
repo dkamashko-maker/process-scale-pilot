@@ -312,7 +312,7 @@ export function runSimulation(
 
       // Collect process events
       if (hasEventOverlay) {
-        const runEvents = getEvents(runId);
+        const runEvents = getInitialEvents().filter((e) => e.run_id === runId);
         const filteredEvents = runEvents.filter((e) => {
           const t = new Date(e.timestamp).getTime();
           return t >= windowStart && t <= windowEnd;
