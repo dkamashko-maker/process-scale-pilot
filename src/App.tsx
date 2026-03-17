@@ -17,6 +17,7 @@ import AdminPage from "./pages/AdminPage";
 import DataStoragePage from "./pages/DataStoragePage";
 import MetadataConstructorPage from "./pages/MetadataConstructorPage";
 import AIPage from "./pages/AIPage";
+import RebuildPage from "./pages/RebuildPage";
 import LoginPage from "./pages/LoginPage";
 import NotFound from "./pages/NotFound";
 
@@ -60,6 +61,7 @@ const App = () => {
                   <Route path="/analytics" element={<IntegratedDashboardPage />} />
                   <Route path="/data-storage" element={<DataStoragePage />} />
                   <Route path="/metadata" element={<MetadataConstructorPage />} />
+                  <Route path="/metadata/rebuild" element={<RebuildPage />} />
                   <Route path="/ai" element={<AIPage />} />
                   <Route path="/admin" element={<AdminPage />} />
                 </Route>
