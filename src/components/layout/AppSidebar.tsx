@@ -1,4 +1,4 @@
-import { LayoutDashboard, Database, Construction, Brain, Activity } from "lucide-react";
+import { LayoutDashboard, Database, Construction, Brain, Activity, FileText } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { RUNS } from "@/data/runData";
 import {
@@ -17,6 +17,7 @@ const navItems = [
   { title: "Integrated Device Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Data Storage", url: "/data-storage", icon: Database },
   { title: "Metadata Constructor", url: "/metadata", icon: Construction },
+  { title: "Reports", url: "/reports", icon: FileText },
   { title: "AI", url: "/ai", icon: Brain },
 ];
 
