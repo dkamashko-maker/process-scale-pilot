@@ -226,11 +226,10 @@ export function createReportFromRun(runId: string, createdBy: string): Report {
     };
   });
 
-  // Try to add HPLC summary data if available
+  // Add HPLC summary data if available
   try {
-    const { getDataRecords } = await import("./dataRecords");
     const hplcRecords = getDataRecords().filter(
-      (r: any) => r.interface_id === "HPLC-01" && r.data_type === "file" && (r.summary.includes("CSV") || r.labels?.format === "CSV"),
+      (r) => r.interface_id === "HPLC-01" && r.data_type === "file" && (r.summary.includes("CSV") || r.labels?.format === "CSV"),
     );
     if (hplcRecords.length > 0) {
       qcRows.push({
