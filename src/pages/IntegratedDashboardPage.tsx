@@ -28,6 +28,7 @@ import {
 } from "recharts";
 import { formatDistanceToNow, format } from "date-fns";
 import MonitoringCharts from "@/components/monitoring/MonitoringCharts";
+import WorkflowVisualization from "@/components/workflow/WorkflowVisualization";
 import type { InstrumentInterface, ParameterDef, TimeseriesPoint } from "@/data/runTypes";
 
 // ── Icon map ──
