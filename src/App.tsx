@@ -61,6 +61,7 @@ const App = () => {
                   <Route path="/analytics" element={<IntegratedDashboardPage />} />
                   <Route path="/data-storage" element={<DataStoragePage />} />
                   <Route path="/metadata" element={<MetadataConstructorPage />} />
+                  <Route path="/metadata/rebuild" element={<RebuildPage />} />
                   <Route path="/ai" element={<AIPage />} />
                   <Route path="/admin" element={<AdminPage />} />
                 </Route>
