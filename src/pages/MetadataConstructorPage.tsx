@@ -161,6 +161,8 @@ export default function MetadataConstructorPage() {
     [detailRecord],
   );
 
+  const navigate = useNavigate();
+
   return (
     <div className="p-6 space-y-4 animate-fade-in">
       {/* Header */}
@@ -168,6 +170,9 @@ export default function MetadataConstructorPage() {
         <Construction className="h-5 w-5 text-primary" />
         <h2 className="text-xl font-semibold">Metadata Constructor</h2>
         <InfoTooltip content="Define label templates, apply metadata to records, and track completeness scores." />
+        <Button variant="outline" size="sm" className="ml-auto h-7 text-xs gap-1" onClick={() => navigate("/metadata/rebuild")}>
+          <Settings2 className="h-3 w-3" /> Open Rebuild Canvas
+        </Button>
       </div>
 
       {/* KPI */}
