@@ -532,6 +532,11 @@ export default function IntegratedDashboardPage() {
             <AnalyticalSummarySection />
           </div>
         </TabsContent>
+
+        {/* ═══ WORKFLOW TAB ═══ */}
+        <TabsContent value="workflow" className="space-y-6">
+          <WorkflowVisualization />
+        </TabsContent>
       </Tabs>
 
       <InterfaceDrawer iface={selectedInterface} onClose={() => setSelectedInterface(null)} />
