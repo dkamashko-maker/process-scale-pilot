@@ -18,6 +18,7 @@ import DataStoragePage from "./pages/DataStoragePage";
 import MetadataConstructorPage from "./pages/MetadataConstructorPage";
 import AIPage from "./pages/AIPage";
 import RebuildPage from "./pages/RebuildPage";
+import ReportsPage from "./pages/ReportsPage";
 import LoginPage from "./pages/LoginPage";
 import NotFound from "./pages/NotFound";
 
