@@ -63,6 +63,7 @@ const App = () => {
                   <Route path="/data-storage" element={<DataStoragePage />} />
                   <Route path="/metadata" element={<MetadataConstructorPage />} />
                   <Route path="/metadata/rebuild" element={<RebuildPage />} />
+                  <Route path="/reports" element={<ReportsPage />} />
                   <Route path="/ai" element={<AIPage />} />
                   <Route path="/admin" element={<AdminPage />} />
                 </Route>
