@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from "react";
 import { format } from "date-fns";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   FileText, Archive, Clock, AlertTriangle, CheckCircle2, Brain,
   Send, Settings2, ExternalLink, Lock, Shield, MessageSquare,
