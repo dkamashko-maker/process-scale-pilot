@@ -1,4 +1,4 @@
-import { LayoutDashboard, Database, Construction, BarChart3, Brain, Activity } from "lucide-react";
+import { LayoutDashboard, Database, Construction, Brain, Activity } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { RUNS } from "@/data/runData";
 import {
@@ -14,10 +14,9 @@ import {
 } from "@/components/ui/sidebar";
 
 const navItems = [
-  { title: "General View", url: "/dashboard", icon: LayoutDashboard },
+  { title: "Integrated Device Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Data Storage", url: "/data-storage", icon: Database },
   { title: "Metadata Constructor", url: "/metadata", icon: Construction },
-  { title: "Analytics", url: "/analytics", icon: BarChart3 },
   { title: "AI", url: "/ai", icon: Brain },
 ];
 
