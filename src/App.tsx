@@ -8,13 +8,12 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { EventsProvider } from "@/contexts/EventsContext";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { SplashScreen } from "@/components/SplashScreen";
-import OverviewPage from "./pages/OverviewPage";
+import IntegratedDashboardPage from "./pages/IntegratedDashboardPage";
 import RunMonitorPage from "./pages/RunMonitorPage";
 import RunsListPage from "./pages/RunsListPage";
 import RunDetailPage from "./pages/RunDetailPage";
 import EventLogPage from "./pages/EventLogPage";
 import AdminPage from "./pages/AdminPage";
-import AnalyticsPage from "./pages/AnalyticsPage";
 import DataStoragePage from "./pages/DataStoragePage";
 import MetadataConstructorPage from "./pages/MetadataConstructorPage";
 import AIPage from "./pages/AIPage";
@@ -53,12 +52,12 @@ const App = () => {
                 <Route path="/login" element={<LoginPage />} />
                 <Route element={<AuthGuard />}>
                   <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                  <Route path="/dashboard" element={<OverviewPage />} />
+                  <Route path="/dashboard" element={<IntegratedDashboardPage />} />
                   <Route path="/run/:runId" element={<RunMonitorPage />} />
                   <Route path="/experiments" element={<RunsListPage />} />
                   <Route path="/experiments/:runId" element={<RunDetailPage />} />
                   <Route path="/events" element={<EventLogPage />} />
-                  <Route path="/analytics" element={<AnalyticsPage />} />
+                  <Route path="/analytics" element={<IntegratedDashboardPage />} />
                   <Route path="/data-storage" element={<DataStoragePage />} />
                   <Route path="/metadata" element={<MetadataConstructorPage />} />
                   <Route path="/ai" element={<AIPage />} />
