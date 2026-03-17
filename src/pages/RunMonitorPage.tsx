@@ -29,6 +29,7 @@ export default function RunMonitorPage() {
   const { runId } = useParams<{ runId: string }>();
   const navigate = useNavigate();
   const { user, canLogEvents, isManager } = useAuth();
+  const { toast } = useToast();
   const { events, addEvent, updateEvent, deleteEvent } = useEvents();
 
   const run = RUNS.find((r) => r.run_id === runId);
