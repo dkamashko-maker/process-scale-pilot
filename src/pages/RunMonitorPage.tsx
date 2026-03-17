@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { RUNS, PARAMETERS, getTimeseries } from "@/data/runData";
+import { FileText } from "lucide-react";
 import { useEvents } from "@/contexts/EventsContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { ProcessChart } from "@/components/monitoring/ProcessChart";

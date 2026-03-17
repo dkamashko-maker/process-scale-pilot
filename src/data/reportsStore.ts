@@ -225,14 +225,13 @@ export function createReportFromRun(runId: string, createdBy: string): Report {
     };
   });
 
-  // Try to populate from HPLC data records if available
+  // Try to add HPLC summary data if available
   try {
-    const { getDataRecords } = require("./dataRecords");
+    const { getDataRecords } = await import("./dataRecords");
     const hplcRecords = getDataRecords().filter(
       (r: any) => r.interface_id === "HPLC-01" && r.data_type === "file" && (r.summary.includes("CSV") || r.labels?.format === "CSV"),
     );
     if (hplcRecords.length > 0) {
-      const latest = hplcRecords[hplcRecords.length - 1];
       qcRows.push({
         parameter: "Titer (HPLC)",
         value: (0.8 + Math.random() * 0.4).toFixed(2),
