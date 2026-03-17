@@ -28,6 +28,7 @@ import {
 } from "recharts";
 import { formatDistanceToNow, format } from "date-fns";
 import MonitoringCharts from "@/components/monitoring/MonitoringCharts";
+import WorkflowVisualization from "@/components/workflow/WorkflowVisualization";
 import type { InstrumentInterface, ParameterDef, TimeseriesPoint } from "@/data/runTypes";
 
 // ── Icon map ──
@@ -462,6 +463,10 @@ export default function IntegratedDashboardPage() {
             <Microscope className="h-4 w-4" />
             Analytical Equipment
           </TabsTrigger>
+          <TabsTrigger value="workflow" className="gap-1.5">
+            <Activity className="h-4 w-4" />
+            Workflow
+          </TabsTrigger>
         </TabsList>
 
         {/* ═══ BIOREACTORS TAB ═══ */}
@@ -526,6 +531,11 @@ export default function IntegratedDashboardPage() {
             </div>
             <AnalyticalSummarySection />
           </div>
+        </TabsContent>
+
+        {/* ═══ WORKFLOW TAB ═══ */}
+        <TabsContent value="workflow" className="space-y-6">
+          <WorkflowVisualization />
         </TabsContent>
       </Tabs>
 
