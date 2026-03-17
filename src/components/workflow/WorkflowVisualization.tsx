@@ -222,8 +222,8 @@ function AddDeviceDialog({ open, onClose, onAdd }: {
 
 // ── Device Detail Sheet ──
 function DeviceDetailSheet({ iface, onClose }: { iface: InstrumentInterface | null; onClose: () => void; }) {
+  const alerts = useMemo(() => (iface ? getAlertsForInterface(iface.id) : []), [iface?.id]);
   if (!iface) return null;
-  const alerts = useMemo(() => getAlertsForInterface(iface.id), [iface.id]);
   const statusCfg = STATUS_COLORS[iface.status];
   const isBioreactor = iface.category === "Production" && iface.id.startsWith("BR-");
   const relatedParams = isBioreactor ? PARAMETERS : [];

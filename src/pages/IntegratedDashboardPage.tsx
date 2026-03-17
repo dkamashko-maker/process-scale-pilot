@@ -462,6 +462,10 @@ export default function IntegratedDashboardPage() {
             <Microscope className="h-4 w-4" />
             Analytical Equipment
           </TabsTrigger>
+          <TabsTrigger value="workflow" className="gap-1.5">
+            <Activity className="h-4 w-4" />
+            Workflow
+          </TabsTrigger>
         </TabsList>
 
         {/* ═══ BIOREACTORS TAB ═══ */}
