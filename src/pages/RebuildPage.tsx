@@ -39,7 +39,7 @@ import {
   type Pipeline, type PipelineNode, type PipelineEdge, type PipelineNodeParam,
   type SimulationConfig, type SimulationResults, type SimulationAlert, type EventPreview,
   createPipeline, savePipeline, getRunsForDevice, runSimulation,
-  saveSimulationRecord, commitEvents,
+  saveSimulationRecord, commitEvents, getPipelines, createDefaultStarterPipeline,
 } from "@/data/pipelineStore";
 import type { InstrumentInterface } from "@/data/runTypes";
 
