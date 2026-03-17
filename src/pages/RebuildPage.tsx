@@ -174,6 +174,14 @@ export default function RebuildPage() {
 
   const selectedNode = pipeline.nodes.find((n) => n.id === selectedNodeId) || null;
 
+  // Show starter toast once
+  useEffect(() => {
+    if (pipeline.pipeline_id === "PIPELINE-DEFAULT-001" && !starterToastShown) {
+      setStarterToastShown(true);
+      toast({ title: "Starter pipeline created.", description: "A default PH/TEMP monitoring pipeline has been loaded. You can edit it freely." });
+    }
+  }, [pipeline.pipeline_id, starterToastShown, toast]);
+
   // ── Palette filtering ──
   const filteredDevices = useMemo(() => {
     const q = paletteSearch.toLowerCase();
