@@ -4,7 +4,7 @@
  */
 
 import type { ProcessEvent, InstrumentInterface } from "./runTypes";
-import { INTERFACES, RUNS, PARAMETERS, getTimeseries, getEvents } from "./runData";
+import { INTERFACES, RUNS, PARAMETERS, getTimeseries, getInitialEvents } from "./runData";
 
 // ══════════════════════════════════════════════
 // Types
