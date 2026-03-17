@@ -57,7 +57,7 @@ const App = () => {
                   <Route path="/experiments" element={<RunsListPage />} />
                   <Route path="/experiments/:runId" element={<RunDetailPage />} />
                   <Route path="/events" element={<EventLogPage />} />
-                  <Route path="/analytics" element={<AnalyticsPage />} />
+                  <Route path="/analytics" element={<IntegratedDashboardPage />} />
                   <Route path="/data-storage" element={<DataStoragePage />} />
                   <Route path="/metadata" element={<MetadataConstructorPage />} />
                   <Route path="/ai" element={<AIPage />} />
