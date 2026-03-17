@@ -39,7 +39,7 @@ import {
   type Pipeline, type PipelineNode, type PipelineEdge, type PipelineNodeParam,
   type SimulationConfig, type SimulationResults, type SimulationAlert, type EventPreview,
   createPipeline, savePipeline, getRunsForDevice, runSimulation,
-  saveSimulationRecord, commitEvents,
+  saveSimulationRecord, commitEvents, getPipelines, createDefaultStarterPipeline,
 } from "@/data/pipelineStore";
 import type { InstrumentInterface } from "@/data/runTypes";
 
@@ -146,9 +146,14 @@ export default function RebuildPage() {
   const { toast } = useToast();
 
   // Pipeline state
-  const [pipeline, setPipeline] = useState<Pipeline>(() =>
-    createPipeline("Untitled Pipeline", "current_user"),
-  );
+  const [pipeline, setPipeline] = useState<Pipeline>(() => {
+    const starter = createDefaultStarterPipeline();
+    if (starter) return starter;
+    const existing = getPipelines();
+    if (existing.length > 0) return existing[0];
+    return createPipeline("Untitled Pipeline", "current_user");
+  });
+  const [starterToastShown, setStarterToastShown] = useState(false);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [connectingFrom, setConnectingFrom] = useState<string | null>(null);
 
@@ -168,6 +173,14 @@ export default function RebuildPage() {
   const [panning, setPanning] = useState<{ startX: number; startY: number; panStartX: number; panStartY: number } | null>(null);
 
   const selectedNode = pipeline.nodes.find((n) => n.id === selectedNodeId) || null;
+
+  // Show starter toast once
+  useEffect(() => {
+    if (pipeline.pipeline_id === "PIPELINE-DEFAULT-001" && !starterToastShown) {
+      setStarterToastShown(true);
+      toast({ title: "Starter pipeline created.", description: "A default PH/TEMP monitoring pipeline has been loaded. You can edit it freely." });
+    }
+  }, [pipeline.pipeline_id, starterToastShown, toast]);
 
   // ── Palette filtering ──
   const filteredDevices = useMemo(() => {
