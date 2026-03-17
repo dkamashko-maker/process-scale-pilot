@@ -6,6 +6,7 @@
 import { RUNS, PARAMETERS } from "./runData";
 import { getAlerts, type Alert } from "./alertsEngine";
 import { getInsights, type AiInsight } from "./aiInsights";
+import { getDataRecords } from "./dataRecords";
 
 // ── Types ──
 
@@ -201,6 +202,69 @@ export function createNewVersion(reportId: string, createdBy: string): Report | 
   };
   _reports.push(newReport);
   return newReport;
+}
+
+export function createReportFromRun(runId: string, createdBy: string): Report {
+  seedReports();
+  const alerts = getAlerts().filter((a) => a.linked_run_id === runId);
+  const insights = getInsights().filter((i) => i.linked_run_id === runId);
+  const run = RUNS.find((r) => r.run_id === runId);
+
+  // Build QC rows from critical parameters
+  const criticalParams = PARAMETERS.filter((p) => p.is_critical);
+  const qcRows: QcRow[] = criticalParams.map((p) => {
+    const hasOor = alerts.some((a) => a.type === "out_of_range" && a.message.toLowerCase().includes(p.display_name.toLowerCase()));
+    const baseVal = (p.min_value + p.max_value) / 2;
+    const val = hasOor
+      ? p.max_value + (p.max_value - p.min_value) * 0.08
+      : baseVal + (Math.random() - 0.5) * (p.max_value - p.min_value) * 0.2;
+    return {
+      parameter: p.display_name,
+      value: val.toFixed(2),
+      unit: p.unit,
+      status: hasOor ? "Fail" as const : "Pass" as const,
+    };
+  });
+
+  // Add HPLC summary data if available
+  try {
+    const hplcRecords = getDataRecords().filter(
+      (r) => r.interface_id === "HPLC-01" && r.data_type === "file" && (r.summary.includes("CSV") || r.labels?.format === "CSV"),
+    );
+    if (hplcRecords.length > 0) {
+      qcRows.push({
+        parameter: "Titer (HPLC)",
+        value: (0.8 + Math.random() * 0.4).toFixed(2),
+        unit: "g/L",
+        status: "Pass",
+      });
+      qcRows.push({
+        parameter: "Purity (HPLC)",
+        value: (95 + Math.random() * 4).toFixed(1),
+        unit: "%",
+        status: "Pass",
+      });
+    }
+  } catch { /* dataRecords not available */ }
+
+  const nextNum = _reports.length + 1;
+  const report: Report = {
+    report_id: `RPT-GEN-${Date.now()}`,
+    report_no: `RPT-2026-${String(nextNum).padStart(3, "0")}`,
+    report_date: new Date().toISOString(),
+    linked_run_id: runId,
+    status: alerts.some((a) => a.severity === "critical") ? "Issues" : "In Progress",
+    version: 1,
+    created_by: createdBy,
+    signed_by: null,
+    signed_at: null,
+    comment: `Auto-generated from ${run?.bioreactor_run || runId} monitoring view.`,
+    qc_rows: qcRows,
+    alert_ids: alerts.map((a) => a.alert_id),
+    insight_ids: insights.map((i) => i.id),
+  };
+  _reports.push(report);
+  return report;
 }
 
 export function getReportAlertsAndInsights(report: Report): {

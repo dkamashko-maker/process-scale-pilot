@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from "react";
 import { format } from "date-fns";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   FileText, Archive, Clock, AlertTriangle, CheckCircle2, Brain,
   Send, Settings2, ExternalLink, Lock, Shield, MessageSquare,
@@ -80,8 +80,13 @@ export default function ReportsPage() {
   const { user, isManager, canLogEvents } = useAuth();
   const navigate = useNavigate();
 
+  const [searchParams] = useSearchParams();
   const reports = useMemo(() => getReports(), []);
-  const [activeReportId, setActiveReportId] = useState<string>(reports[0]?.report_id || "");
+  const [activeReportId, setActiveReportId] = useState<string>(() => {
+    const fromQuery = searchParams.get("active");
+    if (fromQuery && reports.some((r) => r.report_id === fromQuery)) return fromQuery;
+    return reports[0]?.report_id || "";
+  });
   const [comment, setComment] = useState("");
   const [chatMessages, setChatMessages] = useState<{ role: "user" | "ai"; text: string }[]>([]);
   const [chatInput, setChatInput] = useState("");

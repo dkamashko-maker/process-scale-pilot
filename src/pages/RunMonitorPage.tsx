@@ -1,6 +1,7 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { RUNS, PARAMETERS, getTimeseries } from "@/data/runData";
+import { FileText } from "lucide-react";
 import { useEvents } from "@/contexts/EventsContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { ProcessChart } from "@/components/monitoring/ProcessChart";
@@ -17,6 +18,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
+import { createReportFromRun } from "@/data/reportsStore";
 import { format } from "date-fns";
 import type { ParameterDef, ProcessEvent } from "@/data/runTypes";
 
@@ -26,6 +29,7 @@ export default function RunMonitorPage() {
   const { runId } = useParams<{ runId: string }>();
   const navigate = useNavigate();
   const { user, canLogEvents, isManager } = useAuth();
+  const { toast } = useToast();
   const { events, addEvent, updateEvent, deleteEvent } = useEvents();
 
   const run = RUNS.find((r) => r.run_id === runId);
@@ -161,6 +165,23 @@ export default function RunMonitorPage() {
                 <p className="text-xs text-muted-foreground font-mono">{run.run_id}</p>
               </div>
               <Badge variant="secondary">Active</Badge>
+              {isManager && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5 text-xs"
+                  onClick={() => {
+                    const report = createReportFromRun(run.run_id, user?.name || "Manager");
+                    toast({
+                      title: "Report generated",
+                      description: `${report.report_no} created with ${report.alert_ids.length} alerts, ${report.insight_ids.length} insights, and ${report.qc_rows.length} QC parameters.`,
+                    });
+                    navigate(`/reports?active=${report.report_id}`);
+                  }}
+                >
+                  <FileText className="h-3.5 w-3.5" /> Generate Report
+                </Button>
+              )}
             </div>
             <div className="grid grid-cols-2 md:grid-cols-5 gap-x-6 gap-y-1 text-sm">
               <div><span className="text-muted-foreground">Reactor</span><p className="font-medium">{run.reactor_id}</p></div>
