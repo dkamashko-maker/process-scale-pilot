@@ -1,4 +1,4 @@
-import { LayoutDashboard, Database, Construction, Brain, Activity } from "lucide-react";
+import { LayoutDashboard, Database, Construction, Brain, Activity, FileText } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { RUNS } from "@/data/runData";
 import {
