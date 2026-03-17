@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { RUNS, PARAMETERS, getTimeseries } from "@/data/runData";
 import { useEvents } from "@/contexts/EventsContext";
