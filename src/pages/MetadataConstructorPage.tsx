@@ -1,8 +1,9 @@
 import { useState, useMemo, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import {
   Construction, Tag, CheckCircle2, AlertTriangle, Filter, X,
-  ChevronRight, FileText, Activity, ClipboardEdit, Layers,
+  ChevronRight, FileText, Activity, ClipboardEdit, Layers, Settings2,
 } from "lucide-react";
 import { InfoTooltip } from "@/components/shared/InfoTooltip";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
