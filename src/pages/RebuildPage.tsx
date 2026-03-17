@@ -146,9 +146,14 @@ export default function RebuildPage() {
   const { toast } = useToast();
 
   // Pipeline state
-  const [pipeline, setPipeline] = useState<Pipeline>(() =>
-    createPipeline("Untitled Pipeline", "current_user"),
-  );
+  const [pipeline, setPipeline] = useState<Pipeline>(() => {
+    const starter = createDefaultStarterPipeline();
+    if (starter) return starter;
+    const existing = getPipelines();
+    if (existing.length > 0) return existing[0];
+    return createPipeline("Untitled Pipeline", "current_user");
+  });
+  const [starterToastShown, setStarterToastShown] = useState(false);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [connectingFrom, setConnectingFrom] = useState<string | null>(null);
 

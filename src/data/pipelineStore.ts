@@ -184,6 +184,98 @@ export function deletePipeline(id: string) {
   _pipelines = _pipelines.filter((p) => p.pipeline_id !== id);
 }
 
+/**
+ * Creates the default starter pipeline if no pipelines exist yet.
+ * Returns the pipeline if created, or null if pipelines already exist.
+ */
+export function createDefaultStarterPipeline(): Pipeline | null {
+  if (_pipelines.length > 0) return null;
+
+  // Find the most recent run for reactor 003-p
+  const runsFor003 = RUNS.filter((r) => r.reactor_id === "003-p");
+  const latestRun = runsFor003.sort(
+    (a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime(),
+  )[0];
+
+  const phParam = PARAMETERS.find((p) => p.parameter_code === "PH")!;
+  const tempParam = PARAMETERS.find((p) => p.parameter_code === "TEMP")!;
+
+  const nodes: PipelineNode[] = [
+    {
+      id: "starter-device-1",
+      type: "device",
+      label: "BR-003-p Bioreactor",
+      x: 60,
+      y: 160,
+      interface_id: "BR-003-p",
+      selected_run_ids: latestRun ? [latestRun.run_id] : [],
+      parameters: [
+        {
+          parameter_code: "PH",
+          display_name: phParam.display_name,
+          unit: phParam.unit,
+          min: phParam.min_value,
+          max: phParam.max_value,
+          useCatalogRange: true,
+        },
+        {
+          parameter_code: "TEMP",
+          display_name: tempParam.display_name,
+          unit: tempParam.unit,
+          min: tempParam.min_value,
+          max: tempParam.max_value,
+          useCatalogRange: true,
+        },
+      ],
+    },
+    {
+      id: "starter-range-check",
+      type: "range_check",
+      label: "Range Check",
+      x: 320,
+      y: 160,
+      apply_parameter_codes: ["PH", "TEMP"],
+    },
+    {
+      id: "starter-ml-insight",
+      type: "ml_insight",
+      label: "ML Insight (Simulated)",
+      x: 580,
+      y: 160,
+      anomaly_threshold: 70,
+      forecast_hours: 12,
+      apply_parameter_codes: ["PH", "TEMP"],
+    },
+    {
+      id: "starter-alert-gen",
+      type: "alert_generator",
+      label: "Alert Generator",
+      x: 840,
+      y: 160,
+      apply_parameter_codes: ["PH", "TEMP"],
+    },
+  ];
+
+  const edges: PipelineEdge[] = [
+    { id: "starter-e1", source: "starter-device-1", target: "starter-range-check" },
+    { id: "starter-e2", source: "starter-range-check", target: "starter-ml-insight" },
+    { id: "starter-e3", source: "starter-ml-insight", target: "starter-alert-gen" },
+  ];
+
+  const now = new Date().toISOString();
+  const p: Pipeline = {
+    pipeline_id: "PIPELINE-DEFAULT-001",
+    name: "Starter: BR-003-p PH/TEMP Range + ML + Alerts",
+    created_by: "system",
+    created_at: now,
+    updated_at: now,
+    nodes,
+    edges,
+  };
+  _pipelines.push(p);
+  return p;
+}
+
 // ── Simulation records ──
 
 export function getSimulationRecords(): PipelineSimulationRecord[] {
