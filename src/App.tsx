@@ -52,7 +52,7 @@ const App = () => {
                 <Route path="/login" element={<LoginPage />} />
                 <Route element={<AuthGuard />}>
                   <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                  <Route path="/dashboard" element={<OverviewPage />} />
+                  <Route path="/dashboard" element={<IntegratedDashboardPage />} />
                   <Route path="/run/:runId" element={<RunMonitorPage />} />
                   <Route path="/experiments" element={<RunsListPage />} />
                   <Route path="/experiments/:runId" element={<RunDetailPage />} />
