@@ -165,6 +165,23 @@ export default function RunMonitorPage() {
                 <p className="text-xs text-muted-foreground font-mono">{run.run_id}</p>
               </div>
               <Badge variant="secondary">Active</Badge>
+              {isManager && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5 text-xs"
+                  onClick={() => {
+                    const report = createReportFromRun(run.run_id, user?.name || "Manager");
+                    toast({
+                      title: "Report generated",
+                      description: `${report.report_no} created with ${report.alert_ids.length} alerts, ${report.insight_ids.length} insights, and ${report.qc_rows.length} QC parameters.`,
+                    });
+                    navigate(`/reports?active=${report.report_id}`);
+                  }}
+                >
+                  <FileText className="h-3.5 w-3.5" /> Generate Report
+                </Button>
+              )}
             </div>
             <div className="grid grid-cols-2 md:grid-cols-5 gap-x-6 gap-y-1 text-sm">
               <div><span className="text-muted-foreground">Reactor</span><p className="font-medium">{run.reactor_id}</p></div>
