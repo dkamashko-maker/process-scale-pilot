@@ -423,7 +423,7 @@ function KpiMini({ label, value, accent, onClick }: { label: string; value: stri
 export default function IntegratedDashboardPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const defaultTab = searchParams.get("tab") || "bioreactors";
+  const activeTab = searchParams.get("tab") || "bioreactors";
   const { events } = useEvents();
   const [selectedInterface, setSelectedInterface] = useState<InstrumentInterface | null>(null);
 
@@ -443,7 +443,7 @@ export default function IntegratedDashboardPage() {
     <div className="p-6 space-y-6 animate-fade-in">
       <div className="flex items-center gap-2">
         <BarChart3 className="h-5 w-5 text-primary" />
-        <h1 className="text-xl font-semibold">Integrated Device Dashboard</h1>
+        <h1 className="text-xl font-semibold">Device Dashboard</h1>
         <InfoTooltip content="Unified view of all bioreactors and analytical equipment with real-time status, analytics, and data summaries." />
       </div>
 
@@ -455,7 +455,7 @@ export default function IntegratedDashboardPage() {
         <KpiCard label="Active Runs" value={RUNS.length} trend="neutral" animationDelay={150} />
       </div>
 
-      <Tabs defaultValue={defaultTab} className="space-y-6">
+      <Tabs value={activeTab} onValueChange={(v) => navigate(`/dashboard?tab=${v}`, { replace: true })} className="space-y-6">
         <TabsList className="h-11">
           <TabsTrigger value="bioreactors" className="gap-1.5 text-sm px-5 py-2.5">
             <FlaskConical className="h-4 w-4" />

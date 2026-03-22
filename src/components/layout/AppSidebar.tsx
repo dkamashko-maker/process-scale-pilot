@@ -59,14 +59,14 @@ export function AppSidebar() {
                   <div
                     className={`flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors cursor-pointer hover:bg-accent ${isDashboard ? "bg-accent text-accent-foreground" : ""}`}
                     onClick={() => {
-                      navigate("/dashboard");
+                      if (!isDashboard) navigate("/dashboard");
                       setDashboardOpen((o) => !o);
                     }}
                   >
                     <LayoutDashboard className="h-5 w-5 flex-shrink-0" />
                     {!collapsed && (
                       <>
-                        <span className="flex-1">Integrated Device Dashboard</span>
+                        <span className="flex-1">Device Dashboard</span>
                         {dashboardOpen ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
                       </>
                     )}
@@ -77,16 +77,12 @@ export function AppSidebar() {
               {/* Sub-items */}
               {!collapsed && dashboardOpen && dashboardSubItems.map((sub) => (
                 <SidebarMenuItem key={sub.tab}>
-                  <SidebarMenuButton asChild>
-                    <div
-                      className="flex items-center gap-3 pl-8 pr-3 py-1.5 text-sm rounded-lg transition-colors cursor-pointer hover:bg-accent text-muted-foreground hover:text-foreground"
-                      onClick={() => {
-                        navigate(`/dashboard?tab=${sub.tab}`);
-                      }}
-                    >
-                      <sub.icon className="h-4 w-4 flex-shrink-0" />
-                      <span>{sub.title}</span>
-                    </div>
+                  <SidebarMenuButton
+                    className="flex items-center gap-3 pl-8 pr-3 py-1.5 text-sm rounded-lg transition-colors cursor-pointer hover:bg-accent text-muted-foreground hover:text-foreground"
+                    onClick={() => navigate(`/dashboard?tab=${sub.tab}`)}
+                  >
+                    <sub.icon className="h-4 w-4 flex-shrink-0" />
+                    <span>{sub.title}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
