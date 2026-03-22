@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Database, Construction, Brain, Activity, FileText,
-  FlaskConical, Microscope, Map, ChevronDown, ChevronRight,
+  FlaskConical, Microscope, Map, ChevronDown, ChevronRight, Workflow,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { RUNS } from "@/data/runData";
@@ -26,7 +26,6 @@ const dashboardSubItems = [
 
 const navItems = [
   { title: "Data Storage", url: "/data-storage", icon: Database },
-  { title: "Metadata Constructor", url: "/metadata", icon: Construction },
   { title: "Reports", url: "/reports", icon: FileText },
   { title: "AI", url: "/ai", icon: Brain },
 ];
@@ -37,7 +36,9 @@ export function AppSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const isDashboard = location.pathname === "/dashboard";
+  const isMetadata = location.pathname.startsWith("/metadata");
   const [dashboardOpen, setDashboardOpen] = useState(isDashboard);
+  const [metadataOpen, setMetadataOpen] = useState(isMetadata);
 
   return (
     <Sidebar className={collapsed ? "w-16" : "w-64"} collapsible="icon">
@@ -86,6 +87,39 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+
+              {/* Metadata Constructor with expandable sub-items */}
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <div
+                    className={`flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors cursor-pointer hover:bg-accent ${isMetadata ? "bg-accent text-accent-foreground" : ""}`}
+                    onClick={() => {
+                      if (!isMetadata) navigate("/metadata");
+                      setMetadataOpen((o) => !o);
+                    }}
+                  >
+                    <Construction className="h-5 w-5 flex-shrink-0" />
+                    {!collapsed && (
+                      <>
+                        <span className="flex-1">Metadata Constructor</span>
+                        {metadataOpen ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
+                      </>
+                    )}
+                  </div>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              {!collapsed && metadataOpen && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    className="flex items-center gap-3 pl-8 pr-3 py-1.5 text-sm rounded-lg transition-colors cursor-pointer hover:bg-accent text-muted-foreground hover:text-foreground"
+                    onClick={() => navigate("/metadata/rebuild")}
+                  >
+                    <Workflow className="h-4 w-4 flex-shrink-0" />
+                    <span>Rebuild Canvas</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
 
               {/* Other nav items */}
               {navItems.map((item) => (
