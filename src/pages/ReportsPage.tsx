@@ -91,6 +91,7 @@ export default function ReportsPage() {
   const [chatMessages, setChatMessages] = useState<{ role: "user" | "ai"; text: string }[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [showAiConfig, setShowAiConfig] = useState(false);
+  const [reportsTableOpen, setReportsTableOpen] = useState(false);
   const [, forceUpdate] = useState(0);
 
   const activeReport = useMemo(
