@@ -454,18 +454,18 @@ export default function IntegratedDashboardPage() {
       </div>
 
       <Tabs defaultValue="bioreactors" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="bioreactors" className="gap-1.5">
+        <TabsList className="h-11">
+          <TabsTrigger value="bioreactors" className="gap-1.5 text-sm px-5 py-2.5">
             <FlaskConical className="h-4 w-4" />
             Bioreactors
           </TabsTrigger>
-          <TabsTrigger value="analytical" className="gap-1.5">
+          <TabsTrigger value="analytical" className="gap-1.5 text-sm px-5 py-2.5">
             <Microscope className="h-4 w-4" />
             Analytical Equipment
           </TabsTrigger>
-          <TabsTrigger value="workflow" className="gap-1.5">
+          <TabsTrigger value="workflow" className="gap-1.5 text-sm px-5 py-2.5">
             <Activity className="h-4 w-4" />
-            Workflow
+            Sensor Map
           </TabsTrigger>
         </TabsList>
 
