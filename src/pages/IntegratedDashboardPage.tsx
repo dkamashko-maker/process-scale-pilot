@@ -423,7 +423,7 @@ function KpiMini({ label, value, accent, onClick }: { label: string; value: stri
 export default function IntegratedDashboardPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const defaultTab = searchParams.get("tab") || "bioreactors";
+  const activeTab = searchParams.get("tab") || "bioreactors";
   const { events } = useEvents();
   const [selectedInterface, setSelectedInterface] = useState<InstrumentInterface | null>(null);
 
