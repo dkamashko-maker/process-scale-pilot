@@ -3,7 +3,7 @@ import { format } from "date-fns";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   FileText, Archive, AlertTriangle, CheckCircle2, Brain,
-  Send, Settings2, ExternalLink, Lock, Shield, MessageSquare,
+  Send, Settings2, ExternalLink, Lock, Shield, MessageSquare, ChevronDown, ChevronRight,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -90,6 +91,7 @@ export default function ReportsPage() {
   const [chatMessages, setChatMessages] = useState<{ role: "user" | "ai"; text: string }[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [showAiConfig, setShowAiConfig] = useState(false);
+  const [reportsTableOpen, setReportsTableOpen] = useState(false);
   const [, forceUpdate] = useState(0);
 
   const activeReport = useMemo(
@@ -195,53 +197,9 @@ export default function ReportsPage() {
 
       {/* Main content grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Left column: Reports table + QC Report (main) + AI Report Generator */}
+        {/* Left column: QC Report (main) + AI Report Generator + Reports Table (collapsible) */}
         <div className="lg:col-span-2 space-y-4">
-          {/* C) Reports Table */}
-          <Card>
-            <CardHeader className="py-3 px-4">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <Archive className="h-4 w-4" /> Reports Table
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="px-4 pb-4">
-              <ScrollArea className="h-[180px]">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="text-xs">Report No</TableHead>
-                      <TableHead className="text-xs">Report Date</TableHead>
-                      <TableHead className="text-xs">Batch No</TableHead>
-                      <TableHead className="text-xs">Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {reports.map((r) => {
-                      const run = RUNS.find((ru) => ru.run_id === r.linked_run_id);
-                      return (
-                        <TableRow
-                          key={r.report_id}
-                          className={`cursor-pointer transition-colors ${r.report_id === activeReportId ? "bg-accent" : "hover:bg-muted/50"}`}
-                          onClick={() => {
-                            setActiveReportId(r.report_id);
-                            setComment(r.comment || "");
-                            setChatMessages([]);
-                          }}
-                        >
-                          <TableCell className="text-xs font-medium">{r.report_no}</TableCell>
-                          <TableCell className="text-xs">{format(new Date(r.report_date), "MMM d, yyyy")}</TableCell>
-                          <TableCell className="text-xs">{run?.batch_id || "–"}</TableCell>
-                          <TableCell><StatusBadge status={r.status} /></TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </ScrollArea>
-            </CardContent>
-          </Card>
-
-          {/* D) QC Report – MAIN ELEMENT */}
+          {/* QC Report – MAIN ELEMENT */}
           <Card className="border-2 border-primary/20">
             <CardHeader className="py-3 px-4">
               <div className="flex items-center justify-between">
@@ -297,7 +255,7 @@ export default function ReportsPage() {
             </CardContent>
           </Card>
 
-          {/* AI Report Generator (was Ask AI) – under QC report */}
+          {/* AI Report Generator – under QC report */}
           <Card className="flex flex-col">
             <CardHeader className="py-3 px-4">
               <div className="flex items-center justify-between">
@@ -344,6 +302,60 @@ export default function ReportsPage() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Reports Table – collapsible at bottom */}
+          <Collapsible open={reportsTableOpen} onOpenChange={setReportsTableOpen}>
+            <Card>
+              <CollapsibleTrigger asChild>
+                <CardHeader className="py-3 px-4 cursor-pointer hover:bg-muted/50 transition-colors">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <Archive className="h-4 w-4" /> Reports Table
+                    <Badge variant="secondary" className="text-[10px]">{reports.length}</Badge>
+                    <span className="ml-auto">
+                      {reportsTableOpen ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+                    </span>
+                  </CardTitle>
+                </CardHeader>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <CardContent className="px-4 pb-4">
+                  <ScrollArea className="h-[180px]">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="text-xs">Report No</TableHead>
+                          <TableHead className="text-xs">Report Date</TableHead>
+                          <TableHead className="text-xs">Batch No</TableHead>
+                          <TableHead className="text-xs">Status</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {reports.map((r) => {
+                          const run = RUNS.find((ru) => ru.run_id === r.linked_run_id);
+                          return (
+                            <TableRow
+                              key={r.report_id}
+                              className={`cursor-pointer transition-colors ${r.report_id === activeReportId ? "bg-accent" : "hover:bg-muted/50"}`}
+                              onClick={() => {
+                                setActiveReportId(r.report_id);
+                                setComment(r.comment || "");
+                                setChatMessages([]);
+                              }}
+                            >
+                              <TableCell className="text-xs font-medium">{r.report_no}</TableCell>
+                              <TableCell className="text-xs">{format(new Date(r.report_date), "MMM d, yyyy")}</TableCell>
+                              <TableCell className="text-xs">{run?.batch_id || "–"}</TableCell>
+                              <TableCell><StatusBadge status={r.status} /></TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </ScrollArea>
+                </CardContent>
+              </CollapsibleContent>
+            </Card>
+          </Collapsible>
         </div>
 
         {/* Right column: Sign & Comment (top) → Alerts & Insights (below) */}
