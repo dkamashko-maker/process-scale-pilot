@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Database, Construction, Brain, Activity, FileText,
-  FlaskConical, Microscope, Map, ChevronDown, ChevronRight,
+  FlaskConical, Microscope, Map, ChevronDown, ChevronRight, Workflow,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { RUNS } from "@/data/runData";
