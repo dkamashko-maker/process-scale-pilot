@@ -88,6 +88,39 @@ export function AppSidebar() {
                 </SidebarMenuItem>
               ))}
 
+              {/* Metadata Constructor with expandable sub-items */}
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <div
+                    className={`flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors cursor-pointer hover:bg-accent ${isMetadata ? "bg-accent text-accent-foreground" : ""}`}
+                    onClick={() => {
+                      if (!isMetadata) navigate("/metadata");
+                      setMetadataOpen((o) => !o);
+                    }}
+                  >
+                    <Construction className="h-5 w-5 flex-shrink-0" />
+                    {!collapsed && (
+                      <>
+                        <span className="flex-1">Metadata Constructor</span>
+                        {metadataOpen ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
+                      </>
+                    )}
+                  </div>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              {!collapsed && metadataOpen && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    className="flex items-center gap-3 pl-8 pr-3 py-1.5 text-sm rounded-lg transition-colors cursor-pointer hover:bg-accent text-muted-foreground hover:text-foreground"
+                    onClick={() => navigate("/metadata/rebuild")}
+                  >
+                    <Workflow className="h-4 w-4 flex-shrink-0" />
+                    <span>Rebuild Canvas</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
+
               {/* Other nav items */}
               {navItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
