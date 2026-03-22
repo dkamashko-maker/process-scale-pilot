@@ -26,7 +26,6 @@ const dashboardSubItems = [
 
 const navItems = [
   { title: "Data Storage", url: "/data-storage", icon: Database },
-  { title: "Metadata Constructor", url: "/metadata", icon: Construction },
   { title: "Reports", url: "/reports", icon: FileText },
   { title: "AI", url: "/ai", icon: Brain },
 ];
@@ -37,7 +36,9 @@ export function AppSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const isDashboard = location.pathname === "/dashboard";
+  const isMetadata = location.pathname.startsWith("/metadata");
   const [dashboardOpen, setDashboardOpen] = useState(isDashboard);
+  const [metadataOpen, setMetadataOpen] = useState(isMetadata);
 
   return (
     <Sidebar className={collapsed ? "w-16" : "w-64"} collapsible="icon">
