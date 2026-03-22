@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { RUNS, INTERFACES, PARAMETERS, getTimeseries, getRunForInterface } from "@/data/runData";
 import { useEvents } from "@/contexts/EventsContext";
 import { getAlertCountsByInterface, getAlerts, getAlertCountsBySeverity } from "@/data/alertsEngine";
