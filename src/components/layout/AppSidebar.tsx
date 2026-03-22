@@ -1,4 +1,9 @@
-import { LayoutDashboard, Database, Construction, Brain, Activity, FileText } from "lucide-react";
+import { useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import {
+  LayoutDashboard, Database, Construction, Brain, Activity, FileText,
+  FlaskConical, Microscope, Map, ChevronDown, ChevronRight,
+} from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { RUNS } from "@/data/runData";
 import {
@@ -13,8 +18,13 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 
+const dashboardSubItems = [
+  { title: "Bioreactors", tab: "bioreactors", icon: FlaskConical },
+  { title: "Analytical Equipment", tab: "analytical", icon: Microscope },
+  { title: "Sensor Map", tab: "workflow", icon: Map },
+];
+
 const navItems = [
-  { title: "Integrated Device Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Data Storage", url: "/data-storage", icon: Database },
   { title: "Metadata Constructor", url: "/metadata", icon: Construction },
   { title: "Reports", url: "/reports", icon: FileText },
@@ -24,6 +34,10 @@ const navItems = [
 export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
+  const location = useLocation();
+  const navigate = useNavigate();
+  const isDashboard = location.pathname === "/dashboard";
+  const [dashboardOpen, setDashboardOpen] = useState(isDashboard);
 
   return (
     <Sidebar className={collapsed ? "w-16" : "w-64"} collapsible="icon">
@@ -39,6 +53,45 @@ export function AppSidebar() {
           </div>
           <SidebarGroupContent>
             <SidebarMenu>
+              {/* Dashboard with expandable sub-items */}
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <div
+                    className={`flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors cursor-pointer hover:bg-accent ${isDashboard ? "bg-accent text-accent-foreground" : ""}`}
+                    onClick={() => {
+                      navigate("/dashboard");
+                      setDashboardOpen((o) => !o);
+                    }}
+                  >
+                    <LayoutDashboard className="h-5 w-5 flex-shrink-0" />
+                    {!collapsed && (
+                      <>
+                        <span className="flex-1">Integrated Device Dashboard</span>
+                        {dashboardOpen ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
+                      </>
+                    )}
+                  </div>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              {/* Sub-items */}
+              {!collapsed && dashboardOpen && dashboardSubItems.map((sub) => (
+                <SidebarMenuItem key={sub.tab}>
+                  <SidebarMenuButton asChild>
+                    <div
+                      className="flex items-center gap-3 pl-8 pr-3 py-1.5 text-sm rounded-lg transition-colors cursor-pointer hover:bg-accent text-muted-foreground hover:text-foreground"
+                      onClick={() => {
+                        navigate(`/dashboard?tab=${sub.tab}`);
+                      }}
+                    >
+                      <sub.icon className="h-4 w-4 flex-shrink-0" />
+                      <span>{sub.title}</span>
+                    </div>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+
+              {/* Other nav items */}
               {navItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>

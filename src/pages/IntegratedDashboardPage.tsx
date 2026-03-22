@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { RUNS, INTERFACES, PARAMETERS, getTimeseries, getRunForInterface } from "@/data/runData";
 import { useEvents } from "@/contexts/EventsContext";
 import { getAlertCountsByInterface, getAlerts, getAlertCountsBySeverity } from "@/data/alertsEngine";
@@ -422,6 +422,8 @@ function KpiMini({ label, value, accent, onClick }: { label: string; value: stri
 // ── Main Page ──
 export default function IntegratedDashboardPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const defaultTab = searchParams.get("tab") || "bioreactors";
   const { events } = useEvents();
   const [selectedInterface, setSelectedInterface] = useState<InstrumentInterface | null>(null);
 
@@ -453,19 +455,19 @@ export default function IntegratedDashboardPage() {
         <KpiCard label="Active Runs" value={RUNS.length} trend="neutral" animationDelay={150} />
       </div>
 
-      <Tabs defaultValue="bioreactors" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="bioreactors" className="gap-1.5">
+      <Tabs defaultValue={defaultTab} className="space-y-6">
+        <TabsList className="h-11">
+          <TabsTrigger value="bioreactors" className="gap-1.5 text-sm px-5 py-2.5">
             <FlaskConical className="h-4 w-4" />
             Bioreactors
           </TabsTrigger>
-          <TabsTrigger value="analytical" className="gap-1.5">
+          <TabsTrigger value="analytical" className="gap-1.5 text-sm px-5 py-2.5">
             <Microscope className="h-4 w-4" />
             Analytical Equipment
           </TabsTrigger>
-          <TabsTrigger value="workflow" className="gap-1.5">
+          <TabsTrigger value="workflow" className="gap-1.5 text-sm px-5 py-2.5">
             <Activity className="h-4 w-4" />
-            Workflow
+            Sensor Map
           </TabsTrigger>
         </TabsList>
 

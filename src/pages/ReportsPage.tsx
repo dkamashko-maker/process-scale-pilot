@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback } from "react";
 import { format } from "date-fns";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
-  FileText, Archive, Clock, AlertTriangle, CheckCircle2, Brain,
+  FileText, Archive, AlertTriangle, CheckCircle2, Brain,
   Send, Settings2, ExternalLink, Lock, Shield, MessageSquare,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,7 +11,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -43,8 +42,8 @@ function generateAiResponse(query: string, report: Report, alerts: any[], insigh
   }
   if (q.includes("qc") || q.includes("quality") || q.includes("parameter")) {
     if (failedQc.length === 0) return `All ${report.qc_rows.length} QC parameters passed specification. No deviations detected.`;
-    const list = failedQc.map((r) => `- **${r.parameter}**: ${r.value} ${r.unit} → ${r.status}`).join("\n");
-    return `**QC Failures**\n\n${list}\n\nThese parameters exceeded their catalog specification range. Review the timeseries data for the corresponding time windows.`;
+    const list = failedQc.map((r) => `- **${r.parameter}**: ${r.value} → ${r.status} (${r.specification})`).join("\n");
+    return `**QC Failures**\n\n${list}\n\nReview the corresponding assay SOPs and timeseries data for root cause analysis.`;
   }
   if (q.includes("compare") || q.includes("batch") || q.includes("run")) {
     return `**Batch Context**\n\nRun: ${run?.bioreactor_run || "N/A"}\nCell line: ${run?.cell_line || "N/A"}\nStrategy: ${run?.process_strategy || "N/A"}\nDuration: ${run?.start_time ? format(new Date(run.start_time), "MMM d") : "?"} – ${run?.end_time ? format(new Date(run.end_time), "MMM d, yyyy") : "?"}\n\nTo compare across runs, navigate to the Integrated Device Dashboard and use the multi-run analytics view.`;
@@ -108,7 +107,6 @@ export default function ReportsPage() {
     [activeReport],
   );
 
-  // KPI counts
   const archiveCount = reports.filter((r) => r.status === "Archive").length;
   const inProgressCount = reports.filter((r) => r.status === "In Progress").length;
   const issuesCount = reports.filter((r) => r.status === "Issues").length;
@@ -116,7 +114,6 @@ export default function ReportsPage() {
   const handleSign = useCallback(() => {
     if (!activeReport || !user) return;
     if (activeReport.signed_by) {
-      // Already signed → create new version
       const newReport = createNewVersion(activeReport.report_id, user.name);
       if (newReport) {
         setActiveReportId(newReport.report_id);
@@ -198,7 +195,7 @@ export default function ReportsPage() {
 
       {/* Main content grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Left column: Reports table + QC */}
+        {/* Left column: Reports table + QC Report (main) + AI Report Generator */}
         <div className="lg:col-span-2 space-y-4">
           {/* C) Reports Table */}
           <Card>
@@ -244,119 +241,68 @@ export default function ReportsPage() {
             </CardContent>
           </Card>
 
-          {/* D) QC Table */}
-          <Card>
+          {/* D) QC Report – MAIN ELEMENT */}
+          <Card className="border-2 border-primary/20">
             <CardHeader className="py-3 px-4">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4" /> QC Results
+                <CardTitle className="text-base flex items-center gap-2">
+                  <CheckCircle2 className="h-5 w-5 text-primary" /> QC Report
                   {isSigned && <Badge variant="outline" className="text-[10px] gap-1"><Lock className="h-2.5 w-2.5" /> Locked</Badge>}
                 </CardTitle>
-                <Button variant="ghost" size="sm" className="text-xs h-7" disabled>
-                  Populate from HPLC summary
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Badge variant="secondary" className="text-[10px]">
+                    {activeReport?.qc_rows.filter((r) => r.status === "Pass").length}/{activeReport?.qc_rows.length} Pass
+                  </Badge>
+                </div>
               </div>
             </CardHeader>
             <CardContent className="px-4 pb-4">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="text-xs">Parameter</TableHead>
-                    <TableHead className="text-xs">Value</TableHead>
-                    <TableHead className="text-xs">Unit</TableHead>
-                    <TableHead className="text-xs">Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {activeReport?.qc_rows.map((row, i) => (
-                    <TableRow key={i}>
-                      <TableCell className="text-xs font-medium">{row.parameter}</TableCell>
-                      <TableCell className="text-xs font-mono">{row.value}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{row.unit}</TableCell>
-                      <TableCell>
-                        <Badge
-                          variant="outline"
-                          className={`text-[10px] ${row.status === "Pass" ? "border-green-500/50 text-green-600" : row.status === "Fail" ? "border-destructive/50 text-destructive" : "border-yellow-500/50 text-yellow-600"}`}
-                        >
-                          {row.status}
-                        </Badge>
-                      </TableCell>
+              <ScrollArea className="max-h-[420px]">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-xs font-semibold">QA Parameter</TableHead>
+                      <TableHead className="text-xs font-semibold">Result / Value</TableHead>
+                      <TableHead className="text-xs font-semibold">Reference / Target</TableHead>
+                      <TableHead className="text-xs font-semibold">Status</TableHead>
+                      <TableHead className="text-xs font-semibold">Assay / Method</TableHead>
+                      <TableHead className="text-xs font-semibold">SOP</TableHead>
+                      <TableHead className="text-xs font-semibold">Specification</TableHead>
+                      <TableHead className="text-xs font-semibold">Responsible</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {activeReport?.qc_rows.map((row, i) => (
+                      <TableRow key={i} className={row.status === "Fail" ? "bg-destructive/5" : ""}>
+                        <TableCell className="text-xs font-medium">{row.parameter}</TableCell>
+                        <TableCell className="text-xs font-mono">{row.value}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground">{row.reference}</TableCell>
+                        <TableCell>
+                          <Badge
+                            variant="outline"
+                            className={`text-[10px] ${row.status === "Pass" ? "border-green-500/50 text-green-600" : row.status === "Fail" ? "border-destructive/50 text-destructive" : "border-yellow-500/50 text-yellow-600"}`}
+                          >
+                            {row.status === "Fail" ? "NOT PASS" : row.status.toUpperCase()}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground">{row.assayMethod}</TableCell>
+                        <TableCell className="text-xs font-mono text-muted-foreground">{row.assayNumber}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground max-w-[200px] truncate" title={row.specification}>{row.specification}</TableCell>
+                        <TableCell className="text-xs">{row.responsiblePerson}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </ScrollArea>
             </CardContent>
           </Card>
 
-          {/* E) Alerts & Insights */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Card>
-              <CardHeader className="py-3 px-4">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4" /> Alerts
-                  <Badge variant="secondary" className="text-[10px]">{reportAlerts.length}</Badge>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="px-4 pb-4">
-                <ScrollArea className="h-[140px]">
-                  {reportAlerts.length === 0 ? (
-                    <p className="text-xs text-muted-foreground italic py-4 text-center">No alerts</p>
-                  ) : (
-                    <div className="space-y-2">
-                      {reportAlerts.map((a) => (
-                        <div key={a.alert_id} className="flex items-start gap-2 p-2 rounded bg-muted/50">
-                          <Badge variant={a.severity === "critical" ? "destructive" : "outline"} className="text-[10px] mt-0.5 shrink-0">
-                            {a.severity}
-                          </Badge>
-                          <p className="text-xs">{a.message}</p>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </ScrollArea>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="py-3 px-4">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <Brain className="h-4 w-4" /> Insights
-                  <Badge variant="secondary" className="text-[10px]">{reportInsights.length}</Badge>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="px-4 pb-4">
-                <ScrollArea className="h-[140px]">
-                  {reportInsights.length === 0 ? (
-                    <p className="text-xs text-muted-foreground italic py-4 text-center">No insights</p>
-                  ) : (
-                    <div className="space-y-2">
-                      {reportInsights.map((ins) => (
-                        <div key={ins.id} className="flex items-start gap-2 p-2 rounded bg-muted/50">
-                          <Badge variant="outline" className={`text-[10px] mt-0.5 shrink-0 ${ins.severity === "critical" ? "border-destructive text-destructive" : ins.severity === "warning" ? "border-yellow-500 text-yellow-600" : ins.severity === "success" ? "border-green-500 text-green-600" : ""}`}>
-                            {ins.severity}
-                          </Badge>
-                          <div>
-                            <p className="text-xs font-medium">{ins.title}</p>
-                            <p className="text-[10px] text-muted-foreground mt-0.5">{ins.explanation.slice(0, 120)}…</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </ScrollArea>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-
-        {/* Right column: AI Chat + Sign */}
-        <div className="space-y-4">
-          {/* F) Ask AI */}
+          {/* AI Report Generator (was Ask AI) – under QC report */}
           <Card className="flex flex-col">
             <CardHeader className="py-3 px-4">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-sm flex items-center gap-2">
-                  <MessageSquare className="h-4 w-4" /> Ask AI
+                  <MessageSquare className="h-4 w-4" /> AI Report Generator
                 </CardTitle>
                 <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setShowAiConfig(true)}>
                   <Settings2 className="h-3.5 w-3.5" />
@@ -367,7 +313,7 @@ export default function ReportsPage() {
               </p>
             </CardHeader>
             <CardContent className="px-4 pb-4 flex-1 flex flex-col">
-              <ScrollArea className="flex-1 h-[280px] border rounded-md p-3 mb-3 bg-muted/30">
+              <ScrollArea className="flex-1 h-[220px] border rounded-md p-3 mb-3 bg-muted/30">
                 {chatMessages.length === 0 ? (
                   <p className="text-xs text-muted-foreground italic text-center pt-8">
                     Type "summary", "alerts", "qc", "compare", or "recommend" to get started.
@@ -398,8 +344,11 @@ export default function ReportsPage() {
               </div>
             </CardContent>
           </Card>
+        </div>
 
-          {/* G) Sign + Comment */}
+        {/* Right column: Sign & Comment (top) → Alerts & Insights (below) */}
+        <div className="space-y-4">
+          {/* Sign & Comment */}
           <Card>
             <CardHeader className="py-3 px-4">
               <CardTitle className="text-sm flex items-center gap-2">
@@ -446,6 +395,64 @@ export default function ReportsPage() {
                   <p className="text-[10px] text-muted-foreground">Version: {activeReport.version} | Created by: {activeReport.created_by}</p>
                 )}
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Alerts & Insights – under Sign & Comment */}
+          <Card>
+            <CardHeader className="py-3 px-4">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4" /> Alerts
+                <Badge variant="secondary" className="text-[10px]">{reportAlerts.length}</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="px-4 pb-4">
+              <ScrollArea className="h-[160px]">
+                {reportAlerts.length === 0 ? (
+                  <p className="text-xs text-muted-foreground italic py-4 text-center">No alerts</p>
+                ) : (
+                  <div className="space-y-2">
+                    {reportAlerts.map((a) => (
+                      <div key={a.alert_id} className="flex items-start gap-2 p-2 rounded bg-muted/50">
+                        <Badge variant={a.severity === "critical" ? "destructive" : "outline"} className="text-[10px] mt-0.5 shrink-0">
+                          {a.severity}
+                        </Badge>
+                        <p className="text-xs">{a.message}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </ScrollArea>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="py-3 px-4">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Brain className="h-4 w-4" /> Insights
+                <Badge variant="secondary" className="text-[10px]">{reportInsights.length}</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="px-4 pb-4">
+              <ScrollArea className="h-[160px]">
+                {reportInsights.length === 0 ? (
+                  <p className="text-xs text-muted-foreground italic py-4 text-center">No insights</p>
+                ) : (
+                  <div className="space-y-2">
+                    {reportInsights.map((ins) => (
+                      <div key={ins.id} className="flex items-start gap-2 p-2 rounded bg-muted/50">
+                        <Badge variant="outline" className={`text-[10px] mt-0.5 shrink-0 ${ins.severity === "critical" ? "border-destructive text-destructive" : ins.severity === "warning" ? "border-yellow-500 text-yellow-600" : ins.severity === "success" ? "border-green-500 text-green-600" : ""}`}>
+                          {ins.severity}
+                        </Badge>
+                        <div>
+                          <p className="text-xs font-medium">{ins.title}</p>
+                          <p className="text-[10px] text-muted-foreground mt-0.5">{ins.explanation.slice(0, 120)}…</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </ScrollArea>
             </CardContent>
           </Card>
         </div>
