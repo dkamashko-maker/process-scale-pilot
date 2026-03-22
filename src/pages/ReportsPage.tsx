@@ -187,13 +187,6 @@ export default function ReportsPage() {
         </CardContent>
       </Card>
 
-      {/* B) KPI counters */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <KpiCard label="Reports (Archive)" value={archiveCount} subtitle="Completed & signed" animationDelay={0} />
-        <KpiCard label="In Progress" value={inProgressCount} subtitle="Under review" animationDelay={100} />
-        <KpiCard label="Reports with Issues" value={issuesCount} subtitle="Require attention" animationDelay={200} />
-        <KpiCard label="Alerts / Insights" value={`${reportAlerts.length} / ${reportInsights.length}`} subtitle="For active report" animationDelay={300} />
-      </div>
 
       {/* Main content grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
