@@ -3,7 +3,7 @@ import { format } from "date-fns";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   FileText, Archive, AlertTriangle, CheckCircle2, Brain,
-  Send, Settings2, ExternalLink, Lock, Shield, MessageSquare,
+  Send, Settings2, ExternalLink, Lock, Shield, MessageSquare, ChevronDown, ChevronRight,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
