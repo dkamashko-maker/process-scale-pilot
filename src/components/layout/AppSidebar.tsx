@@ -77,16 +77,12 @@ export function AppSidebar() {
               {/* Sub-items */}
               {!collapsed && dashboardOpen && dashboardSubItems.map((sub) => (
                 <SidebarMenuItem key={sub.tab}>
-                  <SidebarMenuButton asChild>
-                    <div
-                      className="flex items-center gap-3 pl-8 pr-3 py-1.5 text-sm rounded-lg transition-colors cursor-pointer hover:bg-accent text-muted-foreground hover:text-foreground"
-                      onClick={() => {
-                        navigate(`/dashboard?tab=${sub.tab}`);
-                      }}
-                    >
-                      <sub.icon className="h-4 w-4 flex-shrink-0" />
-                      <span>{sub.title}</span>
-                    </div>
+                  <SidebarMenuButton
+                    className="flex items-center gap-3 pl-8 pr-3 py-1.5 text-sm rounded-lg transition-colors cursor-pointer hover:bg-accent text-muted-foreground hover:text-foreground"
+                    onClick={() => navigate(`/dashboard?tab=${sub.tab}`)}
+                  >
+                    <sub.icon className="h-4 w-4 flex-shrink-0" />
+                    <span>{sub.title}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}

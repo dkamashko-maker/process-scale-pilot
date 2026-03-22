@@ -455,7 +455,7 @@ export default function IntegratedDashboardPage() {
         <KpiCard label="Active Runs" value={RUNS.length} trend="neutral" animationDelay={150} />
       </div>
 
-      <Tabs defaultValue={defaultTab} className="space-y-6">
+      <Tabs value={activeTab} onValueChange={(v) => navigate(`/dashboard?tab=${v}`, { replace: true })} className="space-y-6">
         <TabsList className="h-11">
           <TabsTrigger value="bioreactors" className="gap-1.5 text-sm px-5 py-2.5">
             <FlaskConical className="h-4 w-4" />
