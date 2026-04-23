@@ -572,9 +572,14 @@ export default function RebuildPage() {
             <Badge variant="secondary" className="text-[9px]">{pipeline.nodes.length} nodes</Badge>
             <Badge variant="secondary" className="text-[9px]">{pipeline.edges.length} edges</Badge>
             <Badge variant="outline" className="text-[9px]">Zoom: {(zoom * 100).toFixed(0)}%</Badge>
+            {!connectingFrom && pipeline.nodes.length >= 2 && (
+              <Badge variant="outline" className="text-[9px] text-muted-foreground">
+                Tip: click a node's right port → then a left port to connect
+              </Badge>
+            )}
             {connectingFrom && (
               <Badge variant="default" className="text-[9px] gap-1 animate-pulse">
-                Connecting… Click target node
+                Connecting… click the target node's left port
                 <button onClick={() => setConnectingFrom(null)} className="ml-1"><X className="h-2.5 w-2.5" /></button>
               </Badge>
             )}
