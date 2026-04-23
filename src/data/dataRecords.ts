@@ -305,16 +305,18 @@ export function runIngestion(): { total: number; newlyAdded: number } {
   const tsRecords = ingestTimeseries();
   const evtRecords = ingestEvents(events);
   const auxRecords = ingestAuxiliary();
+  const eqRecords = ingestEquipmentCatalog();
 
   const a1 = mergeRecords(tsRecords);
   const a2 = mergeRecords(evtRecords);
   const a3 = mergeRecords(auxRecords);
+  const a4 = mergeRecords(eqRecords);
 
   // Sort by measured_at
   _records.sort((a, b) => new Date(a.measured_at).getTime() - new Date(b.measured_at).getTime());
 
   _initialized = true;
-  return { total: _records.length, newlyAdded: a1 + a2 + a3 };
+  return { total: _records.length, newlyAdded: a1 + a2 + a3 + a4 };
 }
 
 /**
