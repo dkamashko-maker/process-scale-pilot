@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Database, Construction, Brain, Activity, FileText,
   FlaskConical, Microscope, Map, ChevronDown, ChevronRight, Workflow,
+  Boxes,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { RUNS } from "@/data/runData";
@@ -25,6 +26,7 @@ const dashboardSubItems = [
 ];
 
 const navItems = [
+  { title: "Equipment Dashboard v2", url: "/equipment-v2", icon: Boxes },
   { title: "Data Storage", url: "/data-storage", icon: Database },
   { title: "Reports", url: "/reports", icon: FileText },
   { title: "AI", url: "/ai", icon: Brain },
