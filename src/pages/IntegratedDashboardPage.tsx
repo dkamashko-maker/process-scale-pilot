@@ -444,14 +444,14 @@ export default function IntegratedDashboardPage() {
       <div className="flex items-center gap-2">
         <BarChart3 className="h-5 w-5 text-primary" />
         <h1 className="text-xl font-semibold">Device Dashboard</h1>
-        <InfoTooltip content="Broad overview of all bioreactors and analytical equipment with status, analytics, and ingestion summaries. For per-equipment cards across upstream / downstream / analytical, open Equipment Dashboard v2." />
+        <InfoTooltip content="Broad overview of all bioreactors and analytical equipment with status, analytics, and ingestion summaries. For per-equipment cards across upstream / downstream / analytical, open Equipment Dashboard." />
         <Button
           variant="outline"
           size="sm"
           className="ml-auto h-7 text-xs gap-1"
-          onClick={() => navigate("/equipment-v2")}
+          onClick={() => navigate("/equipment")}
         >
-          <Activity className="h-3 w-3" /> Open Equipment Dashboard v2
+          <Activity className="h-3 w-3" /> Open Equipment Dashboard
         </Button>
       </div>
 

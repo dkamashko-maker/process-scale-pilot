@@ -79,7 +79,7 @@ export default function RunMonitorPage() {
     return (
       <div className="p-6">
         <h2 className="text-2xl font-bold mb-4">Run not found</h2>
-        <Button onClick={() => navigate("/dashboard")}>Back to Dashboard</Button>
+        <Button onClick={() => navigate("/equipment")}>Back to Equipment Dashboard</Button>
       </div>
     );
   }
