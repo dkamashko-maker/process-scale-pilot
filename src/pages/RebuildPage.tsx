@@ -95,13 +95,16 @@ function snapToGrid(v: number) { return Math.round(v / GRID_SIZE) * GRID_SIZE; }
 // ══════════════════════════════════════════════
 
 function CanvasNode({
-  node, selected, alertCount, onSelect, onDragStart,
+  node, selected, alertCount, isConnectSource, onSelect, onDragStart, onStartConnect, onCompleteConnect,
 }: {
   node: PipelineNode;
   selected: boolean;
   alertCount: number;
+  isConnectSource: boolean;
   onSelect: () => void;
   onDragStart: (e: React.MouseEvent) => void;
+  onStartConnect: () => void;
+  onCompleteConnect: () => void;
 }) {
   const color = NODE_COLORS[node.type] || NODE_COLORS.device;
   const Icon = node.type === "device"
@@ -111,9 +114,6 @@ function CanvasNode({
   return (
     <g
       transform={`translate(${node.x},${node.y})`}
-      onClick={(e) => { e.stopPropagation(); onSelect(); }}
-      onMouseDown={(e) => { e.stopPropagation(); onDragStart(e); }}
-      style={{ cursor: "grab" }}
       className="select-none"
     >
       <rect
@@ -121,31 +121,59 @@ function CanvasNode({
         height={NODE_H}
         rx={8}
         fill="hsl(var(--card))"
-        stroke={selected ? color : "hsl(var(--border))"}
-        strokeWidth={selected ? 2.5 : 1}
+        stroke={selected ? color : isConnectSource ? "hsl(var(--primary))" : "hsl(var(--border))"}
+        strokeWidth={selected || isConnectSource ? 2.5 : 1}
         filter={selected ? "drop-shadow(0 4px 12px rgba(0,0,0,0.15))" : "drop-shadow(0 1px 3px rgba(0,0,0,0.08))"}
+        onClick={(e) => { e.stopPropagation(); onSelect(); }}
+        onMouseDown={(e) => { e.stopPropagation(); onDragStart(e); }}
+        style={{ cursor: "grab" }}
       />
       {/* Color accent bar */}
-      <rect x={0} y={0} width={4} height={NODE_H} rx={2} fill={color} />
+      <rect x={0} y={0} width={4} height={NODE_H} rx={2} fill={color} pointerEvents="none" />
       {/* Icon */}
-      <foreignObject x={12} y={16} width={32} height={32}>
+      <foreignObject x={12} y={16} width={32} height={32} pointerEvents="none">
         <div style={{ background: color, borderRadius: 6, padding: 6, display: "flex", alignItems: "center", justifyContent: "center" }}>
           <Icon style={{ width: 18, height: 18, color: "#fff" }} />
         </div>
       </foreignObject>
       {/* Label */}
-      <text x={52} y={30} fontSize={11} fontWeight={600} fill="hsl(var(--foreground))">{node.label.length > 16 ? node.label.slice(0, 15) + "…" : node.label}</text>
-      <text x={52} y={46} fontSize={9} fill="hsl(var(--muted-foreground))">{node.type === "device" ? (node.interface_id || "No device") : node.type.replace(/_/g, " ")}</text>
+      <text x={52} y={30} fontSize={11} fontWeight={600} fill="hsl(var(--foreground))" pointerEvents="none">{node.label.length > 16 ? node.label.slice(0, 15) + "…" : node.label}</text>
+      <text x={52} y={46} fontSize={9} fill="hsl(var(--muted-foreground))" pointerEvents="none">{node.type === "device" ? (node.interface_id || "No device") : node.type.replace(/_/g, " ")}</text>
       {/* Alert badge */}
       {alertCount > 0 && (
         <>
-          <circle cx={NODE_W - 12} cy={12} r={9} fill="hsl(0, 72%, 51%)" />
-          <text x={NODE_W - 12} y={16} fontSize={9} fontWeight={700} fill="#fff" textAnchor="middle">{alertCount}</text>
+          <circle cx={NODE_W - 12} cy={12} r={9} fill="hsl(0, 72%, 51%)" pointerEvents="none" />
+          <text x={NODE_W - 12} y={16} fontSize={9} fontWeight={700} fill="#fff" textAnchor="middle" pointerEvents="none">{alertCount}</text>
         </>
       )}
-      {/* Connection ports */}
-      <circle cx={0} cy={NODE_H / 2} r={5} fill="hsl(var(--background))" stroke="hsl(var(--border))" strokeWidth={1.5} />
-      <circle cx={NODE_W} cy={NODE_H / 2} r={5} fill="hsl(var(--background))" stroke="hsl(var(--border))" strokeWidth={1.5} />
+      {/* Input port (left) — click to complete an in-flight connection */}
+      <g
+        onClick={(e) => { e.stopPropagation(); onCompleteConnect(); }}
+        onMouseDown={(e) => e.stopPropagation()}
+        style={{ cursor: "crosshair" }}
+      >
+        <circle cx={0} cy={NODE_H / 2} r={9} fill="transparent" />
+        <circle cx={0} cy={NODE_H / 2} r={5}
+          fill="hsl(var(--background))"
+          stroke="hsl(var(--primary))"
+          strokeWidth={1.5}
+          className="hover:fill-[hsl(var(--primary))] transition-colors"
+        />
+      </g>
+      {/* Output port (right) — click to start a connection */}
+      <g
+        onClick={(e) => { e.stopPropagation(); onStartConnect(); }}
+        onMouseDown={(e) => e.stopPropagation()}
+        style={{ cursor: "crosshair" }}
+      >
+        <circle cx={NODE_W} cy={NODE_H / 2} r={9} fill="transparent" />
+        <circle cx={NODE_W} cy={NODE_H / 2} r={5}
+          fill={isConnectSource ? "hsl(var(--primary))" : "hsl(var(--background))"}
+          stroke="hsl(var(--primary))"
+          strokeWidth={1.5}
+          className="hover:fill-[hsl(var(--primary))] transition-colors"
+        />
+      </g>
     </g>
   );
 }
