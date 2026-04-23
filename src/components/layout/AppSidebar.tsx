@@ -1,9 +1,8 @@
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
-  LayoutDashboard, Database, Construction, Brain, Activity, FileText,
-  FlaskConical, Microscope, Map, ChevronDown, ChevronRight, Workflow,
-  Boxes,
+  Database, Construction, Brain, Activity, FileText,
+  Map, ChevronDown, ChevronRight, Workflow, Boxes,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { RUNS } from "@/data/runData";
@@ -19,14 +18,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 
-const dashboardSubItems = [
-  { title: "Bioreactors", tab: "bioreactors", icon: FlaskConical },
-  { title: "Analytical Equipment", tab: "analytical", icon: Microscope },
-  { title: "Sensor Map", tab: "workflow", icon: Map },
-];
-
 const navItems = [
-  { title: "Equipment Dashboard v2", url: "/equipment-v2", icon: Boxes },
   { title: "Data Storage", url: "/data-storage", icon: Database },
   { title: "Reports", url: "/reports", icon: FileText },
   { title: "AI", url: "/ai", icon: Brain },
@@ -37,9 +29,9 @@ export function AppSidebar() {
   const collapsed = state === "collapsed";
   const location = useLocation();
   const navigate = useNavigate();
-  const isDashboard = location.pathname === "/dashboard";
+  const isEquipment = location.pathname.startsWith("/equipment");
   const isMetadata = location.pathname.startsWith("/metadata");
-  const [dashboardOpen, setDashboardOpen] = useState(isDashboard);
+  const [equipmentOpen, setEquipmentOpen] = useState(isEquipment);
   const [metadataOpen, setMetadataOpen] = useState(isMetadata);
 
   return (
@@ -56,39 +48,38 @@ export function AppSidebar() {
           </div>
           <SidebarGroupContent>
             <SidebarMenu>
-              {/* Dashboard with expandable sub-items */}
+              {/* Equipment Dashboard with expandable sub-items */}
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
                   <div
-                    className={`flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors cursor-pointer hover:bg-accent ${isDashboard ? "bg-accent text-accent-foreground" : ""}`}
+                    className={`flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors cursor-pointer hover:bg-accent ${location.pathname === "/equipment" ? "bg-accent text-accent-foreground" : ""}`}
                     onClick={() => {
-                      if (!isDashboard) navigate("/dashboard");
-                      setDashboardOpen((o) => !o);
+                      if (location.pathname !== "/equipment") navigate("/equipment");
+                      setEquipmentOpen((o) => !o);
                     }}
                   >
-                    <LayoutDashboard className="h-5 w-5 flex-shrink-0" />
+                    <Boxes className="h-5 w-5 flex-shrink-0" />
                     {!collapsed && (
                       <>
-                        <span className="flex-1">Device Dashboard</span>
-                        {dashboardOpen ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
+                        <span className="flex-1">Equipment Dashboard</span>
+                        {equipmentOpen ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
                       </>
                     )}
                   </div>
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
-              {/* Sub-items */}
-              {!collapsed && dashboardOpen && dashboardSubItems.map((sub) => (
-                <SidebarMenuItem key={sub.tab}>
+              {!collapsed && equipmentOpen && (
+                <SidebarMenuItem>
                   <SidebarMenuButton
-                    className="flex items-center gap-3 pl-8 pr-3 py-1.5 text-sm rounded-lg transition-colors cursor-pointer hover:bg-accent text-muted-foreground hover:text-foreground"
-                    onClick={() => navigate(`/dashboard?tab=${sub.tab}`)}
+                    className={`flex items-center gap-3 pl-8 pr-3 py-1.5 text-sm rounded-lg transition-colors cursor-pointer hover:bg-accent ${location.pathname === "/equipment/sensor-map" ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                    onClick={() => navigate("/equipment/sensor-map")}
                   >
-                    <sub.icon className="h-4 w-4 flex-shrink-0" />
-                    <span>{sub.title}</span>
+                    <Map className="h-4 w-4 flex-shrink-0" />
+                    <span>Sensor Map</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
-              ))}
+              )}
 
               {/* Metadata Constructor with expandable sub-items */}
               <SidebarMenuItem>
@@ -114,11 +105,11 @@ export function AppSidebar() {
               {!collapsed && metadataOpen && (
                 <SidebarMenuItem>
                   <SidebarMenuButton
-                    className="flex items-center gap-3 pl-8 pr-3 py-1.5 text-sm rounded-lg transition-colors cursor-pointer hover:bg-accent text-muted-foreground hover:text-foreground"
+                    className={`flex items-center gap-3 pl-8 pr-3 py-1.5 text-sm rounded-lg transition-colors cursor-pointer hover:bg-accent ${location.pathname === "/metadata/rebuild" ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:text-foreground"}`}
                     onClick={() => navigate("/metadata/rebuild")}
                   >
                     <Workflow className="h-4 w-4 flex-shrink-0" />
-                    <span>Rebuild Canvas</span>
+                    <span>Workflow Canvas</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               )}

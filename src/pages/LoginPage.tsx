@@ -16,14 +16,14 @@ export default function LoginPage() {
 
   // If already logged in, redirect
   if (user) {
-    navigate("/dashboard", { replace: true });
+    navigate("/equipment", { replace: true });
     return null;
   }
 
   const handleLogin = () => {
     if (!name.trim()) return;
     login(name.trim(), role);
-    navigate("/dashboard");
+    navigate("/equipment");
   };
 
   return (

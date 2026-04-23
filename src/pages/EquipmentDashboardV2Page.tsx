@@ -343,7 +343,7 @@ function EquipmentDrawer({
                 className="justify-start"
                 onClick={() => {
                   const run = getRunForEquipmentId(equipment.equipmentId);
-                  navigate(run ? `/run/${run.run_id}` : "/dashboard?tab=bioreactors");
+                  navigate(run ? `/run/${run.run_id}` : "/equipment");
                 }}
               >
                 <LineChart className="h-4 w-4 mr-2" /> Open monitoring view
@@ -399,7 +399,7 @@ export default function EquipmentDashboardV2Page() {
     <div className="p-6 space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold">Equipment Dashboard v2</h1>
+        <h1 className="text-2xl font-bold">Equipment Dashboard</h1>
         <p className="text-sm text-muted-foreground mt-1">
           Operational equipment and assay status overview
         </p>
