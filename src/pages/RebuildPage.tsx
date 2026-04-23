@@ -205,6 +205,15 @@ export default function RebuildPage() {
   const [simResults, setSimResults] = useState<SimulationResults | null>(null);
   const [resultsCollapsed, setResultsCollapsed] = useState(false);
 
+  // Simulation lifecycle (inspector controls)
+  type SimStatus = "idle" | "running" | "paused" | "done" | "stopped";
+  interface RunLogEntry { ts: string; level: "info" | "warn" | "error" | "ok"; message: string; }
+  const [simStatus, setSimStatus] = useState<SimStatus>("idle");
+  const [simProgress, setSimProgress] = useState(0); // 0-100
+  const [runLog, setRunLog] = useState<RunLogEntry[]>([]);
+  const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const stepsRef = useRef<{ runner: () => void; total: number; cursor: number }>({ runner: () => {}, total: 0, cursor: 0 });
+
   // Canvas state
   const svgRef = useRef<SVGSVGElement>(null);
   const [pan, setPan] = useState({ x: 0, y: 0 });
