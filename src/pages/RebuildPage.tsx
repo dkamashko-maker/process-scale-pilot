@@ -5,7 +5,7 @@ import {
   Search, GripVertical, Plus, Trash2, Save, Play, Settings2, X,
   ChevronRight, ChevronLeft, AlertTriangle, CheckCircle2, Brain,
   Merge, Filter, Zap, BarChart3, LineChart as LineChartIcon, Clock,
-  FileText, Shield, ArrowRight,
+  FileText, Shield, ArrowRight, Pause, Square, RotateCcw, Hammer, Download,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
