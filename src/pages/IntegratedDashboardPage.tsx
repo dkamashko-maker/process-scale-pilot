@@ -444,15 +444,23 @@ export default function IntegratedDashboardPage() {
       <div className="flex items-center gap-2">
         <BarChart3 className="h-5 w-5 text-primary" />
         <h1 className="text-xl font-semibold">Device Dashboard</h1>
-        <InfoTooltip content="Unified view of all bioreactors and analytical equipment with real-time status, analytics, and data summaries." />
+        <InfoTooltip content="Broad overview of all bioreactors and analytical equipment with status, analytics, and ingestion summaries. For per-equipment cards across upstream / downstream / analytical, open Equipment Dashboard v2." />
+        <Button
+          variant="outline"
+          size="sm"
+          className="ml-auto h-7 text-xs gap-1"
+          onClick={() => navigate("/equipment-v2")}
+        >
+          <Activity className="h-3 w-3" /> Open Equipment Dashboard v2
+        </Button>
       </div>
 
-      {/* Global KPIs */}
+      {/* Global KPIs — equipment-fleet framing (multi-batch) */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <KpiCard label="Total Interfaces" value={INTERFACES.length} trend="neutral" animationDelay={0} />
         <KpiCard label="Connected" value={connectedCount} trend="neutral" animationDelay={50} />
         <KpiCard label="Events (24h)" value={events24h.length} trend="neutral" animationDelay={100} />
-        <KpiCard label="Active Runs" value={RUNS.length} trend="neutral" animationDelay={150} />
+        <KpiCard label="Bioreactor Runs" value={RUNS.length} trend="neutral" animationDelay={150} />
       </div>
 
       <Tabs value={activeTab} onValueChange={(v) => navigate(`/dashboard?tab=${v}`, { replace: true })} className="space-y-6">

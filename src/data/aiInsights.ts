@@ -7,6 +7,7 @@ import { getAlerts } from "./alertsEngine";
 import { getDataRecords, getRecordCountsByInterface } from "./dataRecords";
 import { INTERFACES, PARAMETERS, RUNS } from "./runData";
 import { computeCompleteness } from "./labelTemplates";
+import { METHOD_MAPPINGS, getEquipmentById } from "./equipment";
 
 // ── Recipes ──
 
@@ -67,6 +68,14 @@ export const AI_RECIPES: AiRecipe[] = [
     category: "anomaly",
     applies_to: ["*"],
     enabled: false,
+  },
+  {
+    id: "RCP-METHOD-COVERAGE",
+    name: "Analytical Method Coverage",
+    description: "Confirms each registered analytical method (HMW Aggregates, LMW Fragments, Charge Variants, Sialic Acid, Tetra-sialylated, HCP, Host Cell DNA, Surfactant) has at least one recent result upload from its assigned equipment.",
+    category: "completeness",
+    applies_to: ["AN-*"],
+    enabled: true,
   },
 ];
 
@@ -252,7 +261,48 @@ function insightAllClear(alerts: Alert[], records: ReturnType<typeof getDataReco
   return [];
 }
 
-// ── Public API ──
+function insightMethodCoverage(records: ReturnType<typeof getDataRecords>): AiInsight[] {
+  // For each registered analytical method, check whether the assigned
+  // equipment has a recent (≤30 days) result-file upload.
+  const cutoff = Date.now() - 30 * 86400000;
+  const missing: string[] = [];
+  const ok: string[] = [];
+  for (const m of METHOD_MAPPINGS) {
+    const eq = getEquipmentById(m.equipmentId);
+    if (!eq) continue;
+    const recent = records.some(
+      (r) =>
+        r.interface_id === m.equipmentId &&
+        r.data_type === "file" &&
+        new Date(r.measured_at).getTime() >= cutoff,
+    );
+    (recent ? ok : missing).push(`${m.methodName} (${m.methodCode}) → ${eq.equipmentName}`);
+  }
+  if (missing.length === 0) {
+    return [{
+      id: "INS-METHOD-COVERAGE-OK",
+      recipe_id: "RCP-METHOD-COVERAGE",
+      title: `All ${METHOD_MAPPINGS.length} analytical methods have recent uploads`,
+      explanation: `Recent result files received from: ${ok.join("; ")}.`,
+      severity: "success",
+      evidence_record_ids: [],
+      interface_id: null,
+      linked_run_id: null,
+      created_at: new Date().toISOString(),
+    }];
+  }
+  return [{
+    id: "INS-METHOD-COVERAGE-GAP",
+    recipe_id: "RCP-METHOD-COVERAGE",
+    title: `${missing.length} analytical method(s) missing recent uploads`,
+    explanation: `No recent result files for: ${missing.join("; ")}. Verify scheduled assays and equipment connectivity.`,
+    severity: "warning",
+    evidence_record_ids: [],
+    interface_id: null,
+    linked_run_id: null,
+    created_at: new Date().toISOString(),
+  }];
+}
 
 export function generateInsights(): AiInsight[] {
   const alerts = getAlerts();
@@ -266,6 +316,7 @@ export function generateInsights(): AiInsight[] {
   if (enabledRecipes.has("RCP-INGESTION-SKEW")) _insights.push(...insightIngestionSkew());
   if (enabledRecipes.has("RCP-COMPANION-CHECK")) _insights.push(...insightCompanion(alerts));
   if (enabledRecipes.has("RCP-CRITICAL-GAP")) _insights.push(...insightCriticalGaps(alerts));
+  if (enabledRecipes.has("RCP-METHOD-COVERAGE")) _insights.push(...insightMethodCoverage(records));
   _insights.push(...insightAllClear(alerts, records));
 
   const sevOrder: Record<InsightSeverity, number> = { critical: 0, warning: 1, info: 2, success: 3 };

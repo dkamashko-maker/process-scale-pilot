@@ -60,6 +60,22 @@ export const LABEL_TEMPLATES: LabelTemplate[] = [
     required_fields: [],
     optional_fields: ["calibration_date", "rack_position"],
   },
+  // ── Analytical equipment (Equipment Dashboard v2 catalog) ──
+  {
+    template_id: "TPL-AN-FILE",
+    name: "Analytical Result File",
+    applies_to: { interface_id: "AN-*", data_type: "file" },
+    required_fields: ["batch", "method", "method_code"],
+    optional_fields: ["operator", "instrument_serial", "upload_mode"],
+  },
+  // ── Downstream operation-cycle events ──
+  {
+    template_id: "TPL-DS-EVT",
+    name: "Downstream Operation Cycle",
+    applies_to: { interface_id: "DS-*", data_type: "event" },
+    required_fields: ["batch", "method"],
+    optional_fields: ["operator", "phase", "cycle_id"],
+  },
 ];
 
 // ── Matching ──

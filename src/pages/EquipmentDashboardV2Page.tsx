@@ -18,6 +18,7 @@ import {
   EQUIPMENT, getFleetKpis, getRecentAlertsForEquipment,
   type Equipment, type EquipmentCategory, type EquipmentStatus,
 } from "@/data/equipment";
+import { getRunForEquipmentId } from "@/data/runData";
 import {
   Activity, AlertTriangle, Search, Wifi, WifiOff, CircleDot,
   FileText, BookOpen, LineChart, Bell, Database, ScrollText, UploadCloud, Cable,
@@ -336,7 +337,15 @@ function EquipmentDrawer({
               <Database className="h-4 w-4 mr-2" /> View ledger records
             </Button>
             {!isAnalytical && (
-              <Button variant="outline" size="sm" className="justify-start" onClick={() => navigate("/dashboard?tab=bioreactors")}>
+              <Button
+                variant="outline"
+                size="sm"
+                className="justify-start"
+                onClick={() => {
+                  const run = getRunForEquipmentId(equipment.equipmentId);
+                  navigate(run ? `/run/${run.run_id}` : "/dashboard?tab=bioreactors");
+                }}
+              >
                 <LineChart className="h-4 w-4 mr-2" /> Open monitoring view
               </Button>
             )}
