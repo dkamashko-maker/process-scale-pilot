@@ -77,14 +77,36 @@ export const INTERFACES: InstrumentInterface[] = [
   },
   {
     id: "HPLC-01",
-    display_name: "HPLC System 01",
+    display_name: "HPLC System 01 (legacy poller)",
     category: "Analytical",
     status: "Offline",
     last_polled_at: "2026-02-21T10:15:00",
     poll_frequency_sec: 3600,
     data_types: ["files"],
-    description: "HPLC interface ingesting chromatography result files (CDF/CSV). Produces titer and purity measurements per injection.",
+    description: "Legacy HPLC interface ingesting chromatography result files (CDF/CSV). Superseded by the analytical equipment catalog (HPLC-SEC, HPLC-IEX, RP-HPLC) used in Equipment Dashboard v2.",
   },
+  // ── New analytical equipment (aligned with shared equipment catalog) ──
+  { id: "AN-101", display_name: "HPLC-SEC",                        category: "Analytical", status: "Connected", last_polled_at: "2026-04-23T10:32:00", poll_frequency_sec: 3600, data_types: ["files"], description: "HPLC-SEC. Result-centric uploads for HMW Aggregates (3b)." },
+  { id: "AN-102", display_name: "HPLC-IEX",                        category: "Analytical", status: "Connected", last_polled_at: "2026-04-23T09:47:00", poll_frequency_sec: 3600, data_types: ["files"], description: "HPLC-IEX. Result-centric uploads for Charge Variants (4)." },
+  { id: "AN-103", display_name: "RP-HPLC",                         category: "Analytical", status: "Connected", last_polled_at: "2026-04-22T18:10:00", poll_frequency_sec: 3600, data_types: ["files"], description: "RP-HPLC. Reverse-phase potency uploads." },
+  { id: "AN-104", display_name: "CE-SDS",                          category: "Analytical", status: "Connected", last_polled_at: "2026-04-23T11:05:00", poll_frequency_sec: 3600, data_types: ["files"], description: "CE-SDS. LMW Fragments (3c)." },
+  { id: "AN-105", display_name: "ELISA Reader",                    category: "Analytical", status: "Connected", last_polled_at: "2026-04-23T08:32:00", poll_frequency_sec: 3600, data_types: ["files"], description: "ELISA reader. HCP (6a) plate results." },
+  { id: "AN-106", display_name: "UV-VIS",                          category: "Analytical", status: "Connected", last_polled_at: "2026-04-23T09:01:00", poll_frequency_sec: 3600, data_types: ["files"], description: "UV-VIS. Surfactant (6c) result uploads." },
+  { id: "AN-107", display_name: "qPCR",                            category: "Analytical", status: "Connected", last_polled_at: "2026-04-23T07:12:00", poll_frequency_sec: 3600, data_types: ["files"], description: "qPCR. Host Cell DNA (6b)." },
+  { id: "AN-108", display_name: "Rapid Endotoxin (manual load)",   category: "Analytical", status: "Offline",   last_polled_at: "2026-04-22T15:05:00", poll_frequency_sec: 0,    data_types: ["files"], description: "Manual-load endotoxin LAL results. Uploaded via the Manual Upload workflow." },
+  { id: "AN-109", display_name: "Cell Analyzer (Cedex HiRes)",     category: "Analytical", status: "Connected", last_polled_at: "2026-04-23T10:31:00", poll_frequency_sec: 1800, data_types: ["files"], description: "Cedex HiRes. VCD / viability uploads." },
+  { id: "AN-110", display_name: "HPLC-FLD",                        category: "Analytical", status: "Connected", last_polled_at: "2026-04-23T06:47:00", poll_frequency_sec: 3600, data_types: ["files"], description: "HPLC-FLD (HILIC-FLR). Tetra-sialylated (5b)." },
+  { id: "AN-111", display_name: "HPAEC-PAD",                       category: "Analytical", status: "Connected", last_polled_at: "2026-04-23T05:02:00", poll_frequency_sec: 3600, data_types: ["files"], description: "HPAEC-PAD. Sialic Acid (5a)." },
+  // ── New downstream equipment (operation-cycle events) ──
+  { id: "DS-101", display_name: "Centrifuge 1",                    category: "Production", status: "Connected", last_polled_at: "2026-04-23T11:35:00", poll_frequency_sec: 60,   data_types: ["events"], description: "Centrifuge 1. Clarification cycle events." },
+  { id: "DS-102", display_name: "Centrifuge 2",                    category: "Production", status: "Connected", last_polled_at: "2026-04-22T16:10:00", poll_frequency_sec: 60,   data_types: ["events"], description: "Centrifuge 2. Clarification cycle events." },
+  { id: "DS-201", display_name: "FPLC Purification System",        category: "Production", status: "Degraded",  last_polled_at: "2026-04-23T12:02:00", poll_frequency_sec: 60,   data_types: ["events", "files"], description: "FPLC purification system. ProteinA capture run logs." },
+  { id: "DS-202", display_name: "Ultrafiltration System",          category: "Production", status: "Connected", last_polled_at: "2026-04-23T11:55:00", poll_frequency_sec: 60,   data_types: ["events"], description: "Ultrafiltration / diafiltration cassette runs." },
+  { id: "DS-301", display_name: "Vial Washer",                     category: "Production", status: "Connected", last_polled_at: "2026-04-21T11:00:00", poll_frequency_sec: 60,   data_types: ["events"], description: "Vial washer cycles." },
+  { id: "DS-302", display_name: "Depyrogenation Oven",             category: "Production", status: "Connected", last_polled_at: "2026-04-23T11:50:00", poll_frequency_sec: 60,   data_types: ["events"], description: "Depyrogenation oven heat-soak cycles." },
+  { id: "DS-401", display_name: "Lyophilizer",                     category: "Production", status: "Degraded",  last_polled_at: "2026-04-23T07:42:00", poll_frequency_sec: 60,   data_types: ["events"], description: "Lyophilizer cycle telemetry / events." },
+  { id: "DS-402", display_name: "Filling Pump",                    category: "Production", status: "Connected", last_polled_at: "2026-04-23T11:58:00", poll_frequency_sec: 60,   data_types: ["events"], description: "Filling pump cycles." },
+  { id: "DS-403", display_name: "Capping & Labeling Station",      category: "Production", status: "Connected", last_polled_at: "2026-04-23T11:55:00", poll_frequency_sec: 60,   data_types: ["events"], description: "Capping and labeling station cycles." },
 ];
 
 /** Get interfaces linked to a specific reactor ID */
@@ -100,10 +122,12 @@ export function getRunForInterface(interfaceId: string): Run | undefined {
 }
 
 // ── RUNS ──
+// Names align with the shared equipment catalog (UP-001 / UP-002).
 export const RUNS: Run[] = [
   {
-    run_id: "CHO-r-hFSG-456-250308-2", batch_id: "CHO-r-hFSG-456-250308-2",
-    reactor_id: "003-p", bioreactor_run: "R-456", operator_id: "20-456",
+    run_id: "CHO-r-hFSG-456-250308-2", batch_id: "B-250423-PD01",
+    reactor_id: "003-p", bioreactor_run: "Prod Bioreactor (#002) — R-456",
+    operator_id: "20-456",
     cell_line: "CHO-DG44/r-hFSHβ-α-clone_127",
     target_protein: "Recombinant human FSH",
     process_strategy: "Fed-Batch", basal_medium: "CHO Medium",
@@ -113,8 +137,9 @@ export const RUNS: Run[] = [
     timezone: "Europe/Zurich", seed: 456,
   },
   {
-    run_id: "CHO-r-hFSG-457-250308-2", batch_id: "CHO-r-hFSG-457-250308-2",
-    reactor_id: "004-p", bioreactor_run: "R-457", operator_id: "20-457",
+    run_id: "CHO-r-hFSG-457-250308-2", batch_id: "B-250420-SD01",
+    reactor_id: "004-p", bioreactor_run: "Seed Bioreactor (#001) — R-457",
+    operator_id: "20-457",
     cell_line: "CHO-DG44/r-hFSHβ-α-clone_127",
     target_protein: "Recombinant human FSH",
     process_strategy: "Fed-Batch", basal_medium: "CHO Medium",
@@ -124,8 +149,9 @@ export const RUNS: Run[] = [
     timezone: "Europe/Zurich", seed: 457,
   },
   {
-    run_id: "CHO-r-hFSG-458-250308-2", batch_id: "CHO-r-hFSG-458-250308-2",
-    reactor_id: "005-p", bioreactor_run: "R-458", operator_id: "20-458",
+    run_id: "CHO-r-hFSG-458-250308-2", batch_id: "B-250423-PD02",
+    reactor_id: "005-p", bioreactor_run: "Prod Bioreactor (#002) — R-458",
+    operator_id: "20-458",
     cell_line: "CHO-DG44/r-hFSHβ-α-clone_127",
     target_protein: "Recombinant human FSH",
     process_strategy: "Fed-Batch", basal_medium: "CHO Medium",
@@ -135,6 +161,23 @@ export const RUNS: Run[] = [
     timezone: "Europe/Zurich", seed: 458,
   },
 ];
+
+/**
+ * Map a shared equipment catalog ID (UP-001/UP-002) to the matching
+ * legacy run, so the Equipment Dashboard v2 upstream cards can navigate
+ * to the existing Bioreactor Monitoring view.
+ */
+export function getRunForEquipmentId(equipmentId: string): Run | undefined {
+  if (equipmentId === "UP-001") {
+    // Seed bioreactor → R-457 (reactor 004-p)
+    return RUNS.find((r) => r.reactor_id === "004-p");
+  }
+  if (equipmentId === "UP-002") {
+    // Prod bioreactor → R-456 (reactor 003-p)
+    return RUNS.find((r) => r.reactor_id === "003-p");
+  }
+  return undefined;
+}
 
 // ── PARAMETERS ──
 export const PARAMETERS: ParameterDef[] = [
