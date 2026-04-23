@@ -368,13 +368,44 @@ export default function RebuildPage() {
 
   const deviceNodesInPipeline = pipeline.nodes.filter((n) => n.type === "device" && n.interface_id);
 
-  const handleRunSimulation = useCallback(() => {
+  // ── Run log helpers ──
+  const appendLog = useCallback((message: string, level: RunLogEntry["level"] = "info") => {
+    setRunLog((prev) => [...prev, { ts: new Date().toISOString(), level, message }]);
+  }, []);
+
+  const clearTick = useCallback(() => {
+    if (tickRef.current) { clearInterval(tickRef.current); tickRef.current = null; }
+  }, []);
+
+  // Build a list of human-readable steps from the pipeline (used to drive the streaming runner)
+  const buildSteps = useCallback((p: Pipeline): string[] => {
+    const steps: string[] = [];
+    steps.push(`Validating pipeline “${p.name}” (${p.nodes.length} nodes / ${p.edges.length} edges)`);
+    p.nodes.forEach((n) => {
+      if (n.type === "device") {
+        steps.push(`Loading device ${n.label}${n.interface_id ? ` (${n.interface_id})` : ""}`);
+        (n.parameters || []).forEach((pr) => steps.push(`  · Streaming ${pr.display_name} [${pr.unit}] (${pr.min}–${pr.max})`));
+      } else if (n.type === "range_check") {
+        steps.push(`Range check on incoming streams`);
+      } else if (n.type === "unit_consistency") {
+        steps.push(`Unit consistency check`);
+      } else if (n.type === "ml_insight") {
+        steps.push(`ML insight (anomaly threshold ${n.anomaly_threshold ?? 70}, +${n.forecast_hours ?? 12} h forecast)`);
+      } else if (n.type === "alert_generator") {
+        steps.push(`Generating alerts from upstream signals`);
+      } else if (n.type === "merge") {
+        steps.push(`Merging streams`);
+      } else if (n.type === "event_overlay") {
+        steps.push(`Overlaying process events`);
+      }
+    });
+    steps.push(`Aggregating results`);
+    return steps;
+  }, []);
+
+  const finalizeSimulation = useCallback(() => {
     const results = runSimulation(pipeline, simConfig);
     setSimResults(results);
-    setShowSimModal(false);
-    setResultsCollapsed(false);
-
-    // Save record
     saveSimulationRecord({
       simulation_id: results.simulation_id,
       pipeline_id: results.pipeline_id,
@@ -389,12 +420,159 @@ export default function RebuildPage() {
       generated_alerts: results.alerts,
       generated_events_preview: results.events_preview,
     });
+    appendLog(`Simulation ${results.simulation_id} finished — ${Object.keys(results.parameter_results).length} parameters, ${results.alerts.length} alerts`, "ok");
+    return results;
+  }, [pipeline, simConfig, appendLog]);
 
-    toast({
-      title: "Simulation complete",
-      description: `${Object.keys(results.parameter_results).length} parameter results, ${results.alerts.length} alerts`,
+  const startTick = useCallback(() => {
+    clearTick();
+    tickRef.current = setInterval(() => {
+      const s = stepsRef.current;
+      if (s.cursor >= s.total) {
+        clearTick();
+        const results = finalizeSimulation();
+        setSimProgress(100);
+        setSimStatus("done");
+        setResultsCollapsed(false);
+        toast({
+          title: "Simulation complete",
+          description: `${Object.keys(results.parameter_results).length} parameter results, ${results.alerts.length} alerts`,
+        });
+        return;
+      }
+      s.runner();
+      s.cursor += 1;
+      setSimProgress(Math.round((s.cursor / s.total) * 100));
+    }, 220);
+  }, [clearTick, finalizeSimulation, toast]);
+
+  const handleStartSimulation = useCallback(() => {
+    if (deviceNodesInPipeline.length === 0) {
+      toast({ title: "Nothing to simulate", description: "Add at least one device node first.", variant: "destructive" });
+      return;
+    }
+    const cfg: SimulationConfig = {
+      ...simConfig,
+      selected_interface_ids: deviceNodesInPipeline.map((n) => n.interface_id!),
+    };
+    setSimConfig(cfg);
+    setSimResults(null);
+    setSimProgress(0);
+    setRunLog([]);
+    setSimStatus("running");
+    appendLog(`Starting simulation of “${pipeline.name}”`, "info");
+
+    const steps = buildSteps(pipeline);
+    let i = 0;
+    stepsRef.current = {
+      total: steps.length,
+      cursor: 0,
+      runner: () => {
+        const msg = steps[i] ?? "tick";
+        i += 1;
+        const lvl: RunLogEntry["level"] = /alert|risk|forecast/i.test(msg) ? "warn" : "info";
+        appendLog(msg, lvl);
+      },
+    };
+    startTick();
+  }, [pipeline, simConfig, deviceNodesInPipeline, appendLog, buildSteps, startTick, toast]);
+
+  const handlePauseSimulation = useCallback(() => {
+    if (simStatus !== "running") return;
+    clearTick();
+    setSimStatus("paused");
+    appendLog("Simulation paused", "warn");
+  }, [simStatus, clearTick, appendLog]);
+
+  const handleResumeSimulation = useCallback(() => {
+    if (simStatus !== "paused") return;
+    setSimStatus("running");
+    appendLog("Simulation resumed", "info");
+    startTick();
+  }, [simStatus, startTick, appendLog]);
+
+  const handleStopSimulation = useCallback(() => {
+    clearTick();
+    setSimStatus("stopped");
+    appendLog("Simulation stopped by user", "error");
+  }, [clearTick, appendLog]);
+
+  const handleRestartSimulation = useCallback(() => {
+    clearTick();
+    setSimStatus("idle");
+    setSimResults(null);
+    setSimProgress(0);
+    setRunLog([]);
+    setTimeout(() => handleStartSimulation(), 0);
+  }, [clearTick, handleStartSimulation]);
+
+  const handleRebuildPipeline = useCallback(() => {
+    clearTick();
+    setSimStatus("idle");
+    setSimResults(null);
+    setSimProgress(0);
+    setRunLog([]);
+    setSelectedNodeId(null);
+    setConnectingFrom(null);
+    appendLog("Pipeline ready to rebuild", "info");
+    toast({ title: "Pipeline reset", description: "Simulation state cleared. Edit nodes and re-run." });
+  }, [clearTick, appendLog, toast]);
+
+  // Cleanup ticker on unmount
+  useEffect(() => () => { if (tickRef.current) clearInterval(tickRef.current); }, []);
+
+  // ── Report download ──
+  const handleDownloadReport = useCallback(() => {
+    if (!simResults) return;
+    const lines: string[] = [];
+    lines.push(`# Workflow Simulation Report`);
+    lines.push(``);
+    lines.push(`- **Simulation ID:** ${simResults.simulation_id}`);
+    lines.push(`- **Pipeline:** ${pipeline.name} (${pipeline.pipeline_id})`);
+    lines.push(`- **Generated:** ${simResults.created_at}`);
+    lines.push(`- **Status:** ${simResults.overall_status.toUpperCase()}`);
+    lines.push(`- **Scope:** ${simResults.scope_mode} · runs=${simResults.selected_run_ids.join(", ") || "—"} · interfaces=${simResults.selected_interface_ids.join(", ") || "—"}`);
+    lines.push(``);
+    lines.push(`## Pipeline Structure`);
+    pipeline.nodes.forEach((n) => lines.push(`- ${n.label} _(${n.type}${n.interface_id ? `, ${n.interface_id}` : ""})_`));
+    lines.push(``);
+    lines.push(`## Parameter Results`);
+    lines.push(`| Parameter | Unit | Points | In-range % | OOR episodes | Unit check |`);
+    lines.push(`|---|---|---:|---:|---:|---|`);
+    Object.values(simResults.parameter_results).forEach((pr) => {
+      lines.push(`| ${pr.display_name} | ${pr.unit} | ${pr.total_points} | ${pr.pct_in_range.toFixed(1)}% | ${pr.oor_episodes.length} | ${pr.unit_mismatch ? "Mismatch" : "OK"} |`);
     });
-  }, [pipeline, simConfig, toast]);
+    lines.push(``);
+    if (simResults.top_risks.length > 0) {
+      lines.push(`## Top Risks`);
+      simResults.top_risks.forEach((r) => lines.push(`- ${r}`));
+      lines.push(``);
+    }
+    if (simResults.alerts.length > 0) {
+      lines.push(`## Alerts (${simResults.alerts.length})`);
+      simResults.alerts.forEach((a) => lines.push(`- **[${a.severity}]** ${a.message}`));
+      lines.push(``);
+    }
+    lines.push(`## Run Log`);
+    runLog.forEach((l) => lines.push(`- \`${l.ts}\` _(${l.level})_ ${l.message}`));
+
+    const blob = new Blob([lines.join("\n")], { type: "text/markdown" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${simResults.simulation_id}-report.md`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    toast({ title: "Report downloaded", description: `${simResults.simulation_id}-report.md` });
+  }, [simResults, pipeline, runLog, toast]);
+
+  // ── Legacy modal-based runner (still used by the Simulate dialog "Run" button) ──
+  const handleRunSimulation = useCallback(() => {
+    setShowSimModal(false);
+    handleStartSimulation();
+  }, [handleStartSimulation]);
 
   const handleCommitEvents = useCallback(() => {
     if (!simResults) return;
