@@ -5,7 +5,7 @@ import {
   Search, GripVertical, Plus, Trash2, Save, Play, Settings2, X,
   ChevronRight, ChevronLeft, AlertTriangle, CheckCircle2, Brain,
   Merge, Filter, Zap, BarChart3, LineChart as LineChartIcon, Clock,
-  FileText, Shield, ArrowRight,
+  FileText, Shield, ArrowRight, Pause, Square, RotateCcw, Hammer, Download,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +19,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Progress } from "@/components/ui/progress";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
 } from "@/components/ui/dialog";
@@ -205,6 +206,15 @@ export default function RebuildPage() {
   const [simResults, setSimResults] = useState<SimulationResults | null>(null);
   const [resultsCollapsed, setResultsCollapsed] = useState(false);
 
+  // Simulation lifecycle (inspector controls)
+  type SimStatus = "idle" | "running" | "paused" | "done" | "stopped";
+  interface RunLogEntry { ts: string; level: "info" | "warn" | "error" | "ok"; message: string; }
+  const [simStatus, setSimStatus] = useState<SimStatus>("idle");
+  const [simProgress, setSimProgress] = useState(0); // 0-100
+  const [runLog, setRunLog] = useState<RunLogEntry[]>([]);
+  const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const stepsRef = useRef<{ runner: () => void; total: number; cursor: number }>({ runner: () => {}, total: 0, cursor: 0 });
+
   // Canvas state
   const svgRef = useRef<SVGSVGElement>(null);
   const [pan, setPan] = useState({ x: 0, y: 0 });
@@ -359,13 +369,44 @@ export default function RebuildPage() {
 
   const deviceNodesInPipeline = pipeline.nodes.filter((n) => n.type === "device" && n.interface_id);
 
-  const handleRunSimulation = useCallback(() => {
+  // ── Run log helpers ──
+  const appendLog = useCallback((message: string, level: RunLogEntry["level"] = "info") => {
+    setRunLog((prev) => [...prev, { ts: new Date().toISOString(), level, message }]);
+  }, []);
+
+  const clearTick = useCallback(() => {
+    if (tickRef.current) { clearInterval(tickRef.current); tickRef.current = null; }
+  }, []);
+
+  // Build a list of human-readable steps from the pipeline (used to drive the streaming runner)
+  const buildSteps = useCallback((p: Pipeline): string[] => {
+    const steps: string[] = [];
+    steps.push(`Validating pipeline “${p.name}” (${p.nodes.length} nodes / ${p.edges.length} edges)`);
+    p.nodes.forEach((n) => {
+      if (n.type === "device") {
+        steps.push(`Loading device ${n.label}${n.interface_id ? ` (${n.interface_id})` : ""}`);
+        (n.parameters || []).forEach((pr) => steps.push(`  · Streaming ${pr.display_name} [${pr.unit}] (${pr.min}–${pr.max})`));
+      } else if (n.type === "range_check") {
+        steps.push(`Range check on incoming streams`);
+      } else if (n.type === "unit_consistency") {
+        steps.push(`Unit consistency check`);
+      } else if (n.type === "ml_insight") {
+        steps.push(`ML insight (anomaly threshold ${n.anomaly_threshold ?? 70}, +${n.forecast_hours ?? 12} h forecast)`);
+      } else if (n.type === "alert_generator") {
+        steps.push(`Generating alerts from upstream signals`);
+      } else if (n.type === "merge") {
+        steps.push(`Merging streams`);
+      } else if (n.type === "event_overlay") {
+        steps.push(`Overlaying process events`);
+      }
+    });
+    steps.push(`Aggregating results`);
+    return steps;
+  }, []);
+
+  const finalizeSimulation = useCallback(() => {
     const results = runSimulation(pipeline, simConfig);
     setSimResults(results);
-    setShowSimModal(false);
-    setResultsCollapsed(false);
-
-    // Save record
     saveSimulationRecord({
       simulation_id: results.simulation_id,
       pipeline_id: results.pipeline_id,
@@ -380,12 +421,159 @@ export default function RebuildPage() {
       generated_alerts: results.alerts,
       generated_events_preview: results.events_preview,
     });
+    appendLog(`Simulation ${results.simulation_id} finished — ${Object.keys(results.parameter_results).length} parameters, ${results.alerts.length} alerts`, "ok");
+    return results;
+  }, [pipeline, simConfig, appendLog]);
 
-    toast({
-      title: "Simulation complete",
-      description: `${Object.keys(results.parameter_results).length} parameter results, ${results.alerts.length} alerts`,
+  const startTick = useCallback(() => {
+    clearTick();
+    tickRef.current = setInterval(() => {
+      const s = stepsRef.current;
+      if (s.cursor >= s.total) {
+        clearTick();
+        const results = finalizeSimulation();
+        setSimProgress(100);
+        setSimStatus("done");
+        setResultsCollapsed(false);
+        toast({
+          title: "Simulation complete",
+          description: `${Object.keys(results.parameter_results).length} parameter results, ${results.alerts.length} alerts`,
+        });
+        return;
+      }
+      s.runner();
+      s.cursor += 1;
+      setSimProgress(Math.round((s.cursor / s.total) * 100));
+    }, 220);
+  }, [clearTick, finalizeSimulation, toast]);
+
+  const handleStartSimulation = useCallback(() => {
+    if (deviceNodesInPipeline.length === 0) {
+      toast({ title: "Nothing to simulate", description: "Add at least one device node first.", variant: "destructive" });
+      return;
+    }
+    const cfg: SimulationConfig = {
+      ...simConfig,
+      selected_interface_ids: deviceNodesInPipeline.map((n) => n.interface_id!),
+    };
+    setSimConfig(cfg);
+    setSimResults(null);
+    setSimProgress(0);
+    setRunLog([]);
+    setSimStatus("running");
+    appendLog(`Starting simulation of “${pipeline.name}”`, "info");
+
+    const steps = buildSteps(pipeline);
+    let i = 0;
+    stepsRef.current = {
+      total: steps.length,
+      cursor: 0,
+      runner: () => {
+        const msg = steps[i] ?? "tick";
+        i += 1;
+        const lvl: RunLogEntry["level"] = /alert|risk|forecast/i.test(msg) ? "warn" : "info";
+        appendLog(msg, lvl);
+      },
+    };
+    startTick();
+  }, [pipeline, simConfig, deviceNodesInPipeline, appendLog, buildSteps, startTick, toast]);
+
+  const handlePauseSimulation = useCallback(() => {
+    if (simStatus !== "running") return;
+    clearTick();
+    setSimStatus("paused");
+    appendLog("Simulation paused", "warn");
+  }, [simStatus, clearTick, appendLog]);
+
+  const handleResumeSimulation = useCallback(() => {
+    if (simStatus !== "paused") return;
+    setSimStatus("running");
+    appendLog("Simulation resumed", "info");
+    startTick();
+  }, [simStatus, startTick, appendLog]);
+
+  const handleStopSimulation = useCallback(() => {
+    clearTick();
+    setSimStatus("stopped");
+    appendLog("Simulation stopped by user", "error");
+  }, [clearTick, appendLog]);
+
+  const handleRestartSimulation = useCallback(() => {
+    clearTick();
+    setSimStatus("idle");
+    setSimResults(null);
+    setSimProgress(0);
+    setRunLog([]);
+    setTimeout(() => handleStartSimulation(), 0);
+  }, [clearTick, handleStartSimulation]);
+
+  const handleRebuildPipeline = useCallback(() => {
+    clearTick();
+    setSimStatus("idle");
+    setSimResults(null);
+    setSimProgress(0);
+    setRunLog([]);
+    setSelectedNodeId(null);
+    setConnectingFrom(null);
+    appendLog("Pipeline ready to rebuild", "info");
+    toast({ title: "Pipeline reset", description: "Simulation state cleared. Edit nodes and re-run." });
+  }, [clearTick, appendLog, toast]);
+
+  // Cleanup ticker on unmount
+  useEffect(() => () => { if (tickRef.current) clearInterval(tickRef.current); }, []);
+
+  // ── Report download ──
+  const handleDownloadReport = useCallback(() => {
+    if (!simResults) return;
+    const lines: string[] = [];
+    lines.push(`# Workflow Simulation Report`);
+    lines.push(``);
+    lines.push(`- **Simulation ID:** ${simResults.simulation_id}`);
+    lines.push(`- **Pipeline:** ${pipeline.name} (${pipeline.pipeline_id})`);
+    lines.push(`- **Generated:** ${simResults.created_at}`);
+    lines.push(`- **Status:** ${simResults.overall_status.toUpperCase()}`);
+    lines.push(`- **Scope:** ${simResults.scope_mode} · runs=${simResults.selected_run_ids.join(", ") || "—"} · interfaces=${simResults.selected_interface_ids.join(", ") || "—"}`);
+    lines.push(``);
+    lines.push(`## Pipeline Structure`);
+    pipeline.nodes.forEach((n) => lines.push(`- ${n.label} _(${n.type}${n.interface_id ? `, ${n.interface_id}` : ""})_`));
+    lines.push(``);
+    lines.push(`## Parameter Results`);
+    lines.push(`| Parameter | Unit | Points | In-range % | OOR episodes | Unit check |`);
+    lines.push(`|---|---|---:|---:|---:|---|`);
+    Object.values(simResults.parameter_results).forEach((pr) => {
+      lines.push(`| ${pr.display_name} | ${pr.unit} | ${pr.total_points} | ${pr.pct_in_range.toFixed(1)}% | ${pr.oor_episodes.length} | ${pr.unit_mismatch ? "Mismatch" : "OK"} |`);
     });
-  }, [pipeline, simConfig, toast]);
+    lines.push(``);
+    if (simResults.top_risks.length > 0) {
+      lines.push(`## Top Risks`);
+      simResults.top_risks.forEach((r) => lines.push(`- ${r}`));
+      lines.push(``);
+    }
+    if (simResults.alerts.length > 0) {
+      lines.push(`## Alerts (${simResults.alerts.length})`);
+      simResults.alerts.forEach((a) => lines.push(`- **[${a.severity}]** ${a.message}`));
+      lines.push(``);
+    }
+    lines.push(`## Run Log`);
+    runLog.forEach((l) => lines.push(`- \`${l.ts}\` _(${l.level})_ ${l.message}`));
+
+    const blob = new Blob([lines.join("\n")], { type: "text/markdown" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${simResults.simulation_id}-report.md`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    toast({ title: "Report downloaded", description: `${simResults.simulation_id}-report.md` });
+  }, [simResults, pipeline, runLog, toast]);
+
+  // ── Legacy modal-based runner (still used by the Simulate dialog "Run" button) ──
+  const handleRunSimulation = useCallback(() => {
+    setShowSimModal(false);
+    handleStartSimulation();
+  }, [handleStartSimulation]);
 
   const handleCommitEvents = useCallback(() => {
     if (!simResults) return;
@@ -486,15 +674,48 @@ export default function RebuildPage() {
           <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={handleSave}>
             <Save className="h-3 w-3" /> Save
           </Button>
-          <Button size="sm" className="h-7 text-xs gap-1" onClick={() => {
-            // Pre-populate sim config with pipeline devices
+          <Separator orientation="vertical" className="h-5 mx-1" />
+          {(simStatus === "idle" || simStatus === "stopped" || simStatus === "done") && (
+            <Button size="sm" className="h-7 text-xs gap-1" onClick={handleStartSimulation}>
+              <Play className="h-3 w-3" /> {simStatus === "done" || simStatus === "stopped" ? "Run again" : "Start"}
+            </Button>
+          )}
+          {simStatus === "running" && (
+            <>
+              <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={handlePauseSimulation}>
+                <Pause className="h-3 w-3" /> Pause
+              </Button>
+              <Button size="sm" variant="destructive" className="h-7 text-xs gap-1" onClick={handleStopSimulation}>
+                <Square className="h-3 w-3" /> Stop
+              </Button>
+            </>
+          )}
+          {simStatus === "paused" && (
+            <>
+              <Button size="sm" className="h-7 text-xs gap-1" onClick={handleResumeSimulation}>
+                <Play className="h-3 w-3" /> Resume
+              </Button>
+              <Button size="sm" variant="destructive" className="h-7 text-xs gap-1" onClick={handleStopSimulation}>
+                <Square className="h-3 w-3" /> Stop
+              </Button>
+            </>
+          )}
+          {(simStatus === "done" || simStatus === "stopped" || simStatus === "paused") && (
+            <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={handleRestartSimulation}>
+              <RotateCcw className="h-3 w-3" /> Restart
+            </Button>
+          )}
+          <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={handleRebuildPipeline} title="Reset simulation state and prepare to rebuild">
+            <Hammer className="h-3 w-3" /> Rebuild
+          </Button>
+          <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => {
             setSimConfig((c) => ({
               ...c,
               selected_interface_ids: deviceNodesInPipeline.map((n) => n.interface_id!),
             }));
             setShowSimModal(true);
-          }}>
-            <Play className="h-3 w-3" /> Simulate
+          }} title="Advanced simulation configuration">
+            <Settings2 className="h-3 w-3" /> Configure…
           </Button>
         </div>
       </div>
@@ -852,6 +1073,147 @@ export default function RebuildPage() {
                   Select a node to configure
                 </div>
               )}
+
+              {/* ── Simulation panel (always visible) ── */}
+              <div className="border-t bg-muted/20 p-3 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <Play className="h-3.5 w-3.5 text-primary" />
+                    <span className="text-[10px] font-semibold uppercase text-muted-foreground">Simulation</span>
+                  </div>
+                  <Badge variant={
+                    simStatus === "running" ? "default" :
+                    simStatus === "paused"  ? "outline" :
+                    simStatus === "done"    ? "secondary" :
+                    simStatus === "stopped" ? "destructive" : "outline"
+                  } className="text-[9px] uppercase">{simStatus}</Badge>
+                </div>
+
+                {/* Lifecycle controls */}
+                <div className="grid grid-cols-3 gap-1">
+                  {(simStatus === "idle" || simStatus === "stopped" || simStatus === "done") && (
+                    <Button size="sm" className="h-7 text-[10px] gap-1 col-span-3" onClick={handleStartSimulation}>
+                      <Play className="h-3 w-3" /> {simStatus === "done" ? "Run again" : "Start simulation"}
+                    </Button>
+                  )}
+                  {simStatus === "running" && (
+                    <>
+                      <Button size="sm" variant="outline" className="h-7 text-[10px] gap-1" onClick={handlePauseSimulation}>
+                        <Pause className="h-3 w-3" /> Pause
+                      </Button>
+                      <Button size="sm" variant="destructive" className="h-7 text-[10px] gap-1" onClick={handleStopSimulation}>
+                        <Square className="h-3 w-3" /> Stop
+                      </Button>
+                      <Button size="sm" variant="outline" className="h-7 text-[10px] gap-1" onClick={handleRestartSimulation}>
+                        <RotateCcw className="h-3 w-3" /> Restart
+                      </Button>
+                    </>
+                  )}
+                  {simStatus === "paused" && (
+                    <>
+                      <Button size="sm" className="h-7 text-[10px] gap-1" onClick={handleResumeSimulation}>
+                        <Play className="h-3 w-3" /> Resume
+                      </Button>
+                      <Button size="sm" variant="destructive" className="h-7 text-[10px] gap-1" onClick={handleStopSimulation}>
+                        <Square className="h-3 w-3" /> Stop
+                      </Button>
+                      <Button size="sm" variant="outline" className="h-7 text-[10px] gap-1" onClick={handleRestartSimulation}>
+                        <RotateCcw className="h-3 w-3" /> Restart
+                      </Button>
+                    </>
+                  )}
+                  <Button size="sm" variant="outline" className="h-7 text-[10px] gap-1 col-span-3" onClick={handleRebuildPipeline}>
+                    <Hammer className="h-3 w-3" /> Rebuild pipeline
+                  </Button>
+                </div>
+
+                {/* Progress */}
+                {(simStatus === "running" || simStatus === "paused" || simStatus === "done") && (
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between text-[9px] text-muted-foreground">
+                      <span>Progress</span><span className="font-mono">{simProgress}%</span>
+                    </div>
+                    <Progress value={simProgress} className="h-1.5" />
+                  </div>
+                )}
+
+                {/* Parameter results summary */}
+                {simResults && (
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <Label className="text-[10px] uppercase text-muted-foreground">Output Results</Label>
+                      <Badge variant={simResults.overall_status === "pass" ? "secondary" : simResults.overall_status === "warning" ? "outline" : "destructive"} className="text-[8px]">
+                        {simResults.overall_status.toUpperCase()}
+                      </Badge>
+                    </div>
+                    <div className="rounded-md border bg-card overflow-hidden">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="text-[9px] h-6">Param</TableHead>
+                            <TableHead className="text-[9px] h-6 text-right">In-range</TableHead>
+                            <TableHead className="text-[9px] h-6 text-right">OOR</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {Object.values(simResults.parameter_results).slice(0, 6).map((pr) => (
+                            <TableRow key={pr.parameter_code + pr.unit}>
+                              <TableCell className="text-[10px] py-1">{pr.display_name}</TableCell>
+                              <TableCell className={`text-[10px] py-1 text-right font-mono ${pr.pct_in_range < 90 ? "text-destructive" : ""}`}>
+                                {pr.pct_in_range.toFixed(0)}%
+                              </TableCell>
+                              <TableCell className="text-[10px] py-1 text-right">{pr.oor_episodes.length}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                    {simResults.alerts.length > 0 && (
+                      <p className="text-[9px] text-destructive mt-1 flex items-center gap-1">
+                        <AlertTriangle className="h-2.5 w-2.5" />{simResults.alerts.length} alert{simResults.alerts.length !== 1 ? "s" : ""} generated
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* Run log */}
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <Label className="text-[10px] uppercase text-muted-foreground">Run Log</Label>
+                    {runLog.length > 0 && (
+                      <span className="text-[9px] text-muted-foreground font-mono">{runLog.length} entries</span>
+                    )}
+                  </div>
+                  <div className="rounded-md border bg-card max-h-48 overflow-auto p-1.5 font-mono text-[9px] space-y-0.5">
+                    {runLog.length === 0 ? (
+                      <p className="text-muted-foreground text-center py-2">Run log will appear here once the simulation starts.</p>
+                    ) : (
+                      runLog.map((l, i) => (
+                        <div key={i} className="flex gap-1.5">
+                          <span className="text-muted-foreground shrink-0">{format(new Date(l.ts), "HH:mm:ss")}</span>
+                          <span className={
+                            l.level === "error" ? "text-destructive font-semibold" :
+                            l.level === "warn"  ? "text-amber-600 dark:text-amber-400" :
+                            l.level === "ok"    ? "text-emerald-600 dark:text-emerald-400 font-semibold" :
+                            "text-foreground"
+                          }>{l.message}</span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+                {/* Download report */}
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 text-[10px] gap-1 w-full"
+                  onClick={handleDownloadReport}
+                  disabled={!simResults}
+                >
+                  <Download className="h-3 w-3" /> Download report (.md)
+                </Button>
+              </div>
             </ScrollArea>
           )}
         </div>
