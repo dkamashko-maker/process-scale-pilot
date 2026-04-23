@@ -125,12 +125,12 @@ export default function EquipmentDashboardV2Page() {
 
       {/* KPI strip */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
-        <KpiCard label="Total"      value={counts.total}      icon={Activity} />
-        <KpiCard label="Upstream"   value={counts.upstream}   icon={FlaskConical} />
-        <KpiCard label="Downstream" value={counts.downstream} icon={Beaker} />
-        <KpiCard label="Analytical" value={counts.analytical} icon={Microscope} />
-        <KpiCard label="Active"     value={counts.active}     icon={CircleDot} />
-        <KpiCard label="Alerts"     value={counts.alerts}     icon={AlertTriangle} />
+        <KpiCard label="Total"      value={counts.total} />
+        <KpiCard label="Upstream"   value={counts.upstream} />
+        <KpiCard label="Downstream" value={counts.downstream} />
+        <KpiCard label="Analytical" value={counts.analytical} />
+        <KpiCard label="Active"     value={counts.active} />
+        <KpiCard label="Alerts"     value={counts.alerts} />
       </div>
 
       {/* Method ↔ Equipment mapping reference */}
