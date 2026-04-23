@@ -9,6 +9,7 @@ import { EventsProvider } from "@/contexts/EventsContext";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { SplashScreen } from "@/components/SplashScreen";
 import IntegratedDashboardPage from "./pages/IntegratedDashboardPage";
+import EquipmentDashboardV2Page from "./pages/EquipmentDashboardV2Page";
 import RunMonitorPage from "./pages/RunMonitorPage";
 import RunsListPage from "./pages/RunsListPage";
 import RunDetailPage from "./pages/RunDetailPage";
@@ -55,6 +56,7 @@ const App = () => {
                 <Route element={<AuthGuard />}>
                   <Route path="/" element={<Navigate to="/dashboard" replace />} />
                   <Route path="/dashboard" element={<IntegratedDashboardPage />} />
+                  <Route path="/equipment-v2" element={<EquipmentDashboardV2Page />} />
                   <Route path="/run/:runId" element={<RunMonitorPage />} />
                   <Route path="/experiments" element={<RunsListPage />} />
                   <Route path="/experiments/:runId" element={<RunDetailPage />} />
