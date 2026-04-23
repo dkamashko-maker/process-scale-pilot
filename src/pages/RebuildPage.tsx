@@ -893,12 +893,179 @@ export default function RebuildPage() {
                         onClick={() => deleteNode(selectedNode.id)}>
                         <Trash2 className="h-3 w-3" />
                       </Button>
-{/* end-node-header */}
-{/* SENTINEL: keep structure; original inner blocks preserved below */}
                     </div>
                   </div>
 
-                  // ... keep existing code (full node configuration: device select, runs, parameters, ml insight, utility nodes) ...
+                  <Separator />
+
+                  {/* ─── Device node config ─── */}
+                  {selectedNode.type === "device" && (
+                    <>
+                      {/* Interface selector */}
+                      <div>
+                        <Label className="text-[10px] uppercase text-muted-foreground">Device</Label>
+                        <Select value={selectedNode.interface_id || ""} onValueChange={(v) => {
+                          updateNode(selectedNode.id, { interface_id: v, selected_run_ids: [] });
+                        }}>
+                          <SelectTrigger className="h-7 text-xs mt-1"><SelectValue placeholder="Select device" /></SelectTrigger>
+                          <SelectContent>
+                            {INTERFACES.map((i) => (
+                              <SelectItem key={i.id} value={i.id} className="text-xs">{i.display_name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* Run selector (multi) */}
+                      {selectedNode.interface_id && (
+                        <div>
+                          <Label className="text-[10px] uppercase text-muted-foreground">Associated Runs</Label>
+                          <div className="mt-1 space-y-1 max-h-32 overflow-y-auto">
+                            {getRunsForDevice(selectedNode.interface_id).map((run) => (
+                              <label key={run.run_id} className="flex items-center gap-2 text-xs cursor-pointer hover:bg-muted/50 px-1 py-0.5 rounded">
+                                <Checkbox
+                                  checked={selectedNode.selected_run_ids?.includes(run.run_id) || false}
+                                  onCheckedChange={(checked) => {
+                                    const current = selectedNode.selected_run_ids || [];
+                                    updateNode(selectedNode.id, {
+                                      selected_run_ids: checked
+                                        ? [...current, run.run_id]
+                                        : current.filter((id) => id !== run.run_id),
+                                    });
+                                  }}
+                                />
+                                <span>{run.bioreactor_run} — {run.reactor_id}</span>
+                              </label>
+                            ))}
+                          </div>
+
+                          {/* Run metadata summary */}
+                          {selectedNode.selected_run_ids && selectedNode.selected_run_ids.length > 0 && (
+                            <div className="mt-2 rounded-md border bg-muted/30 p-2 space-y-1">
+                              {selectedNode.selected_run_ids.map((rid) => {
+                                const run = RUNS.find((r) => r.run_id === rid);
+                                if (!run) return null;
+                                return (
+                                  <div key={rid} className="text-[9px] text-muted-foreground">
+                                    <span className="font-medium text-foreground">{run.bioreactor_run}</span> · {run.cell_line.split("/")[0]} · {run.process_strategy}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      <Separator />
+
+                      {/* Parameters */}
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <Label className="text-[10px] uppercase text-muted-foreground">Parameters</Label>
+                          <Button variant="ghost" size="sm" className="h-5 text-[9px] gap-0.5" onClick={() => addParamToNode(selectedNode.id)}>
+                            <Plus className="h-2.5 w-2.5" /> Add
+                          </Button>
+                        </div>
+                        <div className="space-y-3">
+                          {(selectedNode.parameters || []).map((param, idx) => (
+                            <div key={idx} className="border rounded-md p-2 space-y-2 bg-muted/20">
+                              <div className="flex items-center justify-between">
+                                <Select value={param.parameter_code} onValueChange={(v) => changeParamCode(selectedNode.id, idx, v)}>
+                                  <SelectTrigger className="h-6 text-[10px] w-32"><SelectValue /></SelectTrigger>
+                                  <SelectContent>
+                                    {PARAMETERS.map((p) => (
+                                      <SelectItem key={p.parameter_code} value={p.parameter_code} className="text-xs">
+                                        {p.display_name} ({p.parameter_code})
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                <Button variant="ghost" size="sm" className="h-5 w-5 p-0" onClick={() => removeParam(selectedNode.id, idx)}>
+                                  <X className="h-3 w-3" />
+                                </Button>
+                              </div>
+
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-[9px] text-muted-foreground w-10">Unit:</span>
+                                <Input className="h-5 text-[10px] w-16" value={param.unitOverride || param.unit} readOnly={!param.unitOverride}
+                                  onChange={(e) => updateParam(selectedNode.id, idx, { unitOverride: e.target.value })} />
+                                {param.unitOverride && param.unitOverride !== PARAMETERS.find((p) => p.parameter_code === param.parameter_code)?.unit && (
+                                  <Badge variant="destructive" className="text-[8px] h-4">⚠ unit mismatch</Badge>
+                                )}
+                              </div>
+
+                              <div className="flex items-center gap-1.5">
+                                <label className="flex items-center gap-1 text-[9px] text-muted-foreground cursor-pointer">
+                                  <Switch className="scale-50" checked={param.useCatalogRange}
+                                    onCheckedChange={(v) => {
+                                      const cat = PARAMETERS.find((p) => p.parameter_code === param.parameter_code);
+                                      updateParam(selectedNode.id, idx, {
+                                        useCatalogRange: v,
+                                        min: v && cat ? cat.min_value : param.min,
+                                        max: v && cat ? cat.max_value : param.max,
+                                      });
+                                    }} />
+                                  Use catalog range
+                                </label>
+                              </div>
+
+                              {!param.useCatalogRange && (
+                                <div className="flex items-center gap-1.5">
+                                  <div>
+                                    <Label className="text-[8px]">Min</Label>
+                                    <Input className="h-5 text-[10px] w-14" type="number" value={param.min}
+                                      onChange={(e) => updateParam(selectedNode.id, idx, { min: parseFloat(e.target.value) || 0 })} />
+                                  </div>
+                                  <div>
+                                    <Label className="text-[8px]">Max</Label>
+                                    <Input className="h-5 text-[10px] w-14" type="number" value={param.max}
+                                      onChange={(e) => updateParam(selectedNode.id, idx, { max: parseFloat(e.target.value) || 0 })} />
+                                  </div>
+                                  {param.min >= param.max && (
+                                    <Badge variant="destructive" className="text-[8px] h-4">min ≥ max</Badge>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {/* ─── ML Insight node config ─── */}
+                  {selectedNode.type === "ml_insight" && (
+                    <div className="space-y-3">
+                      <Badge variant="outline" className="text-[8px]">⚗ SIMULATED ML — heuristic methods</Badge>
+                      <div>
+                        <Label className="text-[10px] uppercase text-muted-foreground">Anomaly Threshold</Label>
+                        <Input className="h-7 text-xs mt-1" type="number" min={0} max={100}
+                          value={selectedNode.anomaly_threshold || 70}
+                          onChange={(e) => updateNode(selectedNode.id, { anomaly_threshold: parseInt(e.target.value) || 70 })} />
+                        <p className="text-[9px] text-muted-foreground mt-0.5">Score 0–100. Points above threshold flagged.</p>
+                      </div>
+                      <div>
+                        <Label className="text-[10px] uppercase text-muted-foreground">Forecast Horizon (hours)</Label>
+                        <Input className="h-7 text-xs mt-1" type="number" min={1} max={48}
+                          value={selectedNode.forecast_hours || 12}
+                          onChange={(e) => updateNode(selectedNode.id, { forecast_hours: parseInt(e.target.value) || 12 })} />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ─── Other utility nodes ─── */}
+                  {["range_check", "unit_consistency", "event_overlay", "alert_generator", "merge"].includes(selectedNode.type) && (
+                    <div className="space-y-2">
+                      <p className="text-xs text-muted-foreground">
+                        {UTILITY_NODES.find((u) => u.type === selectedNode.type)?.description}
+                      </p>
+                      {selectedNode.type === "alert_generator" && (
+                        <p className="text-[9px] text-muted-foreground italic">
+                          This node will generate alerts for OOR episodes, unit mismatches, and forecast violations during simulation.
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="p-4 text-center text-muted-foreground text-xs mt-8">
