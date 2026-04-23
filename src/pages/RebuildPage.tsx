@@ -673,15 +673,48 @@ export default function RebuildPage() {
           <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={handleSave}>
             <Save className="h-3 w-3" /> Save
           </Button>
-          <Button size="sm" className="h-7 text-xs gap-1" onClick={() => {
-            // Pre-populate sim config with pipeline devices
+          <Separator orientation="vertical" className="h-5 mx-1" />
+          {(simStatus === "idle" || simStatus === "stopped" || simStatus === "done") && (
+            <Button size="sm" className="h-7 text-xs gap-1" onClick={handleStartSimulation}>
+              <Play className="h-3 w-3" /> {simStatus === "done" || simStatus === "stopped" ? "Run again" : "Start"}
+            </Button>
+          )}
+          {simStatus === "running" && (
+            <>
+              <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={handlePauseSimulation}>
+                <Pause className="h-3 w-3" /> Pause
+              </Button>
+              <Button size="sm" variant="destructive" className="h-7 text-xs gap-1" onClick={handleStopSimulation}>
+                <Square className="h-3 w-3" /> Stop
+              </Button>
+            </>
+          )}
+          {simStatus === "paused" && (
+            <>
+              <Button size="sm" className="h-7 text-xs gap-1" onClick={handleResumeSimulation}>
+                <Play className="h-3 w-3" /> Resume
+              </Button>
+              <Button size="sm" variant="destructive" className="h-7 text-xs gap-1" onClick={handleStopSimulation}>
+                <Square className="h-3 w-3" /> Stop
+              </Button>
+            </>
+          )}
+          {(simStatus === "done" || simStatus === "stopped" || simStatus === "paused") && (
+            <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={handleRestartSimulation}>
+              <RotateCcw className="h-3 w-3" /> Restart
+            </Button>
+          )}
+          <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={handleRebuildPipeline} title="Reset simulation state and prepare to rebuild">
+            <Hammer className="h-3 w-3" /> Rebuild
+          </Button>
+          <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => {
             setSimConfig((c) => ({
               ...c,
               selected_interface_ids: deviceNodesInPipeline.map((n) => n.interface_id!),
             }));
             setShowSimModal(true);
-          }}>
-            <Play className="h-3 w-3" /> Simulate
+          }} title="Advanced simulation configuration">
+            <Settings2 className="h-3 w-3" /> Configure…
           </Button>
         </div>
       </div>
