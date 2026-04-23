@@ -316,6 +316,7 @@ export function generateInsights(): AiInsight[] {
   if (enabledRecipes.has("RCP-INGESTION-SKEW")) _insights.push(...insightIngestionSkew());
   if (enabledRecipes.has("RCP-COMPANION-CHECK")) _insights.push(...insightCompanion(alerts));
   if (enabledRecipes.has("RCP-CRITICAL-GAP")) _insights.push(...insightCriticalGaps(alerts));
+  if (enabledRecipes.has("RCP-METHOD-COVERAGE")) _insights.push(...insightMethodCoverage(records));
   _insights.push(...insightAllClear(alerts, records));
 
   const sevOrder: Record<InsightSeverity, number> = { critical: 0, warning: 1, info: 2, success: 3 };

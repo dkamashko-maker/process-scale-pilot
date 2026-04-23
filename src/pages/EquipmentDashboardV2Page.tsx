@@ -18,6 +18,7 @@ import {
   EQUIPMENT, getFleetKpis, getRecentAlertsForEquipment,
   type Equipment, type EquipmentCategory, type EquipmentStatus,
 } from "@/data/equipment";
+import { getRunForEquipmentId } from "@/data/runData";
 import {
   Activity, AlertTriangle, Search, Wifi, WifiOff, CircleDot,
   FileText, BookOpen, LineChart, Bell, Database, ScrollText, UploadCloud, Cable,
