@@ -48,9 +48,21 @@ import type { InstrumentInterface } from "@/data/runTypes";
 // ══════════════════════════════════════════════
 
 const DEVICE_ICONS: Record<string, typeof FlaskConical> = {
+  // Legacy
   "BR-003-p": FlaskConical, "BR-004-p": FlaskConical, "BR-005-p": FlaskConical,
   "GAS-MFC-RACK": Wind, "PUMP-MODULE": Pipette,
   "METAB-ANALYZER": TestTube, "CELL-COUNTER": Microscope, "HPLC-01": Cpu,
+  // Upstream
+  "UP-001": FlaskConical, "UP-002": FlaskConical,
+  // Downstream
+  "DS-101": Pipette, "DS-102": Pipette,
+  "DS-201": Pipette, "DS-202": Pipette,
+  "DS-301": TestTube, "DS-302": Wind,
+  "DS-401": TestTube, "DS-402": Pipette, "DS-403": TestTube,
+  // Analytical
+  "AN-101": Cpu, "AN-102": Cpu, "AN-103": Cpu, "AN-104": TestTube,
+  "AN-105": Microscope, "AN-106": Cpu, "AN-107": TestTube,
+  "AN-108": TestTube, "AN-109": Microscope, "AN-110": Cpu, "AN-111": Cpu,
 };
 
 const UTILITY_NODES = [
