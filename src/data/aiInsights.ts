@@ -7,6 +7,7 @@ import { getAlerts } from "./alertsEngine";
 import { getDataRecords, getRecordCountsByInterface } from "./dataRecords";
 import { INTERFACES, PARAMETERS, RUNS } from "./runData";
 import { computeCompleteness } from "./labelTemplates";
+import { METHOD_MAPPINGS, getEquipmentById } from "./equipment";
 
 // ── Recipes ──
 
@@ -67,6 +68,14 @@ export const AI_RECIPES: AiRecipe[] = [
     category: "anomaly",
     applies_to: ["*"],
     enabled: false,
+  },
+  {
+    id: "RCP-METHOD-COVERAGE",
+    name: "Analytical Method Coverage",
+    description: "Confirms each registered analytical method (HMW Aggregates, LMW Fragments, Charge Variants, Sialic Acid, Tetra-sialylated, HCP, Host Cell DNA, Surfactant) has at least one recent result upload from its assigned equipment.",
+    category: "completeness",
+    applies_to: ["AN-*"],
+    enabled: true,
   },
 ];
 

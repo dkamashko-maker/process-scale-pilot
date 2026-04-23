@@ -273,6 +273,82 @@ function ingestAuxiliary(): DataRecord[] {
 }
 
 // ────────────────────────────────────────────
+// Equipment-catalog records (analytical & downstream)
+// Seeds a small, illustrative set of result-file and operation-cycle
+// records for the new shared equipment fleet so that Data Storage,
+// Metadata Constructor, AI insights, and Reports evidence all reference
+// the same vocabulary as Equipment Dashboard v2.
+// ────────────────────────────────────────────
+
+function ingestEquipmentCatalog(): DataRecord[] {
+  const records: DataRecord[] = [];
+  const linkRunId = RUNS[0]?.run_id;
+
+  // Analytical: 2 result-file records per analytical equipment
+  const analytical = EQUIPMENT.filter((e) => e.equipmentCategory === "analytical");
+  for (const eq of analytical) {
+    const methodCode = METHOD_MAPPINGS.find((m) => m.equipmentId === eq.equipmentId)?.methodCode ?? "";
+    const baseTs = new Date(eq.lastDataReceivedAt).getTime();
+    const isManual = eq.integrationMode === "manual";
+
+    for (let i = 0; i < 2; i++) {
+      const measuredAt = new Date(baseTs - i * 86400000).toISOString();
+      const rawRef = `file://${eq.equipmentId}/${eq.currentBatch ?? "no-batch"}/result_${i}`;
+      records.push({
+        record_id: `DR-FILE-${eq.equipmentId}-${i}`,
+        measured_at: measuredAt,
+        ingested_at: new Date(new Date(measuredAt).getTime() + 120000).toISOString(),
+        interface_id: eq.equipmentId,
+        data_type: "file",
+        summary: `${eq.equipmentName} – ${eq.methodName ?? "Result"} upload`,
+        raw_ref: rawRef,
+        hash: fakeHash(rawRef),
+        attributable_to: isManual ? "QC Operator (manual upload)" : eq.equipmentId,
+        entry_mode: isManual ? "manual" : "auto",
+        labels: {
+          batch: eq.currentBatch ?? "",
+          method: eq.methodName ?? "",
+          method_code: methodCode,
+          upload_mode: isManual ? "manual" : "online",
+        },
+        completeness_score: 100,
+        quality_flags: ["in_spec"],
+        linked_run_id: linkRunId,
+      });
+    }
+  }
+
+  // Downstream: 1 operation-cycle event per downstream equipment
+  const downstream = EQUIPMENT.filter((e) => e.equipmentCategory === "downstream");
+  for (const eq of downstream) {
+    const measuredAt = eq.lastOperationAt;
+    const rawRef = `evt://${eq.equipmentId}/${eq.currentBatch ?? "idle"}/cycle`;
+    records.push({
+      record_id: `DR-EV-${eq.equipmentId}-cycle`,
+      measured_at: measuredAt,
+      ingested_at: new Date(new Date(measuredAt).getTime() + 5000).toISOString(),
+      interface_id: eq.equipmentId,
+      data_type: "event",
+      summary: `${eq.equipmentName} – ${eq.processPhase}`,
+      raw_ref: rawRef,
+      hash: fakeHash(rawRef),
+      attributable_to: eq.equipmentId,
+      entry_mode: "auto",
+      labels: {
+        batch: eq.currentBatch ?? "",
+        method: eq.methodName ?? "",
+        phase: eq.processPhase,
+      },
+      completeness_score: 100,
+      quality_flags: ["in_spec"],
+      linked_run_id: linkRunId,
+    });
+  }
+
+  return records;
+}
+
+// ────────────────────────────────────────────
 // In-memory store with raw_ref-based dedup
 // ────────────────────────────────────────────
 
