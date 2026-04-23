@@ -21,6 +21,7 @@ import AIPage from "./pages/AIPage";
 import RebuildPage from "./pages/RebuildPage";
 import ReportsPage from "./pages/ReportsPage";
 import LoginPage from "./pages/LoginPage";
+import SensorMapPage from "./pages/SensorMapPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -54,9 +55,11 @@ const App = () => {
               <Routes>
                 <Route path="/login" element={<LoginPage />} />
                 <Route element={<AuthGuard />}>
-                  <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                  <Route path="/" element={<Navigate to="/equipment" replace />} />
                   <Route path="/dashboard" element={<IntegratedDashboardPage />} />
-                  <Route path="/equipment-v2" element={<EquipmentDashboardV2Page />} />
+                  <Route path="/equipment" element={<EquipmentDashboardV2Page />} />
+                  <Route path="/equipment/sensor-map" element={<SensorMapPage />} />
+                  <Route path="/equipment-v2" element={<Navigate to="/equipment" replace />} />
                   <Route path="/run/:runId" element={<RunMonitorPage />} />
                   <Route path="/experiments" element={<RunsListPage />} />
                   <Route path="/experiments/:runId" element={<RunDetailPage />} />
