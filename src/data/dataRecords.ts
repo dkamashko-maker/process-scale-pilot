@@ -13,6 +13,7 @@
 
 import type { DataRecord, QualityFlag, ProcessEvent } from "./runTypes";
 import { RUNS, INTERFACES, PARAMETERS, getTimeseries, getInitialEvents } from "./runData";
+import { EQUIPMENT, METHOD_MAPPINGS } from "./equipment";
 
 // ────────────────────────────────────────────
 // Helpers
