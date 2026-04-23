@@ -610,8 +610,18 @@ export default function RebuildPage() {
                   node={node}
                   selected={node.id === selectedNodeId}
                   alertCount={0}
+                  isConnectSource={connectingFrom === node.id}
                   onSelect={() => handleNodeClick(node.id)}
                   onDragStart={(e) => handleNodeDragStart(node.id, e)}
+                  onStartConnect={() => setConnectingFrom(node.id)}
+                  onCompleteConnect={() => {
+                    if (connectingFrom && connectingFrom !== node.id) {
+                      addEdge(connectingFrom, node.id);
+                      setConnectingFrom(null);
+                    } else {
+                      setSelectedNodeId(node.id);
+                    }
+                  }}
                 />
               ))}
             </g>
