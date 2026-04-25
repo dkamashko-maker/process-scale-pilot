@@ -434,7 +434,6 @@ export default function ReportsPage() {
           </Button>
         </CardContent>
       </Card>
-    </div>
 
       {/* AI Config modal */}
       <Dialog open={showAiConfig} onOpenChange={setShowAiConfig}>
