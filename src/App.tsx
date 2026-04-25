@@ -22,6 +22,7 @@ import RebuildPage from "./pages/RebuildPage";
 import ReportsPage from "./pages/ReportsPage";
 import LoginPage from "./pages/LoginPage";
 import SensorMapPage from "./pages/SensorMapPage";
+import MaterialFlowPage from "./pages/MaterialFlowPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -59,6 +60,7 @@ const App = () => {
                   <Route path="/dashboard" element={<IntegratedDashboardPage />} />
                   <Route path="/equipment" element={<EquipmentDashboardV2Page />} />
                   <Route path="/equipment/sensor-map" element={<SensorMapPage />} />
+                  <Route path="/equipment/material-flow" element={<MaterialFlowPage />} />
                   <Route path="/equipment-v2" element={<Navigate to="/equipment" replace />} />
                   <Route path="/run/:runId" element={<RunMonitorPage />} />
                   <Route path="/experiments" element={<RunsListPage />} />
