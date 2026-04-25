@@ -30,22 +30,39 @@ import { EquipmentTooltip } from "@/components/equipment/EquipmentTooltip";
 // ── Small visual helpers ────────────────────────────────────────────────
 
 function StatusChip({ status }: { status: EquipmentStatus }) {
-  const map = {
-    active: { variant: "default" as const, label: "Active" },
-    idle:   { variant: "secondary" as const, label: "Idle" },
-    error:  { variant: "destructive" as const, label: "Error" },
-  };
-  return <Badge variant={map[status].variant}>{map[status].label}</Badge>;
+  const cfg = {
+    active: {
+      cls: "bg-status-active/15 text-status-active border-status-active/30",
+      dot: "bg-status-active animate-pulse",
+      label: "Active",
+    },
+    idle: {
+      cls: "bg-status-idle/10 text-status-idle border-status-idle/25",
+      dot: "bg-status-idle",
+      label: "Idle",
+    },
+    error: {
+      cls: "bg-status-error/15 text-status-error border-status-error/30",
+      dot: "bg-status-error animate-pulse",
+      label: "Error",
+    },
+  }[status];
+  return (
+    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-[11px] font-medium ${cfg.cls}`}>
+      <span className={`h-1.5 w-1.5 rounded-full ${cfg.dot}`} />
+      {cfg.label}
+    </span>
+  );
 }
 
 function ConnectionDot({ health }: { health: Equipment["connectionHealth"] }) {
   const cfg = {
-    connected: { Icon: Wifi,      cls: "text-primary",     label: "Connected" },
-    degraded:  { Icon: CircleDot, cls: "text-amber-500",   label: "Degraded" },
-    offline:   { Icon: WifiOff,   cls: "text-destructive", label: "Offline" },
+    connected: { Icon: Wifi,      cls: "text-status-active",  label: "Connected" },
+    degraded:  { Icon: CircleDot, cls: "text-status-warning", label: "Degraded" },
+    offline:   { Icon: WifiOff,   cls: "text-status-error",   label: "Offline" },
   }[health];
   return (
-    <span className={`inline-flex items-center gap-1 text-[11px] ${cfg.cls}`} title={cfg.label}>
+    <span className={`inline-flex items-center gap-1 text-[11px] font-medium ${cfg.cls}`} title={cfg.label}>
       <cfg.Icon className="h-3.5 w-3.5" />
       {cfg.label}
     </span>
@@ -54,28 +71,56 @@ function ConnectionDot({ health }: { health: Equipment["connectionHealth"] }) {
 
 function AlertChip({ count, critical }: { count: number; critical: boolean }) {
   if (count === 0) {
-    return <span className="text-[11px] text-muted-foreground inline-flex items-center gap-1"><Bell className="h-3 w-3" /> No alerts</span>;
+    return (
+      <span className="text-[11px] text-muted-foreground inline-flex items-center gap-1">
+        <Bell className="h-3 w-3" /> No alerts
+      </span>
+    );
   }
   return (
-    <Badge variant={critical ? "destructive" : "outline"} className="gap-1">
+    <span
+      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[11px] font-medium ${
+        critical
+          ? "bg-status-error/15 text-status-error border-status-error/30"
+          : "bg-status-warning/15 text-status-warning border-status-warning/30"
+      }`}
+    >
       <AlertTriangle className="h-3 w-3" />
       {count} alert{count > 1 ? "s" : ""}
-    </Badge>
+    </span>
   );
 }
 
 function Sparkline({ data }: { data: number[] }) {
   if (!data?.length) return null;
-  const w = 80, h = 22;
+  const w = 96, h = 28;
   const min = Math.min(...data), max = Math.max(...data);
   const range = max - min || 1;
   const step = w / (data.length - 1);
   const pts = data.map((v, i) => `${i * step},${h - ((v - min) / range) * h}`).join(" ");
+  const area = `0,${h} ${pts} ${w},${h}`;
   return (
-    <svg width={w} height={h} className="text-primary">
-      <polyline fill="none" stroke="currentColor" strokeWidth="1.5" points={pts} />
+    <svg width={w} height={h} className="text-primary overflow-visible">
+      <defs>
+        <linearGradient id="spark-fill" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0%" stopColor="currentColor" stopOpacity="0.25" />
+          <stop offset="100%" stopColor="currentColor" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <polygon fill="url(#spark-fill)" points={area} />
+      <polyline fill="none" stroke="currentColor" strokeWidth="1.75" points={pts} strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
+}
+
+// ── Tile shell ──
+function tileShell(status: EquipmentStatus, manual = false): string {
+  const base =
+    "group cursor-pointer rounded-lg border transition-all duration-200 shadow-tile hover:shadow-tile-hover hover:-translate-y-0.5";
+  if (manual) return `${base} bg-muted/30 border-dashed border-border hover:border-muted-foreground/40`;
+  if (status === "error")  return `${base} bg-tile-error border-status-error/30 hover:border-status-error/60`;
+  if (status === "active") return `${base} bg-tile-active border-border hover:border-primary/50`;
+  return `${base} bg-tile-idle border-border hover:border-primary/40`;
 }
 
 // ── Cards (one component per category) ──────────────────────────────────
@@ -83,129 +128,148 @@ function Sparkline({ data }: { data: number[] }) {
 function UpstreamCard({ eq, onOpen }: { eq: Equipment; onOpen: () => void }) {
   const showBatchPhase = eq.status === "active" || eq.status === "error";
   return (
-    <Card className="cursor-pointer hover:border-primary/50 transition-all hover:shadow-md" onClick={onOpen}>
-      <CardHeader className="pb-2">
-        <div className="flex items-start justify-between gap-2">
-          <div>
-            <CardTitle className="text-base">{eq.equipmentName}</CardTitle>
-            <p className="text-[11px] text-muted-foreground mt-0.5 font-mono">{eq.equipmentId}</p>
+    <EquipmentTooltip equipment={eq}>
+      <div className={tileShell(eq.status)} onClick={onOpen}>
+        <div className="p-4 pb-3">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <div className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">Bioreactor</div>
+              <div className="text-base font-semibold leading-tight truncate">{eq.equipmentName}</div>
+              <div className="text-[11px] text-muted-foreground mt-0.5 font-mono">{eq.equipmentId}</div>
+            </div>
+            <StatusChip status={eq.status} />
           </div>
-          <StatusChip status={eq.status} />
         </div>
-      </CardHeader>
-      <CardContent className="space-y-2 text-base">
-        {showBatchPhase ? (
-          <div className="space-y-0.5">
-            <div className="text-xs text-muted-foreground">Current batch</div>
-            <div className="font-mono text-xs">{eq.currentBatch ?? "—"}</div>
-            <div className="text-xs text-muted-foreground mt-1">Phase</div>
-            <div className="text-xs">{eq.processPhase}</div>
+        <div className="px-4 pb-4 space-y-2.5">
+          {showBatchPhase ? (
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Batch</div>
+                <div className="font-mono text-xs truncate">{eq.currentBatch ?? "—"}</div>
+              </div>
+              <div>
+                <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Phase</div>
+                <div className="text-xs truncate">{eq.processPhase}</div>
+              </div>
+            </div>
+          ) : (
+            <div>
+              <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Last operation</div>
+              <div className="text-xs">{format(new Date(eq.lastOperationAt), "MMM d, HH:mm")}</div>
+            </div>
+          )}
+          {eq.trendPreview && (
+            <div className="flex items-center justify-between rounded-md bg-muted/40 px-2.5 py-1.5">
+              <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Temp trend</span>
+              <Sparkline data={eq.trendPreview} />
+            </div>
+          )}
+          <div className="flex items-center justify-between pt-1 border-t">
+            <ConnectionDot health={eq.connectionHealth} />
+            <AlertChip count={eq.alertCount} critical={eq.criticalAlert} />
           </div>
-        ) : (
-          <div className="space-y-0.5">
-            <div className="text-xs text-muted-foreground">Last operation</div>
-            <div className="text-xs">{format(new Date(eq.lastOperationAt), "MMM d, HH:mm")}</div>
-          </div>
-        )}
-        {eq.trendPreview && (
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] text-muted-foreground">Temperature trend</span>
-            <Sparkline data={eq.trendPreview} />
-          </div>
-        )}
-        <Separator />
-        <div className="flex items-center justify-between">
-          <ConnectionDot health={eq.connectionHealth} />
-          <AlertChip count={eq.alertCount} critical={eq.criticalAlert} />
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </EquipmentTooltip>
   );
 }
 
 function DownstreamCard({ eq, onOpen }: { eq: Equipment; onOpen: () => void }) {
   const showBatch = eq.status === "active" || eq.status === "error";
   return (
-    <Card className="cursor-pointer hover:border-primary/50 transition-all hover:shadow-md" onClick={onOpen}>
-      <CardHeader className="pb-2">
-        <div className="flex items-start justify-between gap-2">
-          <div>
-            <CardTitle className="text-base">{eq.equipmentName}</CardTitle>
-            <p className="text-[11px] text-muted-foreground mt-0.5 font-mono">{eq.equipmentId}</p>
+    <EquipmentTooltip equipment={eq}>
+      <div className={tileShell(eq.status)} onClick={onOpen}>
+        <div className="p-4 pb-3">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <div className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">Operational</div>
+              <div className="text-base font-semibold leading-tight truncate">{eq.equipmentName}</div>
+              <div className="text-[11px] text-muted-foreground mt-0.5 font-mono">{eq.equipmentId}</div>
+            </div>
+            <StatusChip status={eq.status} />
           </div>
-          <StatusChip status={eq.status} />
         </div>
-      </CardHeader>
-      <CardContent className="space-y-2 text-base">
-        {showBatch ? (
-          <div className="space-y-0.5">
-            <div className="text-xs text-muted-foreground">Current batch</div>
-            <div className="font-mono text-xs">{eq.currentBatch ?? "—"}</div>
+        <div className="px-4 pb-4 space-y-2.5">
+          {showBatch ? (
+            <div>
+              <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Batch</div>
+              <div className="font-mono text-xs truncate">{eq.currentBatch ?? "—"}</div>
+            </div>
+          ) : (
+            <div>
+              <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Last operation</div>
+              <div className="text-xs">{format(new Date(eq.lastOperationAt), "MMM d, HH:mm")}</div>
+            </div>
+          )}
+          <div className="flex items-center justify-between pt-1 border-t">
+            <ConnectionDot health={eq.connectionHealth} />
+            <AlertChip count={eq.alertCount} critical={eq.criticalAlert} />
           </div>
-        ) : (
-          <div className="space-y-0.5">
-            <div className="text-xs text-muted-foreground">Last operation</div>
-            <div className="text-xs">{format(new Date(eq.lastOperationAt), "MMM d, HH:mm")}</div>
-          </div>
-        )}
-        <Separator />
-        <div className="flex items-center justify-between">
-          <ConnectionDot health={eq.connectionHealth} />
-          <AlertChip count={eq.alertCount} critical={eq.criticalAlert} />
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </EquipmentTooltip>
   );
 }
 
 function AnalyticalCard({ eq, onOpen }: { eq: Equipment; onOpen: () => void }) {
   const isManual = eq.integrationMode === "manual";
   return (
-    <Card
-      className={`cursor-pointer transition-all hover:shadow-md ${
-        isManual ? "bg-muted/30 border-dashed hover:border-muted-foreground/50" : "hover:border-primary/50"
-      }`}
-      onClick={onOpen}
-    >
-      <CardHeader className="pb-2">
-        <div className="flex items-start justify-between gap-2">
-          <div>
-            <CardTitle className={`text-base ${isManual ? "text-muted-foreground" : ""}`}>
-              {eq.equipmentName}
-            </CardTitle>
-            <p className="text-[11px] text-muted-foreground mt-0.5 font-mono">{eq.equipmentId}</p>
-          </div>
-          <Badge
-            variant={isManual ? "outline" : "secondary"}
-            className={`gap-1 text-[10px] ${isManual ? "text-muted-foreground" : ""}`}
-          >
-            {isManual ? <UploadCloud className="h-3 w-3" /> : <Cable className="h-3 w-3" />}
-            {isManual ? "Manual load" : "Online"}
-          </Badge>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-2 text-base">
-        <div>
-          <div className="text-muted-foreground">Method</div>
-          <div className="text-foreground">{eq.methodName ?? "—"}</div>
-        </div>
-        <div className="grid grid-cols-2 gap-2">
-          <div>
-            <div className="text-muted-foreground">Batch / series</div>
-            <div className="font-mono">{eq.currentBatch ?? "—"}</div>
-          </div>
-          <div>
-            <div className="text-muted-foreground">Last data</div>
-            <div>{format(new Date(eq.lastDataReceivedAt), "MMM d, HH:mm")}</div>
+    <EquipmentTooltip equipment={eq}>
+      <div className={tileShell(eq.status, isManual)} onClick={onOpen}>
+        <div className="p-4 pb-3">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <div className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">
+                {isManual ? "Manual upload" : "Analytical"}
+              </div>
+              <div className={`text-base font-semibold leading-tight truncate ${isManual ? "text-muted-foreground" : ""}`}>
+                {eq.equipmentName}
+              </div>
+              <div className="text-[11px] text-muted-foreground mt-0.5 font-mono">{eq.equipmentId}</div>
+            </div>
+            <span
+              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-medium ${
+                isManual
+                  ? "bg-muted text-muted-foreground border-border"
+                  : "bg-primary/10 text-primary border-primary/25"
+              }`}
+            >
+              {isManual ? <UploadCloud className="h-3 w-3" /> : <Cable className="h-3 w-3" />}
+              {isManual ? "Manual" : "Online"}
+            </span>
           </div>
         </div>
-        <Separator />
-        <div className="flex items-center justify-between">
-          <ConnectionDot health={eq.connectionHealth} />
-          <AlertChip count={eq.alertCount} critical={eq.criticalAlert} />
+        <div className="px-4 pb-4 space-y-2 text-xs">
+          <div className="flex items-start gap-1.5">
+            <Layers className="h-3 w-3 mt-0.5 text-muted-foreground shrink-0" />
+            <div className="min-w-0">
+              <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Method</div>
+              <div className="truncate">{eq.methodName ?? "—"}</div>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="flex items-start gap-1.5">
+              <Hash className="h-3 w-3 mt-0.5 text-muted-foreground shrink-0" />
+              <div className="min-w-0">
+                <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Batch</div>
+                <div className="font-mono truncate">{eq.currentBatch ?? "—"}</div>
+              </div>
+            </div>
+            <div className="flex items-start gap-1.5">
+              <Clock className="h-3 w-3 mt-0.5 text-muted-foreground shrink-0" />
+              <div className="min-w-0">
+                <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Last data</div>
+                <div className="truncate">{format(new Date(eq.lastDataReceivedAt), "MMM d, HH:mm")}</div>
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center justify-between pt-1 border-t">
+            <ConnectionDot health={eq.connectionHealth} />
+            <AlertChip count={eq.alertCount} critical={eq.criticalAlert} />
+          </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </EquipmentTooltip>
   );
 }
 
