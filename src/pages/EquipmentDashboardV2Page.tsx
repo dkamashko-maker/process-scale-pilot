@@ -405,8 +405,8 @@ export default function EquipmentDashboardV2Page() {
         </p>
       </div>
 
-      {/* KPI strip */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+      {/* KPI strip (compact) */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
         <KpiTile label="Connected"               value={kpis.connected}               Icon={Wifi} />
         <KpiTile label="Active"                  value={kpis.active}                  Icon={Activity} />
         <KpiTile label="Idle"                    value={kpis.idle}                    Icon={CircleDot} />
@@ -444,12 +444,27 @@ export default function EquipmentDashboardV2Page() {
         </CardContent>
       </Card>
 
-      {/* Tabs */}
+      {/* Category tabs — primary navigation */}
       <Tabs value={tab} onValueChange={(v) => setTab(v as EquipmentCategory)}>
-        <TabsList>
-          <TabsTrigger value="upstream">Upstream Process Equipment</TabsTrigger>
-          <TabsTrigger value="downstream">Downstream Process Equipment</TabsTrigger>
-          <TabsTrigger value="analytical">Analytical Equipment &amp; Assays</TabsTrigger>
+        <TabsList className="h-auto w-full flex flex-wrap gap-2 bg-muted/50 p-1.5">
+          <TabsTrigger
+            value="upstream"
+            className="flex-1 min-w-[200px] text-base font-semibold py-3 px-5 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+          >
+            Upstream Process Equipment
+          </TabsTrigger>
+          <TabsTrigger
+            value="downstream"
+            className="flex-1 min-w-[200px] text-base font-semibold py-3 px-5 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+          >
+            Downstream Process Equipment
+          </TabsTrigger>
+          <TabsTrigger
+            value="analytical"
+            className="flex-1 min-w-[200px] text-base font-semibold py-3 px-5 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+          >
+            Analytical Equipment &amp; Assays
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="upstream" className="mt-4">
@@ -481,13 +496,13 @@ export default function EquipmentDashboardV2Page() {
 
 function KpiTile({ label, value, Icon }: { label: string; value: number; Icon: React.ComponentType<{ className?: string }> }) {
   return (
-    <Card className="p-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <div className="text-xs text-muted-foreground">{label}</div>
-          <div className="text-2xl font-bold mt-0.5">{value}</div>
+    <Card className="p-3">
+      <div className="flex items-center justify-between gap-2">
+        <div className="min-w-0">
+          <div className="text-[10px] uppercase tracking-wide text-muted-foreground truncate">{label}</div>
+          <div className="text-lg font-semibold mt-0.5 leading-tight">{value}</div>
         </div>
-        <Icon className="h-5 w-5 text-muted-foreground" />
+        <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
       </div>
     </Card>
   );
