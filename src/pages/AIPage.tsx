@@ -7,7 +7,7 @@ import {
 import {
   Brain, Lightbulb, Settings2, AlertTriangle, CheckCircle2,
   ExternalLink, Shield, Tag, TrendingUp, Zap, Info,
-  MessageSquare, Send, Trash2, Download, Loader2,
+  MessageSquare, Send, Trash2, Download, Loader2, FileText,
 } from "lucide-react";
 import { InfoTooltip } from "@/components/shared/InfoTooltip";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
