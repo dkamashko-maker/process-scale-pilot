@@ -91,7 +91,7 @@ function UpstreamCard({ eq, onOpen }: { eq: Equipment; onOpen: () => void }) {
           <StatusChip status={eq.status} />
         </div>
       </CardHeader>
-      <CardContent className="space-y-2 text-sm">
+      <CardContent className="space-y-2 text-base">
         {showBatchPhase ? (
           <div className="space-y-0.5">
             <div className="text-xs text-muted-foreground">Current batch</div>
@@ -134,7 +134,7 @@ function DownstreamCard({ eq, onOpen }: { eq: Equipment; onOpen: () => void }) {
           <StatusChip status={eq.status} />
         </div>
       </CardHeader>
-      <CardContent className="space-y-2 text-sm">
+      <CardContent className="space-y-2 text-base">
         {showBatch ? (
           <div className="space-y-0.5">
             <div className="text-xs text-muted-foreground">Current batch</div>
@@ -182,7 +182,7 @@ function AnalyticalCard({ eq, onOpen }: { eq: Equipment; onOpen: () => void }) {
           </Badge>
         </div>
       </CardHeader>
-      <CardContent className="space-y-2 text-xs">
+      <CardContent className="space-y-2 text-base">
         <div>
           <div className="text-muted-foreground">Method</div>
           <div className="text-foreground">{eq.methodName ?? "—"}</div>
