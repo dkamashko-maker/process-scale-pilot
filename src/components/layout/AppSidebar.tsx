@@ -21,7 +21,7 @@ import {
 const navItems = [
   { title: "Data Storage", url: "/data-storage", icon: Database },
   { title: "Reports", url: "/reports", icon: FileText },
-  { title: "AI", url: "/ai", icon: Brain },
+  { title: "Insights", url: "/ai", icon: Brain },
 ];
 
 export function AppSidebar() {
