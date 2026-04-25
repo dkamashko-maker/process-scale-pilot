@@ -899,9 +899,90 @@ export default function RebuildPage() {
                   <Input className="h-7 text-xs pl-7" placeholder="Search…" value={paletteSearch} onChange={(e) => setPaletteSearch(e.target.value)} />
                 </div>
 
-                {/* Devices */}
+                {/* Quick add — author from scratch */}
                 <div>
-                  <p className="text-[10px] font-semibold text-muted-foreground uppercase mb-1.5">Devices</p>
+                  <p className="text-[10px] font-semibold text-muted-foreground uppercase mb-1.5">Create from scratch</p>
+                  <div className="grid grid-cols-2 gap-1">
+                    <Button variant="outline" size="sm" className="h-7 text-[10px] gap-1 justify-start"
+                      onClick={() => addEquipmentNode()}>
+                      <Boxes className="h-3 w-3" style={{ color: NODE_COLORS.equipment }} /> Equipment
+                    </Button>
+                    <Button variant="outline" size="sm" className="h-7 text-[10px] gap-1 justify-start"
+                      onClick={() => addMethodNode()}>
+                      <Beaker className="h-3 w-3" style={{ color: NODE_COLORS.method }} /> Method
+                    </Button>
+                    <Button variant="outline" size="sm" className="h-7 text-[10px] gap-1 justify-start"
+                      onClick={() => addNode("decision", "Decision", { description: "Routes flow based on a rule." })}>
+                      <GitBranch className="h-3 w-3" style={{ color: NODE_COLORS.decision }} /> Decision
+                    </Button>
+                    <Button variant="outline" size="sm" className="h-7 text-[10px] gap-1 justify-start"
+                      onClick={() => addNode("data_op", "Data op", { description: "Custom data operation." })}>
+                      <FileText className="h-3 w-3" style={{ color: NODE_COLORS.data_op }} /> Data op
+                    </Button>
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Equipment catalog */}
+                <div>
+                  <p className="text-[10px] font-semibold text-muted-foreground uppercase mb-1.5 flex items-center gap-1">
+                    <Boxes className="h-3 w-3" /> Equipment catalog
+                  </p>
+                  <div className="space-y-1">
+                    {filteredEquipment.map((eq) => (
+                      <button
+                        key={eq.equipmentId}
+                        className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-xs hover:bg-accent/50 transition-colors text-left"
+                        onClick={() => addEquipmentNode(eq.equipmentId)}
+                        title={`${eq.equipmentName} · ${eq.equipmentCategory}`}
+                      >
+                        <span className="h-2 w-2 rounded-full shrink-0" style={{ background: NODE_COLORS.equipment }} />
+                        <div className="min-w-0">
+                          <p className="truncate font-medium">{eq.equipmentName}</p>
+                          <p className="text-[9px] text-muted-foreground font-mono">{eq.equipmentId} · {eq.equipmentCategory}</p>
+                        </div>
+                      </button>
+                    ))}
+                    {filteredEquipment.length === 0 && (
+                      <p className="text-[9px] text-muted-foreground italic px-2">No matching equipment.</p>
+                    )}
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Method catalog */}
+                <div>
+                  <p className="text-[10px] font-semibold text-muted-foreground uppercase mb-1.5 flex items-center gap-1">
+                    <Beaker className="h-3 w-3" /> Method catalog
+                  </p>
+                  <div className="space-y-1">
+                    {filteredMethods.map((m) => (
+                      <button
+                        key={m.id}
+                        className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-xs hover:bg-accent/50 transition-colors text-left"
+                        onClick={() => addMethodNode(m.id)}
+                        title={`${m.name} (${m.code}) · ${m.category}`}
+                      >
+                        <span className="h-2 w-2 rounded-full shrink-0" style={{ background: NODE_COLORS.method }} />
+                        <div className="min-w-0">
+                          <p className="truncate font-medium">{m.name}</p>
+                          <p className="text-[9px] text-muted-foreground font-mono">{m.code} · {m.category}</p>
+                        </div>
+                      </button>
+                    ))}
+                    {filteredMethods.length === 0 && (
+                      <p className="text-[9px] text-muted-foreground italic px-2">No matching method.</p>
+                    )}
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Devices (legacy interfaces — kept for simulation runs) */}
+                <div>
+                  <p className="text-[10px] font-semibold text-muted-foreground uppercase mb-1.5">Devices (interfaces)</p>
                   <div className="space-y-1">
                     {filteredDevices.map((iface) => {
                       const Icon = DEVICE_ICONS[iface.id] || Gauge;
