@@ -63,7 +63,7 @@ function computeDeviations(ts: TimeseriesPoint[], params: ParameterDef[]): Devia
     .sort((a, b) => b.pctOut - a.pctOut);
 }
 
-// ── Interface Card (compact) ──
+// ── Interface Card (commercial polish — aligned with Equipment Dashboard) ──
 function InterfaceCard({ iface, alertCount, delay, onClick }: {
   iface: InstrumentInterface; alertCount: number; delay: number; onClick: () => void;
 }) {
@@ -72,47 +72,65 @@ function InterfaceCard({ iface, alertCount, delay, onClick }: {
   const Icon = INTERFACE_ICONS[iface.id] || Gauge;
   const polledAgo = formatDistanceToNow(new Date(iface.last_polled_at), { addSuffix: true });
 
+  // Map interface status to visual tone
+  const toneCls =
+    iface.status === "Connected"
+      ? "bg-tile-active border-border hover:border-primary/50"
+      : iface.status === "Degraded"
+      ? "bg-tile-idle border-status-warning/30 hover:border-status-warning/60"
+      : "bg-tile-error border-status-error/30 hover:border-status-error/60";
+
+  const chipCls =
+    iface.status === "Connected"
+      ? "bg-status-active/15 text-status-active border-status-active/30"
+      : iface.status === "Degraded"
+      ? "bg-status-warning/15 text-status-warning border-status-warning/30"
+      : "bg-status-error/15 text-status-error border-status-error/30";
+
   return (
-    <Card
-      className="cursor-pointer hover:border-primary/50 transition-all hover:shadow-md opacity-0 animate-fade-in group"
+    <div
+      className={`group cursor-pointer rounded-lg border shadow-tile hover:shadow-tile-hover hover:-translate-y-0.5 transition-all duration-200 opacity-0 animate-fade-in ${toneCls}`}
       style={{ animationDelay: `${delay}ms` }}
       onClick={onClick}
     >
-      <CardContent className="p-4 space-y-3">
+      <div className="p-4 space-y-3">
         <div className="flex items-start justify-between gap-2">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="rounded-md bg-primary/10 p-2 flex-shrink-0 group-hover:bg-primary/15 transition-colors">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="rounded-md bg-primary/10 p-2.5 flex-shrink-0 group-hover:bg-primary/15 transition-colors">
               <Icon className="h-5 w-5 text-primary" />
             </div>
             <div className="min-w-0">
-              <h3 className="font-semibold text-sm truncate">{iface.display_name}</h3>
-              <p className="text-[10px] text-muted-foreground font-mono">{iface.id}</p>
+              <div className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">{iface.category}</div>
+              <h3 className="font-semibold text-base leading-tight truncate">{iface.display_name}</h3>
+              <p className="text-[11px] text-muted-foreground font-mono">{iface.id}</p>
             </div>
           </div>
-          <Badge variant={statusCfg.variant} className="text-[10px] gap-1 flex-shrink-0">
+          <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-[11px] font-medium flex-shrink-0 ${chipCls}`}>
             <StatusIcon className="h-3 w-3" />
             {statusCfg.label}
-          </Badge>
+          </span>
         </div>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5">
+        <div className="flex items-center justify-between pt-2 border-t">
+          <div className="flex items-center gap-1.5 text-muted-foreground">
             {iface.data_types.map((dt) => {
               const cfg = DATA_TYPE_ICONS[dt];
               const DtIcon = cfg.icon;
-              return <div key={dt} className="flex items-center gap-0.5 text-muted-foreground" title={cfg.label}><DtIcon className="h-3 w-3" /></div>;
+              return <DtIcon key={dt} className="h-3.5 w-3.5" aria-label={cfg.label} />;
             })}
           </div>
-        </div>
-        <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-          <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{polledAgo}</span>
+          <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+            <Clock className="h-3 w-3" />{polledAgo}
+          </span>
           {alertCount > 0 ? (
-            <span className="flex items-center gap-1 text-destructive font-medium"><AlertTriangle className="h-3 w-3" />{alertCount} alert{alertCount !== 1 ? "s" : ""}</span>
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[11px] font-medium bg-status-error/15 text-status-error border-status-error/30">
+              <AlertTriangle className="h-3 w-3" />{alertCount}
+            </span>
           ) : (
-            <span className="flex items-center gap-1 text-muted-foreground/60">0 alerts</span>
+            <span className="text-[11px] text-muted-foreground/70">No alerts</span>
           )}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 
