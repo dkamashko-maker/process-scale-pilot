@@ -324,19 +324,53 @@ export default function RebuildPage() {
     return UTILITY_NODES.filter((u) => u.label.toLowerCase().includes(q));
   }, [paletteSearch]);
 
+  const filteredEquipment = useMemo(() => {
+    const q = paletteSearch.toLowerCase();
+    return EQUIPMENT.filter(
+      (e) => e.equipmentName.toLowerCase().includes(q) || e.equipmentId.toLowerCase().includes(q),
+    );
+  }, [paletteSearch]);
+
+  const filteredMethods = useMemo(() => {
+    const q = paletteSearch.toLowerCase();
+    return METHODS.filter(
+      (m) => m.name.toLowerCase().includes(q) || m.code.toLowerCase().includes(q),
+    );
+  }, [paletteSearch]);
+
   // ── Node operations ──
-  const addNode = useCallback((type: PipelineNode["type"], label: string, interfaceId?: string) => {
+  const addNode = useCallback((type: PipelineNode["type"], label: string, extra?: Partial<PipelineNode>) => {
     const id = `node-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
     const x = snapToGrid(200 + Math.random() * 300 - pan.x);
     const y = snapToGrid(100 + Math.random() * 200 - pan.y);
+
+    // Default I/O per kind
+    const defaults: Partial<PipelineNode> = {};
+    if (type === "equipment") {
+      defaults.inputs = ["material_in"];
+      defaults.outputs = ["material_out"];
+      defaults.criticality = "medium";
+    } else if (type === "method") {
+      defaults.inputs = ["sample"];
+      defaults.outputs = ["result"];
+    } else if (type === "decision") {
+      defaults.inputs = ["input"];
+      defaults.outputs = ["pass", "fail"];
+    } else if (type === "data_op") {
+      defaults.inputs = ["data"];
+      defaults.outputs = ["data_record"];
+    }
+
     const newNode: PipelineNode = {
       id, type, label, x, y,
-      interface_id: interfaceId,
       selected_run_ids: [],
       parameters: [],
       anomaly_threshold: type === "ml_insight" ? 70 : undefined,
       forecast_hours: type === "ml_insight" ? 12 : undefined,
       apply_parameter_codes: [],
+      alertRelevant: type === "alert_generator",
+      ...defaults,
+      ...extra,
     };
     setPipeline((prev) => ({
       ...prev,
@@ -344,6 +378,55 @@ export default function RebuildPage() {
     }));
     setSelectedNodeId(id);
   }, [pan]);
+
+  /** Add an equipment node bound to a catalog entry (or blank if id omitted). */
+  const addEquipmentNode = useCallback((equipmentId?: string) => {
+    if (equipmentId) {
+      const eq = getEquipmentById(equipmentId);
+      if (!eq) return;
+      addNode("equipment", eq.equipmentName, {
+        linkedEquipmentId: equipmentId,
+        description: `${eq.equipmentName} (${eq.equipmentCategory})`,
+        criticality: eq.criticality ?? "medium",
+        metadata: { ...(eq.metadata ?? {}) },
+      });
+    } else {
+      addNode("equipment", "New Equipment", {
+        description: "Custom equipment node — link to a fleet entry or describe manually.",
+      });
+    }
+  }, [addNode]);
+
+  /** Add a method node bound to a catalog entry (or blank if id omitted). */
+  const addMethodNode = useCallback((methodId?: string) => {
+    if (methodId) {
+      const m = getMethodById(methodId);
+      if (!m) return;
+      addNode("method", `${m.name} (${m.code})`, {
+        linkedMethodId: methodId,
+        linkedEquipmentId: m.primaryEquipmentId,
+        description: m.notes ?? `${m.name} — ${m.category}`,
+        processDetails: m.unit ? `Reports in ${m.unit}.` : undefined,
+        metadata: m.acceptance
+          ? {
+              ...(m.acceptance.min !== undefined ? { acceptanceMin: m.acceptance.min } : {}),
+              ...(m.acceptance.max !== undefined ? { acceptanceMax: m.acceptance.max } : {}),
+              ...(m.acceptance.target !== undefined ? { target: m.acceptance.target } : {}),
+            }
+          : undefined,
+      });
+    } else {
+      addNode("method", "New Method", {
+        description: "Custom method node — link to a method catalog entry or describe manually.",
+      });
+    }
+  }, [addNode]);
+
+  /** Add a generic device node (legacy palette path). */
+  const addDeviceNode = useCallback((label: string, interfaceId: string) => {
+    addNode("device", label, { interface_id: interfaceId });
+  }, [addNode]);
+
 
   const updateNode = useCallback((nodeId: string, updates: Partial<PipelineNode>) => {
     setPipeline((prev) => ({
