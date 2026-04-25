@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   Database, Construction, Brain, Activity, FileText,
-  Map, ChevronDown, ChevronRight, Workflow, Boxes, GitBranch,
+  Map, ChevronDown, ChevronRight, Workflow, Boxes, GitBranch, ClipboardList,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { RUNS } from "@/data/runData";
@@ -114,15 +114,26 @@ export function AppSidebar() {
               </SidebarMenuItem>
 
               {!collapsed && metadataOpen && (
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    className={`flex items-center gap-3 pl-8 pr-3 py-1.5 text-sm rounded-lg transition-colors cursor-pointer hover:bg-accent ${location.pathname === "/metadata/rebuild" ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:text-foreground"}`}
-                    onClick={() => navigate("/metadata/rebuild")}
-                  >
-                    <Workflow className="h-4 w-4 flex-shrink-0" />
-                    <span>Workflow Canvas</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
+                <>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      className={`flex items-center gap-3 pl-8 pr-3 py-1.5 text-sm rounded-lg transition-colors cursor-pointer hover:bg-accent ${location.pathname === "/metadata/rebuild" ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                      onClick={() => navigate("/metadata/rebuild")}
+                    >
+                      <Workflow className="h-4 w-4 flex-shrink-0" />
+                      <span>Workflow Canvas</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      className={`flex items-center gap-3 pl-8 pr-3 py-1.5 text-sm rounded-lg transition-colors cursor-pointer hover:bg-accent ${location.pathname === "/metadata/configurator" ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                      onClick={() => navigate("/metadata/configurator")}
+                    >
+                      <ClipboardList className="h-4 w-4 flex-shrink-0" />
+                      <span>Metadata Configurator</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </>
               )}
 
               {/* Other nav items */}
