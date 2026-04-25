@@ -99,12 +99,17 @@ export const METADATA_RULES: Record<
   ],
 };
 
-/** Picks the rule set a given equipment unit should follow. */
+/** Picks the rule set a given equipment unit should follow.
+ *  Bioreactors → richest set. Non-bioreactor operational equipment → reduced
+ *  operational set. Analytical equipment → result-centric set. */
 export function getMetadataRuleFor(equipmentId: string): string[] {
   const eq = EQUIPMENT.find((e) => e.equipmentId === equipmentId);
   if (!eq) return [];
   if (eq.equipmentCategory === "analytical") return METADATA_RULES.analytical;
-  if (eq.equipmentCategory === "upstream")   return METADATA_RULES.bioreactor;
+  // Treat as bioreactor only if the unit is actually one (name-based heuristic
+  // so future non-bioreactor upstream units fall back to operational metadata).
+  const isBioreactor = /bioreactor|fermenter/i.test(eq.equipmentName);
+  if (eq.equipmentCategory === "upstream" && isBioreactor) return METADATA_RULES.bioreactor;
   return METADATA_RULES.operational;
 }
 
