@@ -64,6 +64,35 @@ export default {
           "4": "hsl(var(--chart-4))",
           "5": "hsl(var(--chart-5))",
         },
+        status: {
+          active: {
+            DEFAULT: "hsl(var(--status-active))",
+            foreground: "hsl(var(--status-active-foreground))",
+            soft: "hsl(var(--status-active-soft))",
+          },
+          idle: {
+            DEFAULT: "hsl(var(--status-idle))",
+            soft: "hsl(var(--status-idle-soft))",
+          },
+          error: {
+            DEFAULT: "hsl(var(--status-error))",
+            foreground: "hsl(var(--status-error-foreground))",
+            soft: "hsl(var(--status-error-soft))",
+          },
+          warning: {
+            DEFAULT: "hsl(var(--status-warning))",
+            soft: "hsl(var(--status-warning-soft))",
+          },
+        },
+      },
+      backgroundImage: {
+        "tile-active": "var(--tile-gradient-active)",
+        "tile-idle": "var(--tile-gradient-idle)",
+        "tile-error": "var(--tile-gradient-error)",
+      },
+      boxShadow: {
+        tile: "var(--shadow-tile)",
+        "tile-hover": "var(--shadow-tile-hover)",
       },
       borderRadius: {
         lg: "var(--radius)",
