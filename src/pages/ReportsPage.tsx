@@ -154,314 +154,287 @@ export default function ReportsPage() {
   const isSigned = !!activeReport?.signed_by;
 
   return (
-    <div className="space-y-4 p-4 max-w-[1600px] mx-auto">
-      {/* A) Active loaded report header */}
-      <Card className="border-l-4 border-l-primary">
+    <div className="space-y-4 p-4 max-w-[1400px] mx-auto">
+      {/* Page intro — clarifies Reports vs Insights distinction */}
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-xl font-bold flex items-center gap-2">
+            <FileText className="h-5 w-5 text-primary" /> Reports
+          </h1>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Document-centric view: review the latest signed/unsigned report and generate new content.
+            For observational analytics, see{" "}
+            <button onClick={() => navigate("/ai")} className="underline hover:text-foreground">Insights</button>.
+          </p>
+        </div>
+        <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+          <Badge variant="outline" className="gap-1"><Archive className="h-3 w-3" /> {archiveCount} Archived</Badge>
+          <Badge variant="outline" className="gap-1"><FileText className="h-3 w-3" /> {inProgressCount} In Progress</Badge>
+          <Badge variant="outline" className={`gap-1 ${issuesCount ? "border-destructive text-destructive" : ""}`}>
+            <AlertTriangle className="h-3 w-3" /> {issuesCount} Issues
+          </Badge>
+        </div>
+      </div>
+
+      {/* ─────────── LATEST / ACTIVE REPORT — prominent, full-width ─────────── */}
+      <Card className="border-l-4 border-l-primary shadow-sm">
         <CardContent className="py-4 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <FileText className="h-5 w-5 text-primary" />
+            <div className="rounded-md bg-primary/10 p-2">
+              <FileText className="h-6 w-6 text-primary" />
+            </div>
             <div>
-              <p className="text-xs text-muted-foreground font-medium">Active Loaded Report</p>
-              <h2 className="text-lg font-bold">{activeReport?.report_no || "–"}</h2>
+              <div className="flex items-center gap-2">
+                <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold">Latest Report</p>
+                <StatusBadge status={activeReport?.status || "Archive"} />
+                {isSigned && (
+                  <Badge variant="outline" className="gap-1 text-[10px]">
+                    <Lock className="h-3 w-3" /> Signed
+                  </Badge>
+                )}
+              </div>
+              <h2 className="text-2xl font-bold mt-0.5">{activeReport?.report_no || "–"}</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {activeReport ? format(new Date(activeReport.report_date), "MMM d, yyyy HH:mm") : "–"}
+                {linkedRun?.batch_id && <> · Batch <span className="font-mono">{linkedRun.batch_id}</span></>}
+                {activeReport && <> · v{activeReport.version}</>}
+              </p>
             </div>
           </div>
-          <div className="flex items-center gap-6 text-sm">
-            <div>
-              <span className="text-muted-foreground">Report Date: </span>
-              <span className="font-medium">{activeReport ? format(new Date(activeReport.report_date), "MMM d, yyyy HH:mm") : "–"}</span>
-            </div>
-            <div>
-              <span className="text-muted-foreground">Batch No: </span>
-              <span className="font-medium">{linkedRun?.batch_id || "–"}</span>
-            </div>
-            <StatusBadge status={activeReport?.status || "Archive"} />
-            {isSigned && (
-              <Badge variant="outline" className="gap-1 text-xs">
-                <Lock className="h-3 w-3" /> Signed
-              </Badge>
-            )}
+          <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" className="gap-1" onClick={() => navigate(`/run/${activeReport?.linked_run_id}`)}>
               <ExternalLink className="h-3.5 w-3.5" /> View Run
+            </Button>
+            {isManager && (
+              <Button size="sm" onClick={handleSign}>
+                {isSigned ? "Create New Version" : "Sign Report"}
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* QC Report — main report content, full width */}
+      <Card className="border-2 border-primary/20">
+        <CardHeader className="py-3 px-4">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base flex items-center gap-2">
+              <CheckCircle2 className="h-5 w-5 text-primary" /> QC Report
+              {isSigned && <Badge variant="outline" className="text-[10px] gap-1"><Lock className="h-2.5 w-2.5" /> Locked</Badge>}
+            </CardTitle>
+            <Badge variant="secondary" className="text-[10px]">
+              {activeReport?.qc_rows.filter((r) => r.status === "Pass").length}/{activeReport?.qc_rows.length} Pass
+            </Badge>
+          </div>
+        </CardHeader>
+        <CardContent className="px-4 pb-4">
+          <ScrollArea className="max-h-[480px]">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-xs font-semibold">QA Parameter</TableHead>
+                  <TableHead className="text-xs font-semibold">Result / Value</TableHead>
+                  <TableHead className="text-xs font-semibold">Reference / Target</TableHead>
+                  <TableHead className="text-xs font-semibold">Status</TableHead>
+                  <TableHead className="text-xs font-semibold">Assay / Method</TableHead>
+                  <TableHead className="text-xs font-semibold">SOP</TableHead>
+                  <TableHead className="text-xs font-semibold">Specification</TableHead>
+                  <TableHead className="text-xs font-semibold">Responsible</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {activeReport?.qc_rows.map((row, i) => (
+                  <TableRow key={i} className={row.status === "Fail" ? "bg-destructive/5" : ""}>
+                    <TableCell className="text-xs font-medium">{row.parameter}</TableCell>
+                    <TableCell className="text-xs font-mono">{row.value}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{row.reference}</TableCell>
+                    <TableCell>
+                      <Badge
+                        variant="outline"
+                        className={`text-[10px] ${row.status === "Pass" ? "border-green-500/50 text-green-600" : row.status === "Fail" ? "border-destructive/50 text-destructive" : "border-yellow-500/50 text-yellow-600"}`}
+                      >
+                        {row.status === "Fail" ? "NOT PASS" : row.status.toUpperCase()}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{row.assayMethod}</TableCell>
+                    <TableCell className="text-xs font-mono text-muted-foreground">{row.assayNumber}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground max-w-[200px] truncate" title={row.specification}>{row.specification}</TableCell>
+                    <TableCell className="text-xs">{row.responsiblePerson}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </ScrollArea>
+        </CardContent>
+      </Card>
+
+      {/* Sign & Comment — compact strip beneath QC */}
+      <Card>
+        <CardHeader className="py-3 px-4">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Shield className="h-4 w-4" /> Sign & Comment
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="px-4 pb-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="md:col-span-2">
+            <Label className="text-xs">Comment</Label>
+            <Textarea
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              placeholder="Add review comment…"
+              className="text-xs mt-1 h-20 resize-none"
+              disabled={isSigned && !isManager}
+            />
+            {!isSigned && canLogEvents && (
+              <Button variant="outline" size="sm" className="mt-2 text-xs h-7" onClick={handleSaveComment}>
+                Save Comment
+              </Button>
+            )}
+          </div>
+          <div className="space-y-2 text-xs">
+            {isSigned ? (
+              <div className="flex items-start gap-2 text-muted-foreground">
+                <Lock className="h-3.5 w-3.5 mt-0.5" />
+                <span>
+                  Signed by <strong className="text-foreground">{activeReport?.signed_by}</strong> at{" "}
+                  {activeReport?.signed_at ? format(new Date(activeReport.signed_at), "MMM d, HH:mm") : "–"}
+                </span>
+              </div>
+            ) : (
+              <p className="text-muted-foreground italic">Not signed yet.</p>
+            )}
+            {!isManager && !isSigned && (
+              <p className="text-[10px] text-muted-foreground italic">Only a Manager can sign reports.</p>
+            )}
+            {activeReport && (
+              <p className="text-[10px] text-muted-foreground">Version: {activeReport.version} · Created by: {activeReport.created_by}</p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ─────────── REPORT GENERATOR — beneath the report ─────────── */}
+      <Card>
+        <CardHeader className="py-3 px-4">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <MessageSquare className="h-4 w-4" /> Report Generator
+            </CardTitle>
+            <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setShowAiConfig(true)}>
+              <Settings2 className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+          <p className="text-[11px] text-muted-foreground mt-1">
+            Draft new report content for the loaded report. Ask for a summary, QC analysis, batch comparison, or recommendations.
+          </p>
+        </CardHeader>
+        <CardContent className="px-4 pb-4">
+          <ScrollArea className="h-[260px] border rounded-md p-3 mb-3 bg-muted/30">
+            {chatMessages.length === 0 ? (
+              <p className="text-xs text-muted-foreground italic text-center pt-10">
+                Type "summary", "alerts", "qc", "compare", or "recommend" to generate a draft.
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {chatMessages.map((msg, i) => (
+                  <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                    <div className={`max-w-[90%] rounded-lg px-3 py-2 text-xs ${msg.role === "user" ? "bg-primary text-primary-foreground" : "bg-card border"}`}>
+                      <pre className="whitespace-pre-wrap font-sans">{msg.text}</pre>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </ScrollArea>
+          <div className="flex gap-2">
+            <Input
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+              placeholder="Ask the generator to draft a section…"
+              className="text-xs h-8"
+              onKeyDown={(e) => e.key === "Enter" && handleChat()}
+            />
+            <Button size="sm" className="h-8 w-8 p-0" onClick={handleChat}>
+              <Send className="h-3.5 w-3.5" />
             </Button>
           </div>
         </CardContent>
       </Card>
 
-
-      {/* Main content grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Left column: QC Report (main) + AI Report Generator + Reports Table (collapsible) */}
-        <div className="lg:col-span-2 space-y-4">
-          {/* QC Report – MAIN ELEMENT */}
-          <Card className="border-2 border-primary/20">
-            <CardHeader className="py-3 px-4">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <CheckCircle2 className="h-5 w-5 text-primary" /> QC Report
-                  {isSigned && <Badge variant="outline" className="text-[10px] gap-1"><Lock className="h-2.5 w-2.5" /> Locked</Badge>}
-                </CardTitle>
-                <div className="flex items-center gap-2">
-                  <Badge variant="secondary" className="text-[10px]">
-                    {activeReport?.qc_rows.filter((r) => r.status === "Pass").length}/{activeReport?.qc_rows.length} Pass
-                  </Badge>
-                </div>
-              </div>
+      {/* Reports Table — collapsible archive */}
+      <Collapsible open={reportsTableOpen} onOpenChange={setReportsTableOpen}>
+        <Card>
+          <CollapsibleTrigger asChild>
+            <CardHeader className="py-3 px-4 cursor-pointer hover:bg-muted/50 transition-colors">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Archive className="h-4 w-4" /> All Reports
+                <Badge variant="secondary" className="text-[10px]">{reports.length}</Badge>
+                <span className="ml-auto">
+                  {reportsTableOpen ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+                </span>
+              </CardTitle>
             </CardHeader>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
             <CardContent className="px-4 pb-4">
-              <ScrollArea className="max-h-[420px]">
+              <ScrollArea className="h-[220px]">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="text-xs font-semibold">QA Parameter</TableHead>
-                      <TableHead className="text-xs font-semibold">Result / Value</TableHead>
-                      <TableHead className="text-xs font-semibold">Reference / Target</TableHead>
-                      <TableHead className="text-xs font-semibold">Status</TableHead>
-                      <TableHead className="text-xs font-semibold">Assay / Method</TableHead>
-                      <TableHead className="text-xs font-semibold">SOP</TableHead>
-                      <TableHead className="text-xs font-semibold">Specification</TableHead>
-                      <TableHead className="text-xs font-semibold">Responsible</TableHead>
+                      <TableHead className="text-xs">Report No</TableHead>
+                      <TableHead className="text-xs">Report Date</TableHead>
+                      <TableHead className="text-xs">Batch No</TableHead>
+                      <TableHead className="text-xs">Status</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {activeReport?.qc_rows.map((row, i) => (
-                      <TableRow key={i} className={row.status === "Fail" ? "bg-destructive/5" : ""}>
-                        <TableCell className="text-xs font-medium">{row.parameter}</TableCell>
-                        <TableCell className="text-xs font-mono">{row.value}</TableCell>
-                        <TableCell className="text-xs text-muted-foreground">{row.reference}</TableCell>
-                        <TableCell>
-                          <Badge
-                            variant="outline"
-                            className={`text-[10px] ${row.status === "Pass" ? "border-green-500/50 text-green-600" : row.status === "Fail" ? "border-destructive/50 text-destructive" : "border-yellow-500/50 text-yellow-600"}`}
-                          >
-                            {row.status === "Fail" ? "NOT PASS" : row.status.toUpperCase()}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-xs text-muted-foreground">{row.assayMethod}</TableCell>
-                        <TableCell className="text-xs font-mono text-muted-foreground">{row.assayNumber}</TableCell>
-                        <TableCell className="text-xs text-muted-foreground max-w-[200px] truncate" title={row.specification}>{row.specification}</TableCell>
-                        <TableCell className="text-xs">{row.responsiblePerson}</TableCell>
-                      </TableRow>
-                    ))}
+                    {reports.map((r) => {
+                      const run = RUNS.find((ru) => ru.run_id === r.linked_run_id);
+                      return (
+                        <TableRow
+                          key={r.report_id}
+                          className={`cursor-pointer transition-colors ${r.report_id === activeReportId ? "bg-accent" : "hover:bg-muted/50"}`}
+                          onClick={() => {
+                            setActiveReportId(r.report_id);
+                            setComment(r.comment || "");
+                            setChatMessages([]);
+                          }}
+                        >
+                          <TableCell className="text-xs font-medium">{r.report_no}</TableCell>
+                          <TableCell className="text-xs">{format(new Date(r.report_date), "MMM d, yyyy")}</TableCell>
+                          <TableCell className="text-xs">{run?.batch_id || "–"}</TableCell>
+                          <TableCell><StatusBadge status={r.status} /></TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </ScrollArea>
             </CardContent>
-          </Card>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
 
-          {/* AI Report Generator – under QC report */}
-          <Card className="flex flex-col">
-            <CardHeader className="py-3 px-4">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <MessageSquare className="h-4 w-4" /> AI Report Generator
-                </CardTitle>
-                <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setShowAiConfig(true)}>
-                  <Settings2 className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-              <p className="text-[10px] text-muted-foreground mt-1">
-                Ask about run/batch insights, comparison, explanation and details
-              </p>
-            </CardHeader>
-            <CardContent className="px-4 pb-4 flex-1 flex flex-col">
-              <ScrollArea className="flex-1 h-[220px] border rounded-md p-3 mb-3 bg-muted/30">
-                {chatMessages.length === 0 ? (
-                  <p className="text-xs text-muted-foreground italic text-center pt-8">
-                    Type "summary", "alerts", "qc", "compare", or "recommend" to get started.
-                  </p>
-                ) : (
-                  <div className="space-y-3">
-                    {chatMessages.map((msg, i) => (
-                      <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                        <div className={`max-w-[90%] rounded-lg px-3 py-2 text-xs ${msg.role === "user" ? "bg-primary text-primary-foreground" : "bg-card border"}`}>
-                          <pre className="whitespace-pre-wrap font-sans">{msg.text}</pre>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </ScrollArea>
-              <div className="flex gap-2">
-                <Input
-                  value={chatInput}
-                  onChange={(e) => setChatInput(e.target.value)}
-                  placeholder="Ask about this report…"
-                  className="text-xs h-8"
-                  onKeyDown={(e) => e.key === "Enter" && handleChat()}
-                />
-                <Button size="sm" className="h-8 w-8 p-0" onClick={handleChat}>
-                  <Send className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Reports Table – collapsible at bottom */}
-          <Collapsible open={reportsTableOpen} onOpenChange={setReportsTableOpen}>
-            <Card>
-              <CollapsibleTrigger asChild>
-                <CardHeader className="py-3 px-4 cursor-pointer hover:bg-muted/50 transition-colors">
-                  <CardTitle className="text-sm flex items-center gap-2">
-                    <Archive className="h-4 w-4" /> Reports Table
-                    <Badge variant="secondary" className="text-[10px]">{reports.length}</Badge>
-                    <span className="ml-auto">
-                      {reportsTableOpen ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
-                    </span>
-                  </CardTitle>
-                </CardHeader>
-              </CollapsibleTrigger>
-              <CollapsibleContent>
-                <CardContent className="px-4 pb-4">
-                  <ScrollArea className="h-[180px]">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="text-xs">Report No</TableHead>
-                          <TableHead className="text-xs">Report Date</TableHead>
-                          <TableHead className="text-xs">Batch No</TableHead>
-                          <TableHead className="text-xs">Status</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {reports.map((r) => {
-                          const run = RUNS.find((ru) => ru.run_id === r.linked_run_id);
-                          return (
-                            <TableRow
-                              key={r.report_id}
-                              className={`cursor-pointer transition-colors ${r.report_id === activeReportId ? "bg-accent" : "hover:bg-muted/50"}`}
-                              onClick={() => {
-                                setActiveReportId(r.report_id);
-                                setComment(r.comment || "");
-                                setChatMessages([]);
-                              }}
-                            >
-                              <TableCell className="text-xs font-medium">{r.report_no}</TableCell>
-                              <TableCell className="text-xs">{format(new Date(r.report_date), "MMM d, yyyy")}</TableCell>
-                              <TableCell className="text-xs">{run?.batch_id || "–"}</TableCell>
-                              <TableCell><StatusBadge status={r.status} /></TableCell>
-                            </TableRow>
-                          );
-                        })}
-                      </TableBody>
-                    </Table>
-                  </ScrollArea>
-                </CardContent>
-              </CollapsibleContent>
-            </Card>
-          </Collapsible>
-        </div>
-
-        {/* Right column: Sign & Comment (top) → Alerts & Insights (below) */}
-        <div className="space-y-4">
-          {/* Sign & Comment */}
-          <Card>
-            <CardHeader className="py-3 px-4">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <Shield className="h-4 w-4" /> Sign & Comment
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="px-4 pb-4 space-y-3">
-              <div>
-                <Label className="text-xs">Comment</Label>
-                <Textarea
-                  value={comment}
-                  onChange={(e) => setComment(e.target.value)}
-                  placeholder="Add review comment…"
-                  className="text-xs mt-1 h-20 resize-none"
-                  disabled={isSigned && !isManager}
-                />
-                {!isSigned && canLogEvents && (
-                  <Button variant="outline" size="sm" className="mt-2 text-xs h-7" onClick={handleSaveComment}>
-                    Save Comment
-                  </Button>
-                )}
-              </div>
-              <Separator />
-              <div className="space-y-2">
-                {isSigned && (
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Lock className="h-3.5 w-3.5" />
-                    <span>Signed by <strong>{activeReport?.signed_by}</strong> at {activeReport?.signed_at ? format(new Date(activeReport.signed_at), "MMM d, HH:mm") : "–"}</span>
-                  </div>
-                )}
-                {isManager && (
-                  <Button
-                    size="sm"
-                    className="w-full text-xs h-8"
-                    onClick={handleSign}
-                  >
-                    {isSigned ? "Create New Version" : "Sign Report"}
-                  </Button>
-                )}
-                {!isManager && !isSigned && (
-                  <p className="text-[10px] text-muted-foreground italic">Only a Manager can sign reports.</p>
-                )}
-                {activeReport && (
-                  <p className="text-[10px] text-muted-foreground">Version: {activeReport.version} | Created by: {activeReport.created_by}</p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Alerts & Insights – under Sign & Comment */}
-          <Card>
-            <CardHeader className="py-3 px-4">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4" /> Alerts
-                <Badge variant="secondary" className="text-[10px]">{reportAlerts.length}</Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="px-4 pb-4">
-              <ScrollArea className="h-[160px]">
-                {reportAlerts.length === 0 ? (
-                  <p className="text-xs text-muted-foreground italic py-4 text-center">No alerts</p>
-                ) : (
-                  <div className="space-y-2">
-                    {reportAlerts.map((a) => (
-                      <div key={a.alert_id} className="flex items-start gap-2 p-2 rounded bg-muted/50">
-                        <Badge variant={a.severity === "critical" ? "destructive" : "outline"} className="text-[10px] mt-0.5 shrink-0">
-                          {a.severity}
-                        </Badge>
-                        <p className="text-xs">{a.message}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </ScrollArea>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="py-3 px-4">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <Brain className="h-4 w-4" /> Insights
-                <Badge variant="secondary" className="text-[10px]">{reportInsights.length}</Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="px-4 pb-4">
-              <ScrollArea className="h-[160px]">
-                {reportInsights.length === 0 ? (
-                  <p className="text-xs text-muted-foreground italic py-4 text-center">No insights</p>
-                ) : (
-                  <div className="space-y-2">
-                    {reportInsights.map((ins) => (
-                      <div key={ins.id} className="flex items-start gap-2 p-2 rounded bg-muted/50">
-                        <Badge variant="outline" className={`text-[10px] mt-0.5 shrink-0 ${ins.severity === "critical" ? "border-destructive text-destructive" : ins.severity === "warning" ? "border-yellow-500 text-yellow-600" : ins.severity === "success" ? "border-green-500 text-green-600" : ""}`}>
-                          {ins.severity}
-                        </Badge>
-                        <div>
-                          <p className="text-xs font-medium">{ins.title}</p>
-                          <p className="text-[10px] text-muted-foreground mt-0.5">{ins.explanation.slice(0, 120)}…</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </ScrollArea>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+      {/* Linked context — small, de-emphasized footer linking out to Insights */}
+      <Card className="bg-muted/30 border-dashed">
+        <CardContent className="py-3 px-4 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1">
+              <AlertTriangle className="h-3.5 w-3.5" />
+              {reportAlerts.length} alert{reportAlerts.length === 1 ? "" : "s"} linked
+            </span>
+            <span className="flex items-center gap-1">
+              <Brain className="h-3.5 w-3.5" />
+              {reportInsights.length} insight{reportInsights.length === 1 ? "" : "s"} linked
+            </span>
+            <span className="italic">— observational context, not part of the signed report</span>
+          </div>
+          <Button variant="ghost" size="sm" className="text-xs gap-1" onClick={() => navigate("/ai")}>
+            View in Insights <ExternalLink className="h-3 w-3" />
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
 
       {/* AI Config modal */}
       <Dialog open={showAiConfig} onOpenChange={setShowAiConfig}>
