@@ -6,7 +6,9 @@ import {
   ChevronRight, ChevronLeft, AlertTriangle, CheckCircle2, Brain,
   Merge, Filter, Zap, BarChart3, LineChart as LineChartIcon, Clock,
   FileText, Shield, ArrowRight, Pause, Square, RotateCcw, Hammer, Download,
+  Boxes, Beaker, Workflow as WorkflowIcon, GitBranch, Sparkles,
 } from "lucide-react";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -43,6 +45,10 @@ import {
   saveSimulationRecord, commitEvents, getPipelines, createDefaultStarterPipeline,
 } from "@/data/pipelineStore";
 import type { InstrumentInterface } from "@/data/runTypes";
+import { EQUIPMENT, getEquipmentById } from "@/data/equipment";
+import { METHODS, getMethodById } from "@/data/methods";
+import { Textarea } from "@/components/ui/textarea";
+
 
 // ══════════════════════════════════════════════
 // Constants
