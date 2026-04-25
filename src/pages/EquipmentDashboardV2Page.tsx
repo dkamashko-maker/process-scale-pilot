@@ -85,7 +85,7 @@ function UpstreamCard({ eq, onOpen }: { eq: Equipment; onOpen: () => void }) {
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-2">
           <div>
-            <CardTitle className="text-sm">{eq.equipmentName}</CardTitle>
+            <CardTitle className="text-base">{eq.equipmentName}</CardTitle>
             <p className="text-[11px] text-muted-foreground mt-0.5 font-mono">{eq.equipmentId}</p>
           </div>
           <StatusChip status={eq.status} />
@@ -128,7 +128,7 @@ function DownstreamCard({ eq, onOpen }: { eq: Equipment; onOpen: () => void }) {
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-2">
           <div>
-            <CardTitle className="text-sm">{eq.equipmentName}</CardTitle>
+            <CardTitle className="text-base">{eq.equipmentName}</CardTitle>
             <p className="text-[11px] text-muted-foreground mt-0.5 font-mono">{eq.equipmentId}</p>
           </div>
           <StatusChip status={eq.status} />
@@ -168,7 +168,7 @@ function AnalyticalCard({ eq, onOpen }: { eq: Equipment; onOpen: () => void }) {
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-2">
           <div>
-            <CardTitle className={`text-sm ${isManual ? "text-muted-foreground" : ""}`}>
+            <CardTitle className={`text-base ${isManual ? "text-muted-foreground" : ""}`}>
               {eq.equipmentName}
             </CardTitle>
             <p className="text-[11px] text-muted-foreground mt-0.5 font-mono">{eq.equipmentId}</p>
