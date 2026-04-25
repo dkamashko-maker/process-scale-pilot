@@ -1120,23 +1120,161 @@ export default function RebuildPage() {
             <ScrollArea className="flex-1">
               {selectedNode ? (
                 <div className="p-3 space-y-4">
-                  {/* Node header */}
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Input className="h-7 text-xs font-semibold" value={selectedNode.label}
-                        onChange={(e) => updateNode(selectedNode.id, { label: e.target.value })} />
-                      <p className="text-[9px] text-muted-foreground mt-1">{selectedNode.type.replace(/_/g, " ")}</p>
+                  {/* ─── Identity ─── */}
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <Label className="text-[10px] uppercase text-muted-foreground">Name</Label>
+                      <Input
+                        className="h-7 text-xs font-semibold mt-1"
+                        value={selectedNode.label}
+                        onChange={(e) => updateNode(selectedNode.id, { label: e.target.value })}
+                      />
                     </div>
-                    <div className="flex gap-1">
-                      <Button variant="outline" size="sm" className="h-6 w-6 p-0" title="Connect to…"
+                    <div className="flex gap-1 pt-5">
+                      <Button variant="outline" size="sm" className="h-7 w-7 p-0" title="Start a connection from this node"
                         onClick={() => setConnectingFrom(selectedNode.id)}>
-                        <ArrowRight className="h-3 w-3" />
+                        <ArrowRight className="h-3.5 w-3.5" />
                       </Button>
-                      <Button variant="destructive" size="sm" className="h-6 w-6 p-0" title="Delete node"
+                      <Button variant="destructive" size="sm" className="h-7 w-7 p-0" title="Delete node"
                         onClick={() => deleteNode(selectedNode.id)}>
-                        <Trash2 className="h-3 w-3" />
+                        <Trash2 className="h-3.5 w-3.5" />
                       </Button>
                     </div>
+                  </div>
+
+                  <div>
+                    <Label className="text-[10px] uppercase text-muted-foreground">Node type</Label>
+                    <Select
+                      value={selectedNode.type}
+                      onValueChange={(v) => updateNode(selectedNode.id, { type: v as PipelineNode["type"] })}
+                    >
+                      <SelectTrigger className="h-7 text-xs mt-1"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="equipment" className="text-xs">Equipment</SelectItem>
+                        <SelectItem value="method" className="text-xs">Method</SelectItem>
+                        <SelectItem value="device" className="text-xs">Device (interface)</SelectItem>
+                        <SelectItem value="decision" className="text-xs">Decision</SelectItem>
+                        <SelectItem value="data_op" className="text-xs">Data operation</SelectItem>
+                        <SelectItem value="range_check" className="text-xs">Range check</SelectItem>
+                        <SelectItem value="unit_consistency" className="text-xs">Unit consistency</SelectItem>
+                        <SelectItem value="event_overlay" className="text-xs">Event overlay</SelectItem>
+                        <SelectItem value="ml_insight" className="text-xs">ML insight</SelectItem>
+                        <SelectItem value="alert_generator" className="text-xs">Alert generator</SelectItem>
+                        <SelectItem value="merge" className="text-xs">Merge</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label className="text-[10px] uppercase text-muted-foreground">Description</Label>
+                    <Textarea
+                      className="text-xs mt-1 min-h-[56px]"
+                      placeholder="What does this step do? Who owns it?"
+                      value={selectedNode.description ?? ""}
+                      onChange={(e) => updateNode(selectedNode.id, { description: e.target.value })}
+                    />
+                  </div>
+
+                  {/* ─── Linked references ─── */}
+                  {(selectedNode.type === "equipment" || selectedNode.type === "method") && (
+                    <div className="rounded-md border bg-muted/20 p-2 space-y-2">
+                      <p className="text-[10px] uppercase text-muted-foreground font-semibold">Linked references</p>
+                      <div>
+                        <Label className="text-[9px] text-muted-foreground">Equipment</Label>
+                        <Select
+                          value={selectedNode.linkedEquipmentId ?? "__none__"}
+                          onValueChange={(v) => updateNode(selectedNode.id, { linkedEquipmentId: v === "__none__" ? undefined : v })}
+                        >
+                          <SelectTrigger className="h-7 text-xs mt-1"><SelectValue placeholder="Not linked" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="__none__" className="text-xs">— Not linked —</SelectItem>
+                            {EQUIPMENT.map((eq) => (
+                              <SelectItem key={eq.equipmentId} value={eq.equipmentId} className="text-xs">
+                                {eq.equipmentName} ({eq.equipmentId})
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      {selectedNode.type === "method" && (
+                        <div>
+                          <Label className="text-[9px] text-muted-foreground">Method</Label>
+                          <Select
+                            value={selectedNode.linkedMethodId ?? "__none__"}
+                            onValueChange={(v) => updateNode(selectedNode.id, { linkedMethodId: v === "__none__" ? undefined : v })}
+                          >
+                            <SelectTrigger className="h-7 text-xs mt-1"><SelectValue placeholder="Not linked" /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="__none__" className="text-xs">— Not linked —</SelectItem>
+                              {METHODS.map((m) => (
+                                <SelectItem key={m.id} value={m.id} className="text-xs">
+                                  {m.name} ({m.code})
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* ─── I/O ports ─── */}
+                  <div className="rounded-md border bg-muted/20 p-2 space-y-2">
+                    <p className="text-[10px] uppercase text-muted-foreground font-semibold">Inputs · Process · Outputs</p>
+                    <PortListEditor
+                      label="Inputs"
+                      values={selectedNode.inputs ?? []}
+                      onChange={(next) => updateNode(selectedNode.id, { inputs: next })}
+                      placeholder="e.g. harvest_broth"
+                    />
+                    <div>
+                      <Label className="text-[9px] text-muted-foreground">Process details</Label>
+                      <Textarea
+                        className="text-xs mt-1 min-h-[48px]"
+                        placeholder="Recipe, conditions, durations…"
+                        value={selectedNode.processDetails ?? ""}
+                        onChange={(e) => updateNode(selectedNode.id, { processDetails: e.target.value })}
+                      />
+                    </div>
+                    <PortListEditor
+                      label="Outputs"
+                      values={selectedNode.outputs ?? []}
+                      onChange={(next) => updateNode(selectedNode.id, { outputs: next })}
+                      placeholder="e.g. clarified_pool"
+                    />
+                  </div>
+
+                  {/* ─── Metadata ─── */}
+                  <MetadataEditor
+                    metadata={selectedNode.metadata ?? {}}
+                    onChange={(next) => updateNode(selectedNode.id, { metadata: next })}
+                  />
+
+                  {/* ─── Alerts & criticality ─── */}
+                  <div className="rounded-md border bg-muted/20 p-2 space-y-2">
+                    <p className="text-[10px] uppercase text-muted-foreground font-semibold">Alerts & criticality</p>
+                    <div>
+                      <Label className="text-[9px] text-muted-foreground">Criticality</Label>
+                      <Select
+                        value={selectedNode.criticality ?? "medium"}
+                        onValueChange={(v) => updateNode(selectedNode.id, { criticality: v as PipelineNode["criticality"] })}
+                      >
+                        <SelectTrigger className="h-7 text-xs mt-1"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="high" className="text-xs">High — surfaces as CRITICAL on canvas</SelectItem>
+                          <SelectItem value="medium" className="text-xs">Medium</SelectItem>
+                          <SelectItem value="low" className="text-xs">Low</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <label className="flex items-center gap-2 text-[10px] cursor-pointer">
+                      <Switch
+                        className="scale-75"
+                        checked={!!selectedNode.alertRelevant}
+                        onCheckedChange={(v) => updateNode(selectedNode.id, { alertRelevant: v })}
+                      />
+                      Alert relevant — forward issues from this node
+                    </label>
                   </div>
 
                   <Separator />
