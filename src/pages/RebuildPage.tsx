@@ -6,7 +6,9 @@ import {
   ChevronRight, ChevronLeft, AlertTriangle, CheckCircle2, Brain,
   Merge, Filter, Zap, BarChart3, LineChart as LineChartIcon, Clock,
   FileText, Shield, ArrowRight, Pause, Square, RotateCcw, Hammer, Download,
+  Boxes, Beaker, Workflow as WorkflowIcon, GitBranch, Sparkles,
 } from "lucide-react";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -43,6 +45,10 @@ import {
   saveSimulationRecord, commitEvents, getPipelines, createDefaultStarterPipeline,
 } from "@/data/pipelineStore";
 import type { InstrumentInterface } from "@/data/runTypes";
+import { EQUIPMENT, getEquipmentById } from "@/data/equipment";
+import { METHODS, getMethodById } from "@/data/methods";
+import { Textarea } from "@/components/ui/textarea";
+
 
 // ══════════════════════════════════════════════
 // Constants
@@ -77,6 +83,10 @@ const UTILITY_NODES = [
 
 const NODE_COLORS: Record<string, string> = {
   device: "hsl(var(--primary))",
+  equipment: "hsl(195, 85%, 45%)",
+  method: "hsl(280, 70%, 55%)",
+  decision: "hsl(38, 92%, 50%)",
+  data_op: "hsl(215, 25%, 47%)",
   range_check: "hsl(173, 58%, 39%)",
   unit_consistency: "hsl(43, 96%, 56%)",
   event_overlay: "hsl(27, 87%, 67%)",
@@ -85,9 +95,31 @@ const NODE_COLORS: Record<string, string> = {
   merge: "hsl(215, 25%, 47%)",
 };
 
+const NODE_KIND_LABEL: Record<string, string> = {
+  device: "Device",
+  equipment: "Equipment",
+  method: "Method",
+  decision: "Decision",
+  data_op: "Data op",
+  range_check: "Range check",
+  unit_consistency: "Unit check",
+  event_overlay: "Event overlay",
+  ml_insight: "ML insight",
+  alert_generator: "Alert generator",
+  merge: "Merge",
+};
+
+const NODE_KIND_ICON: Record<string, typeof FlaskConical> = {
+  equipment: Boxes,
+  method: Beaker,
+  decision: GitBranch,
+  data_op: FileText,
+};
+
 const GRID_SIZE = 20;
-const NODE_W = 180;
-const NODE_H = 72;
+const NODE_W = 200;
+const NODE_H = 86;
+
 
 function snapToGrid(v: number) { return Math.round(v / GRID_SIZE) * GRID_SIZE; }
 
@@ -108,9 +140,24 @@ function CanvasNode({
   onCompleteConnect: () => void;
 }) {
   const color = NODE_COLORS[node.type] || NODE_COLORS.device;
-  const Icon = node.type === "device"
-    ? (DEVICE_ICONS[node.interface_id || ""] || Gauge)
-    : (UTILITY_NODES.find((u) => u.type === node.type)?.icon || Settings2);
+  const Icon =
+    node.type === "device"
+      ? (DEVICE_ICONS[node.interface_id || ""] || Gauge)
+      : NODE_KIND_ICON[node.type]
+        || UTILITY_NODES.find((u) => u.type === node.type)?.icon
+        || Settings2;
+
+  const subLabel =
+    node.type === "device"   ? (node.interface_id || "No device")
+  : node.type === "equipment"? (node.linkedEquipmentId || "Custom equipment")
+  : node.type === "method"   ? (node.linkedMethodId || "Custom method")
+  : (NODE_KIND_LABEL[node.type] || node.type.replace(/_/g, " "));
+
+  const inputs = node.inputs ?? [];
+  const outputs = node.outputs ?? [];
+  const inputCount = Math.max(1, inputs.length);
+  const outputCount = Math.max(1, outputs.length);
+  const isCritical = node.criticality === "high";
 
   return (
     <g
@@ -122,8 +169,8 @@ function CanvasNode({
         height={NODE_H}
         rx={8}
         fill="hsl(var(--card))"
-        stroke={selected ? color : isConnectSource ? "hsl(var(--primary))" : "hsl(var(--border))"}
-        strokeWidth={selected || isConnectSource ? 2.5 : 1}
+        stroke={selected ? color : isConnectSource ? "hsl(var(--primary))" : isCritical ? "hsl(0, 72%, 51%)" : "hsl(var(--border))"}
+        strokeWidth={selected || isConnectSource || isCritical ? 2.5 : 1}
         filter={selected ? "drop-shadow(0 4px 12px rgba(0,0,0,0.15))" : "drop-shadow(0 1px 3px rgba(0,0,0,0.08))"}
         onClick={(e) => { e.stopPropagation(); onSelect(); }}
         onMouseDown={(e) => { e.stopPropagation(); onDragStart(e); }}
@@ -131,15 +178,35 @@ function CanvasNode({
       />
       {/* Color accent bar */}
       <rect x={0} y={0} width={4} height={NODE_H} rx={2} fill={color} pointerEvents="none" />
+      {/* Kind chip */}
+      <foreignObject x={10} y={6} width={NODE_W - 20} height={14} pointerEvents="none">
+        <div style={{ fontSize: 8, letterSpacing: 0.6, textTransform: "uppercase", color: "hsl(var(--muted-foreground))", fontWeight: 600 }}>
+          {NODE_KIND_LABEL[node.type] || node.type}
+          {node.alertRelevant && " · alerting"}
+        </div>
+      </foreignObject>
       {/* Icon */}
-      <foreignObject x={12} y={16} width={32} height={32} pointerEvents="none">
-        <div style={{ background: color, borderRadius: 6, padding: 6, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <Icon style={{ width: 18, height: 18, color: "#fff" }} />
+      <foreignObject x={10} y={24} width={28} height={28} pointerEvents="none">
+        <div style={{ background: color, borderRadius: 6, padding: 5, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <Icon style={{ width: 16, height: 16, color: "#fff" }} />
         </div>
       </foreignObject>
       {/* Label */}
-      <text x={52} y={30} fontSize={11} fontWeight={600} fill="hsl(var(--foreground))" pointerEvents="none">{node.label.length > 16 ? node.label.slice(0, 15) + "…" : node.label}</text>
-      <text x={52} y={46} fontSize={9} fill="hsl(var(--muted-foreground))" pointerEvents="none">{node.type === "device" ? (node.interface_id || "No device") : node.type.replace(/_/g, " ")}</text>
+      <text x={44} y={38} fontSize={11} fontWeight={600} fill="hsl(var(--foreground))" pointerEvents="none">
+        {node.label.length > 20 ? node.label.slice(0, 19) + "…" : node.label}
+      </text>
+      <text x={44} y={51} fontSize={9} fill="hsl(var(--muted-foreground))" pointerEvents="none">
+        {subLabel.length > 22 ? subLabel.slice(0, 21) + "…" : subLabel}
+      </text>
+      {/* I/O counts */}
+      <text x={10} y={NODE_H - 8} fontSize={8} fill="hsl(var(--muted-foreground))" pointerEvents="none">
+        ▸ {inputs.length} in · {outputs.length} out
+      </text>
+      {isCritical && (
+        <text x={NODE_W - 10} y={NODE_H - 8} fontSize={8} fontWeight={700} fill="hsl(0, 72%, 51%)" textAnchor="end" pointerEvents="none">
+          CRITICAL
+        </text>
+      )}
       {/* Alert badge */}
       {alertCount > 0 && (
         <>
@@ -147,34 +214,46 @@ function CanvasNode({
           <text x={NODE_W - 12} y={16} fontSize={9} fontWeight={700} fill="#fff" textAnchor="middle" pointerEvents="none">{alertCount}</text>
         </>
       )}
-      {/* Input port (left) — click to complete an in-flight connection */}
-      <g
-        onClick={(e) => { e.stopPropagation(); onCompleteConnect(); }}
-        onMouseDown={(e) => e.stopPropagation()}
-        style={{ cursor: "crosshair" }}
-      >
-        <circle cx={0} cy={NODE_H / 2} r={9} fill="transparent" />
-        <circle cx={0} cy={NODE_H / 2} r={5}
-          fill="hsl(var(--background))"
-          stroke="hsl(var(--primary))"
-          strokeWidth={1.5}
-          className="hover:fill-[hsl(var(--primary))] transition-colors"
-        />
-      </g>
-      {/* Output port (right) — click to start a connection */}
-      <g
-        onClick={(e) => { e.stopPropagation(); onStartConnect(); }}
-        onMouseDown={(e) => e.stopPropagation()}
-        style={{ cursor: "crosshair" }}
-      >
-        <circle cx={NODE_W} cy={NODE_H / 2} r={9} fill="transparent" />
-        <circle cx={NODE_W} cy={NODE_H / 2} r={5}
-          fill={isConnectSource ? "hsl(var(--primary))" : "hsl(var(--background))"}
-          stroke="hsl(var(--primary))"
-          strokeWidth={1.5}
-          className="hover:fill-[hsl(var(--primary))] transition-colors"
-        />
-      </g>
+      {/* Input ports (left) — one per declared input, default 1 */}
+      {Array.from({ length: inputCount }).map((_, i) => {
+        const cy = ((i + 1) * NODE_H) / (inputCount + 1);
+        return (
+          <g
+            key={`in-${i}`}
+            onClick={(e) => { e.stopPropagation(); onCompleteConnect(); }}
+            onMouseDown={(e) => e.stopPropagation()}
+            style={{ cursor: "crosshair" }}
+          >
+            <circle cx={0} cy={cy} r={9} fill="transparent" />
+            <circle cx={0} cy={cy} r={5}
+              fill="hsl(var(--background))"
+              stroke="hsl(var(--primary))"
+              strokeWidth={1.5}
+              className="hover:fill-[hsl(var(--primary))] transition-colors"
+            />
+          </g>
+        );
+      })}
+      {/* Output ports (right) */}
+      {Array.from({ length: outputCount }).map((_, i) => {
+        const cy = ((i + 1) * NODE_H) / (outputCount + 1);
+        return (
+          <g
+            key={`out-${i}`}
+            onClick={(e) => { e.stopPropagation(); onStartConnect(); }}
+            onMouseDown={(e) => e.stopPropagation()}
+            style={{ cursor: "crosshair" }}
+          >
+            <circle cx={NODE_W} cy={cy} r={9} fill="transparent" />
+            <circle cx={NODE_W} cy={cy} r={5}
+              fill={isConnectSource ? "hsl(var(--primary))" : "hsl(var(--background))"}
+              stroke="hsl(var(--primary))"
+              strokeWidth={1.5}
+              className="hover:fill-[hsl(var(--primary))] transition-colors"
+            />
+          </g>
+        );
+      })}
     </g>
   );
 }
@@ -245,19 +324,53 @@ export default function RebuildPage() {
     return UTILITY_NODES.filter((u) => u.label.toLowerCase().includes(q));
   }, [paletteSearch]);
 
+  const filteredEquipment = useMemo(() => {
+    const q = paletteSearch.toLowerCase();
+    return EQUIPMENT.filter(
+      (e) => e.equipmentName.toLowerCase().includes(q) || e.equipmentId.toLowerCase().includes(q),
+    );
+  }, [paletteSearch]);
+
+  const filteredMethods = useMemo(() => {
+    const q = paletteSearch.toLowerCase();
+    return METHODS.filter(
+      (m) => m.name.toLowerCase().includes(q) || m.code.toLowerCase().includes(q),
+    );
+  }, [paletteSearch]);
+
   // ── Node operations ──
-  const addNode = useCallback((type: PipelineNode["type"], label: string, interfaceId?: string) => {
+  const addNode = useCallback((type: PipelineNode["type"], label: string, extra?: Partial<PipelineNode>) => {
     const id = `node-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
     const x = snapToGrid(200 + Math.random() * 300 - pan.x);
     const y = snapToGrid(100 + Math.random() * 200 - pan.y);
+
+    // Default I/O per kind
+    const defaults: Partial<PipelineNode> = {};
+    if (type === "equipment") {
+      defaults.inputs = ["material_in"];
+      defaults.outputs = ["material_out"];
+      defaults.criticality = "medium";
+    } else if (type === "method") {
+      defaults.inputs = ["sample"];
+      defaults.outputs = ["result"];
+    } else if (type === "decision") {
+      defaults.inputs = ["input"];
+      defaults.outputs = ["pass", "fail"];
+    } else if (type === "data_op") {
+      defaults.inputs = ["data"];
+      defaults.outputs = ["data_record"];
+    }
+
     const newNode: PipelineNode = {
       id, type, label, x, y,
-      interface_id: interfaceId,
       selected_run_ids: [],
       parameters: [],
       anomaly_threshold: type === "ml_insight" ? 70 : undefined,
       forecast_hours: type === "ml_insight" ? 12 : undefined,
       apply_parameter_codes: [],
+      alertRelevant: type === "alert_generator",
+      ...defaults,
+      ...extra,
     };
     setPipeline((prev) => ({
       ...prev,
@@ -265,6 +378,55 @@ export default function RebuildPage() {
     }));
     setSelectedNodeId(id);
   }, [pan]);
+
+  /** Add an equipment node bound to a catalog entry (or blank if id omitted). */
+  const addEquipmentNode = useCallback((equipmentId?: string) => {
+    if (equipmentId) {
+      const eq = getEquipmentById(equipmentId);
+      if (!eq) return;
+      addNode("equipment", eq.equipmentName, {
+        linkedEquipmentId: equipmentId,
+        description: `${eq.equipmentName} (${eq.equipmentCategory})`,
+        criticality: eq.criticality ?? "medium",
+        metadata: { ...(eq.metadata ?? {}) },
+      });
+    } else {
+      addNode("equipment", "New Equipment", {
+        description: "Custom equipment node — link to a fleet entry or describe manually.",
+      });
+    }
+  }, [addNode]);
+
+  /** Add a method node bound to a catalog entry (or blank if id omitted). */
+  const addMethodNode = useCallback((methodId?: string) => {
+    if (methodId) {
+      const m = getMethodById(methodId);
+      if (!m) return;
+      addNode("method", `${m.name} (${m.code})`, {
+        linkedMethodId: methodId,
+        linkedEquipmentId: m.primaryEquipmentId,
+        description: m.notes ?? `${m.name} — ${m.category}`,
+        processDetails: m.unit ? `Reports in ${m.unit}.` : undefined,
+        metadata: m.acceptance
+          ? {
+              ...(m.acceptance.min !== undefined ? { acceptanceMin: m.acceptance.min } : {}),
+              ...(m.acceptance.max !== undefined ? { acceptanceMax: m.acceptance.max } : {}),
+              ...(m.acceptance.target !== undefined ? { target: m.acceptance.target } : {}),
+            }
+          : undefined,
+      });
+    } else {
+      addNode("method", "New Method", {
+        description: "Custom method node — link to a method catalog entry or describe manually.",
+      });
+    }
+  }, [addNode]);
+
+  /** Add a generic device node (legacy palette path). */
+  const addDeviceNode = useCallback((label: string, interfaceId: string) => {
+    addNode("device", label, { interface_id: interfaceId });
+  }, [addNode]);
+
 
   const updateNode = useCallback((nodeId: string, updates: Partial<PipelineNode>) => {
     setPipeline((prev) => ({
@@ -722,7 +884,7 @@ export default function RebuildPage() {
 
       <div className="flex flex-1 min-h-0">
         {/* ══════════ LEFT PALETTE ══════════ */}
-        <div className={`border-r bg-card shrink-0 flex flex-col transition-all ${paletteCollapsed ? "w-10" : "w-56"}`}>
+        <div className={`border-r bg-card shrink-0 flex flex-col transition-all ${paletteCollapsed ? "w-10" : "w-64"}`}>
           <div className="flex items-center justify-between p-2 border-b">
             {!paletteCollapsed && <span className="text-xs font-semibold text-muted-foreground uppercase">Palette</span>}
             <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => setPaletteCollapsed(!paletteCollapsed)}>
@@ -737,9 +899,90 @@ export default function RebuildPage() {
                   <Input className="h-7 text-xs pl-7" placeholder="Search…" value={paletteSearch} onChange={(e) => setPaletteSearch(e.target.value)} />
                 </div>
 
-                {/* Devices */}
+                {/* Quick add — author from scratch */}
                 <div>
-                  <p className="text-[10px] font-semibold text-muted-foreground uppercase mb-1.5">Devices</p>
+                  <p className="text-[10px] font-semibold text-muted-foreground uppercase mb-1.5">Create from scratch</p>
+                  <div className="grid grid-cols-2 gap-1">
+                    <Button variant="outline" size="sm" className="h-7 text-[10px] gap-1 justify-start"
+                      onClick={() => addEquipmentNode()}>
+                      <Boxes className="h-3 w-3" style={{ color: NODE_COLORS.equipment }} /> Equipment
+                    </Button>
+                    <Button variant="outline" size="sm" className="h-7 text-[10px] gap-1 justify-start"
+                      onClick={() => addMethodNode()}>
+                      <Beaker className="h-3 w-3" style={{ color: NODE_COLORS.method }} /> Method
+                    </Button>
+                    <Button variant="outline" size="sm" className="h-7 text-[10px] gap-1 justify-start"
+                      onClick={() => addNode("decision", "Decision", { description: "Routes flow based on a rule." })}>
+                      <GitBranch className="h-3 w-3" style={{ color: NODE_COLORS.decision }} /> Decision
+                    </Button>
+                    <Button variant="outline" size="sm" className="h-7 text-[10px] gap-1 justify-start"
+                      onClick={() => addNode("data_op", "Data op", { description: "Custom data operation." })}>
+                      <FileText className="h-3 w-3" style={{ color: NODE_COLORS.data_op }} /> Data op
+                    </Button>
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Equipment catalog */}
+                <div>
+                  <p className="text-[10px] font-semibold text-muted-foreground uppercase mb-1.5 flex items-center gap-1">
+                    <Boxes className="h-3 w-3" /> Equipment catalog
+                  </p>
+                  <div className="space-y-1">
+                    {filteredEquipment.map((eq) => (
+                      <button
+                        key={eq.equipmentId}
+                        className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-xs hover:bg-accent/50 transition-colors text-left"
+                        onClick={() => addEquipmentNode(eq.equipmentId)}
+                        title={`${eq.equipmentName} · ${eq.equipmentCategory}`}
+                      >
+                        <span className="h-2 w-2 rounded-full shrink-0" style={{ background: NODE_COLORS.equipment }} />
+                        <div className="min-w-0">
+                          <p className="truncate font-medium">{eq.equipmentName}</p>
+                          <p className="text-[9px] text-muted-foreground font-mono">{eq.equipmentId} · {eq.equipmentCategory}</p>
+                        </div>
+                      </button>
+                    ))}
+                    {filteredEquipment.length === 0 && (
+                      <p className="text-[9px] text-muted-foreground italic px-2">No matching equipment.</p>
+                    )}
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Method catalog */}
+                <div>
+                  <p className="text-[10px] font-semibold text-muted-foreground uppercase mb-1.5 flex items-center gap-1">
+                    <Beaker className="h-3 w-3" /> Method catalog
+                  </p>
+                  <div className="space-y-1">
+                    {filteredMethods.map((m) => (
+                      <button
+                        key={m.id}
+                        className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-xs hover:bg-accent/50 transition-colors text-left"
+                        onClick={() => addMethodNode(m.id)}
+                        title={`${m.name} (${m.code}) · ${m.category}`}
+                      >
+                        <span className="h-2 w-2 rounded-full shrink-0" style={{ background: NODE_COLORS.method }} />
+                        <div className="min-w-0">
+                          <p className="truncate font-medium">{m.name}</p>
+                          <p className="text-[9px] text-muted-foreground font-mono">{m.code} · {m.category}</p>
+                        </div>
+                      </button>
+                    ))}
+                    {filteredMethods.length === 0 && (
+                      <p className="text-[9px] text-muted-foreground italic px-2">No matching method.</p>
+                    )}
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Devices (legacy interfaces — kept for simulation runs) */}
+                <div>
+                  <p className="text-[10px] font-semibold text-muted-foreground uppercase mb-1.5">Devices (interfaces)</p>
                   <div className="space-y-1">
                     {filteredDevices.map((iface) => {
                       const Icon = DEVICE_ICONS[iface.id] || Gauge;
@@ -747,7 +990,7 @@ export default function RebuildPage() {
                         <button
                           key={iface.id}
                           className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-xs hover:bg-accent/50 transition-colors text-left"
-                          onClick={() => addNode("device", iface.display_name, iface.id)}
+                          onClick={() => addDeviceNode(iface.display_name, iface.id)}
                         >
                           <Icon className="h-3.5 w-3.5 text-primary shrink-0" />
                           <div className="min-w-0">
@@ -866,7 +1109,7 @@ export default function RebuildPage() {
         </div>
 
         {/* ══════════ RIGHT INSPECTOR ══════════ */}
-        <div className={`border-l bg-card shrink-0 flex flex-col transition-all ${inspectorCollapsed ? "w-10" : "w-72"}`}>
+        <div className={`border-l bg-card shrink-0 flex flex-col transition-all ${inspectorCollapsed ? "w-10" : "w-[340px]"}`}>
           <div className="flex items-center justify-between p-2 border-b">
             {!inspectorCollapsed && <span className="text-xs font-semibold text-muted-foreground uppercase">Inspector</span>}
             <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => setInspectorCollapsed(!inspectorCollapsed)}>
@@ -877,23 +1120,161 @@ export default function RebuildPage() {
             <ScrollArea className="flex-1">
               {selectedNode ? (
                 <div className="p-3 space-y-4">
-                  {/* Node header */}
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Input className="h-7 text-xs font-semibold" value={selectedNode.label}
-                        onChange={(e) => updateNode(selectedNode.id, { label: e.target.value })} />
-                      <p className="text-[9px] text-muted-foreground mt-1">{selectedNode.type.replace(/_/g, " ")}</p>
+                  {/* ─── Identity ─── */}
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <Label className="text-[10px] uppercase text-muted-foreground">Name</Label>
+                      <Input
+                        className="h-7 text-xs font-semibold mt-1"
+                        value={selectedNode.label}
+                        onChange={(e) => updateNode(selectedNode.id, { label: e.target.value })}
+                      />
                     </div>
-                    <div className="flex gap-1">
-                      <Button variant="outline" size="sm" className="h-6 w-6 p-0" title="Connect to…"
+                    <div className="flex gap-1 pt-5">
+                      <Button variant="outline" size="sm" className="h-7 w-7 p-0" title="Start a connection from this node"
                         onClick={() => setConnectingFrom(selectedNode.id)}>
-                        <ArrowRight className="h-3 w-3" />
+                        <ArrowRight className="h-3.5 w-3.5" />
                       </Button>
-                      <Button variant="destructive" size="sm" className="h-6 w-6 p-0" title="Delete node"
+                      <Button variant="destructive" size="sm" className="h-7 w-7 p-0" title="Delete node"
                         onClick={() => deleteNode(selectedNode.id)}>
-                        <Trash2 className="h-3 w-3" />
+                        <Trash2 className="h-3.5 w-3.5" />
                       </Button>
                     </div>
+                  </div>
+
+                  <div>
+                    <Label className="text-[10px] uppercase text-muted-foreground">Node type</Label>
+                    <Select
+                      value={selectedNode.type}
+                      onValueChange={(v) => updateNode(selectedNode.id, { type: v as PipelineNode["type"] })}
+                    >
+                      <SelectTrigger className="h-7 text-xs mt-1"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="equipment" className="text-xs">Equipment</SelectItem>
+                        <SelectItem value="method" className="text-xs">Method</SelectItem>
+                        <SelectItem value="device" className="text-xs">Device (interface)</SelectItem>
+                        <SelectItem value="decision" className="text-xs">Decision</SelectItem>
+                        <SelectItem value="data_op" className="text-xs">Data operation</SelectItem>
+                        <SelectItem value="range_check" className="text-xs">Range check</SelectItem>
+                        <SelectItem value="unit_consistency" className="text-xs">Unit consistency</SelectItem>
+                        <SelectItem value="event_overlay" className="text-xs">Event overlay</SelectItem>
+                        <SelectItem value="ml_insight" className="text-xs">ML insight</SelectItem>
+                        <SelectItem value="alert_generator" className="text-xs">Alert generator</SelectItem>
+                        <SelectItem value="merge" className="text-xs">Merge</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label className="text-[10px] uppercase text-muted-foreground">Description</Label>
+                    <Textarea
+                      className="text-xs mt-1 min-h-[56px]"
+                      placeholder="What does this step do? Who owns it?"
+                      value={selectedNode.description ?? ""}
+                      onChange={(e) => updateNode(selectedNode.id, { description: e.target.value })}
+                    />
+                  </div>
+
+                  {/* ─── Linked references ─── */}
+                  {(selectedNode.type === "equipment" || selectedNode.type === "method") && (
+                    <div className="rounded-md border bg-muted/20 p-2 space-y-2">
+                      <p className="text-[10px] uppercase text-muted-foreground font-semibold">Linked references</p>
+                      <div>
+                        <Label className="text-[9px] text-muted-foreground">Equipment</Label>
+                        <Select
+                          value={selectedNode.linkedEquipmentId ?? "__none__"}
+                          onValueChange={(v) => updateNode(selectedNode.id, { linkedEquipmentId: v === "__none__" ? undefined : v })}
+                        >
+                          <SelectTrigger className="h-7 text-xs mt-1"><SelectValue placeholder="Not linked" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="__none__" className="text-xs">— Not linked —</SelectItem>
+                            {EQUIPMENT.map((eq) => (
+                              <SelectItem key={eq.equipmentId} value={eq.equipmentId} className="text-xs">
+                                {eq.equipmentName} ({eq.equipmentId})
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      {selectedNode.type === "method" && (
+                        <div>
+                          <Label className="text-[9px] text-muted-foreground">Method</Label>
+                          <Select
+                            value={selectedNode.linkedMethodId ?? "__none__"}
+                            onValueChange={(v) => updateNode(selectedNode.id, { linkedMethodId: v === "__none__" ? undefined : v })}
+                          >
+                            <SelectTrigger className="h-7 text-xs mt-1"><SelectValue placeholder="Not linked" /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="__none__" className="text-xs">— Not linked —</SelectItem>
+                              {METHODS.map((m) => (
+                                <SelectItem key={m.id} value={m.id} className="text-xs">
+                                  {m.name} ({m.code})
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* ─── I/O ports ─── */}
+                  <div className="rounded-md border bg-muted/20 p-2 space-y-2">
+                    <p className="text-[10px] uppercase text-muted-foreground font-semibold">Inputs · Process · Outputs</p>
+                    <PortListEditor
+                      label="Inputs"
+                      values={selectedNode.inputs ?? []}
+                      onChange={(next) => updateNode(selectedNode.id, { inputs: next })}
+                      placeholder="e.g. harvest_broth"
+                    />
+                    <div>
+                      <Label className="text-[9px] text-muted-foreground">Process details</Label>
+                      <Textarea
+                        className="text-xs mt-1 min-h-[48px]"
+                        placeholder="Recipe, conditions, durations…"
+                        value={selectedNode.processDetails ?? ""}
+                        onChange={(e) => updateNode(selectedNode.id, { processDetails: e.target.value })}
+                      />
+                    </div>
+                    <PortListEditor
+                      label="Outputs"
+                      values={selectedNode.outputs ?? []}
+                      onChange={(next) => updateNode(selectedNode.id, { outputs: next })}
+                      placeholder="e.g. clarified_pool"
+                    />
+                  </div>
+
+                  {/* ─── Metadata ─── */}
+                  <MetadataEditor
+                    metadata={selectedNode.metadata ?? {}}
+                    onChange={(next) => updateNode(selectedNode.id, { metadata: next })}
+                  />
+
+                  {/* ─── Alerts & criticality ─── */}
+                  <div className="rounded-md border bg-muted/20 p-2 space-y-2">
+                    <p className="text-[10px] uppercase text-muted-foreground font-semibold">Alerts & criticality</p>
+                    <div>
+                      <Label className="text-[9px] text-muted-foreground">Criticality</Label>
+                      <Select
+                        value={selectedNode.criticality ?? "medium"}
+                        onValueChange={(v) => updateNode(selectedNode.id, { criticality: v as PipelineNode["criticality"] })}
+                      >
+                        <SelectTrigger className="h-7 text-xs mt-1"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="high" className="text-xs">High — surfaces as CRITICAL on canvas</SelectItem>
+                          <SelectItem value="medium" className="text-xs">Medium</SelectItem>
+                          <SelectItem value="low" className="text-xs">Low</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <label className="flex items-center gap-2 text-[10px] cursor-pointer">
+                      <Switch
+                        className="scale-75"
+                        checked={!!selectedNode.alertRelevant}
+                        onCheckedChange={(v) => updateNode(selectedNode.id, { alertRelevant: v })}
+                      />
+                      Alert relevant — forward issues from this node
+                    </label>
                   </div>
 
                   <Separator />
@@ -1571,6 +1952,127 @@ function MiniKpi({ label, value, accent }: { label: string; value: number | stri
     <div className="rounded-md border bg-muted/30 p-2">
       <p className="text-[9px] text-muted-foreground uppercase">{label}</p>
       <p className={`text-lg font-bold ${accent ? "text-destructive" : ""}`}>{value}</p>
+    </div>
+  );
+}
+
+// ── Port list editor (named inputs / outputs) ──
+function PortListEditor({
+  label, values, onChange, placeholder,
+}: {
+  label: string;
+  values: string[];
+  onChange: (next: string[]) => void;
+  placeholder?: string;
+}) {
+  return (
+    <div>
+      <div className="flex items-center justify-between">
+        <Label className="text-[9px] text-muted-foreground">{label}</Label>
+        <Button
+          variant="ghost" size="sm" className="h-5 text-[9px] gap-0.5"
+          onClick={() => onChange([...values, ""])}
+        >
+          <Plus className="h-2.5 w-2.5" /> Add
+        </Button>
+      </div>
+      <div className="space-y-1 mt-1">
+        {values.length === 0 && (
+          <p className="text-[9px] text-muted-foreground italic px-1">No {label.toLowerCase()} declared.</p>
+        )}
+        {values.map((v, i) => (
+          <div key={i} className="flex items-center gap-1">
+            <Input
+              className="h-6 text-[10px]"
+              placeholder={placeholder}
+              value={v}
+              onChange={(e) => {
+                const next = [...values];
+                next[i] = e.target.value;
+                onChange(next);
+              }}
+            />
+            <Button
+              variant="ghost" size="sm" className="h-6 w-6 p-0 shrink-0"
+              onClick={() => onChange(values.filter((_, j) => j !== i))}
+              title="Remove"
+            >
+              <X className="h-3 w-3" />
+            </Button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── Metadata key/value editor ──
+function MetadataEditor({
+  metadata, onChange,
+}: {
+  metadata: Record<string, string | number | boolean>;
+  onChange: (next: Record<string, string | number | boolean>) => void;
+}) {
+  const entries = Object.entries(metadata);
+  return (
+    <div className="rounded-md border bg-muted/20 p-2 space-y-2">
+      <div className="flex items-center justify-between">
+        <p className="text-[10px] uppercase text-muted-foreground font-semibold">Metadata</p>
+        <Button
+          variant="ghost" size="sm" className="h-5 text-[9px] gap-0.5"
+          onClick={() => {
+            let i = 1;
+            let key = `field_${i}`;
+            while (key in metadata) { i += 1; key = `field_${i}`; }
+            onChange({ ...metadata, [key]: "" });
+          }}
+        >
+          <Plus className="h-2.5 w-2.5" /> Add field
+        </Button>
+      </div>
+      {entries.length === 0 && (
+        <p className="text-[9px] text-muted-foreground italic">No metadata fields. Reusable in tooltips and reports.</p>
+      )}
+      {entries.map(([k, v]) => (
+        <div key={k} className="flex items-center gap-1">
+          <Input
+            className="h-6 text-[10px] w-1/2"
+            value={k}
+            onChange={(e) => {
+              const newKey = e.target.value;
+              if (!newKey || newKey === k) return;
+              const next: Record<string, string | number | boolean> = {};
+              for (const [kk, vv] of entries) next[kk === k ? newKey : kk] = vv;
+              onChange(next);
+            }}
+          />
+          <Input
+            className="h-6 text-[10px] flex-1"
+            value={String(v)}
+            onChange={(e) => {
+              const raw = e.target.value;
+              const num = Number(raw);
+              const parsed: string | number | boolean =
+                raw === "true" ? true
+              : raw === "false" ? false
+              : raw !== "" && !Number.isNaN(num) ? num
+              : raw;
+              onChange({ ...metadata, [k]: parsed });
+            }}
+          />
+          <Button
+            variant="ghost" size="sm" className="h-6 w-6 p-0 shrink-0"
+            onClick={() => {
+              const next = { ...metadata };
+              delete next[k];
+              onChange(next);
+            }}
+            title="Remove"
+          >
+            <X className="h-3 w-3" />
+          </Button>
+        </div>
+      ))}
     </div>
   );
 }

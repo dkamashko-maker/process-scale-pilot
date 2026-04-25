@@ -22,7 +22,8 @@ export interface PipelineNodeParam {
 
 export interface PipelineNode {
   id: string;
-  type: "device" | "range_check" | "unit_consistency" | "event_overlay" | "ml_insight" | "alert_generator" | "merge";
+  type: "device" | "range_check" | "unit_consistency" | "event_overlay" | "ml_insight" | "alert_generator" | "merge"
+      | "equipment" | "method" | "decision" | "data_op";
   label: string;
   x: number;
   y: number;
@@ -34,7 +35,28 @@ export interface PipelineNode {
   anomaly_threshold?: number;
   apply_parameter_codes?: string[];
   forecast_hours?: number;
+
+  // ── Domain-oriented authoring fields (additive, optional) ──
+  /** Free-form description shown in the inspector */
+  description?: string;
+  /** Named input ports (semantic labels, e.g. "harvest_broth", "sample") */
+  inputs?: string[];
+  /** Named output ports */
+  outputs?: string[];
+  /** Process / step details (recipe notes, conditions, durations) */
+  processDetails?: string;
+  /** Reusable metadata key/value bag (mirrors equipment.metadata) */
+  metadata?: Record<string, string | number | boolean>;
+  /** Linked equipment id (from EQUIPMENT) for equipment / method nodes */
+  linkedEquipmentId?: string;
+  /** Linked method id (from METHODS) for method nodes */
+  linkedMethodId?: string;
+  /** Author-assigned criticality — drives alert weight */
+  criticality?: "high" | "medium" | "low";
+  /** Whether this node should raise/forward alerts */
+  alertRelevant?: boolean;
 }
+
 
 export interface PipelineEdge {
   id: string;
