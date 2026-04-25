@@ -7,7 +7,7 @@ import {
 import {
   Brain, Lightbulb, Settings2, AlertTriangle, CheckCircle2,
   ExternalLink, Shield, Tag, TrendingUp, Zap, Info,
-  MessageSquare, Send, Trash2, Download, Loader2,
+  MessageSquare, Send, Trash2, Download, Loader2, FileText,
 } from "lucide-react";
 import { InfoTooltip } from "@/components/shared/InfoTooltip";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -74,11 +74,32 @@ export default function AIPage() {
 
   return (
     <div className="p-6 space-y-6 animate-fade-in">
-      {/* Header */}
-      <div className="flex items-center gap-2">
-        <Brain className="h-5 w-5 text-primary" />
-        <h2 className="text-xl font-semibold">AI Insights</h2>
-        <InfoTooltip content="AI-powered process analytics, forecasting, and deterministic insights. No external LLM calls — all analysis runs locally against your data." />
+      {/* Header — explicitly distinguishes Insights from Reports */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-2">
+          <Brain className="h-5 w-5 text-primary" />
+          <h2 className="text-xl font-semibold">Insights</h2>
+          <Badge variant="outline" className="gap-1 text-[10px] border-primary/40 text-primary">
+            <Lightbulb className="h-3 w-3" /> Read-only
+          </Badge>
+          <InfoTooltip content="Insights are observational analytics derived from your data. They are not reports — nothing here can be edited, signed, or archived." />
+          <Button
+            variant="ghost"
+            size="sm"
+            className="ml-auto text-xs gap-1"
+            onClick={() => navigate("/reports")}
+          >
+            <FileText className="h-3.5 w-3.5" /> Go to Reports
+          </Button>
+        </div>
+        <div className="rounded-md border border-dashed bg-muted/30 px-3 py-2">
+          <p className="text-xs text-muted-foreground">
+            <span className="font-medium text-foreground">Insights are observations, not reports.</span>{" "}
+            They are generated automatically from process data, are read-only, and cannot be signed,
+            edited, or used as compliance evidence. For signed deliverables, see{" "}
+            <button onClick={() => navigate("/reports")} className="underline hover:text-foreground">Reports</button>.
+          </p>
+        </div>
       </div>
 
       {/* KPI */}
