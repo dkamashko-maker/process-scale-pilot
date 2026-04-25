@@ -464,20 +464,22 @@ export default function EquipmentDashboardV2Page() {
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold">Equipment Dashboard</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Operational equipment and assay status overview
-        </p>
+      <div className="flex items-end justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Equipment Dashboard</h1>
+          <p className="text-sm text-muted-foreground mt-1.5">
+            Operational equipment, assays and connection status across the fleet.
+          </p>
+        </div>
       </div>
 
-      {/* KPI strip (compact) */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
-        <KpiTile label="Connected"               value={kpis.connected}               Icon={Wifi} />
-        <KpiTile label="Active"                  value={kpis.active}                  Icon={Activity} />
-        <KpiTile label="Idle"                    value={kpis.idle}                    Icon={CircleDot} />
-        <KpiTile label="With alerts"             value={kpis.withAlerts}              Icon={AlertTriangle} />
-        <KpiTile label="Analytical uploads today" value={kpis.analyticalUploadsToday} Icon={UploadCloud} />
+      {/* KPI strip — polished, scannable, commercial */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        <KpiTile label="Connected"               value={kpis.connected}               Icon={Wifi}           tone="primary" />
+        <KpiTile label="Active"                  value={kpis.active}                  Icon={Activity}       tone="active" />
+        <KpiTile label="Idle"                    value={kpis.idle}                    Icon={CircleDot}      tone="idle" />
+        <KpiTile label="With alerts"             value={kpis.withAlerts}              Icon={AlertTriangle}  tone={kpis.withAlerts > 0 ? "warning" : "idle"} />
+        <KpiTile label="Uploads today"           value={kpis.analyticalUploadsToday}  Icon={UploadCloud}    tone="primary" />
       </div>
 
       {/* Utility controls */}
