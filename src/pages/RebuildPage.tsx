@@ -140,9 +140,24 @@ function CanvasNode({
   onCompleteConnect: () => void;
 }) {
   const color = NODE_COLORS[node.type] || NODE_COLORS.device;
-  const Icon = node.type === "device"
-    ? (DEVICE_ICONS[node.interface_id || ""] || Gauge)
-    : (UTILITY_NODES.find((u) => u.type === node.type)?.icon || Settings2);
+  const Icon =
+    node.type === "device"
+      ? (DEVICE_ICONS[node.interface_id || ""] || Gauge)
+      : NODE_KIND_ICON[node.type]
+        || UTILITY_NODES.find((u) => u.type === node.type)?.icon
+        || Settings2;
+
+  const subLabel =
+    node.type === "device"   ? (node.interface_id || "No device")
+  : node.type === "equipment"? (node.linkedEquipmentId || "Custom equipment")
+  : node.type === "method"   ? (node.linkedMethodId || "Custom method")
+  : (NODE_KIND_LABEL[node.type] || node.type.replace(/_/g, " "));
+
+  const inputs = node.inputs ?? [];
+  const outputs = node.outputs ?? [];
+  const inputCount = Math.max(1, inputs.length);
+  const outputCount = Math.max(1, outputs.length);
+  const isCritical = node.criticality === "high";
 
   return (
     <g
@@ -154,8 +169,8 @@ function CanvasNode({
         height={NODE_H}
         rx={8}
         fill="hsl(var(--card))"
-        stroke={selected ? color : isConnectSource ? "hsl(var(--primary))" : "hsl(var(--border))"}
-        strokeWidth={selected || isConnectSource ? 2.5 : 1}
+        stroke={selected ? color : isConnectSource ? "hsl(var(--primary))" : isCritical ? "hsl(0, 72%, 51%)" : "hsl(var(--border))"}
+        strokeWidth={selected || isConnectSource || isCritical ? 2.5 : 1}
         filter={selected ? "drop-shadow(0 4px 12px rgba(0,0,0,0.15))" : "drop-shadow(0 1px 3px rgba(0,0,0,0.08))"}
         onClick={(e) => { e.stopPropagation(); onSelect(); }}
         onMouseDown={(e) => { e.stopPropagation(); onDragStart(e); }}
@@ -163,15 +178,35 @@ function CanvasNode({
       />
       {/* Color accent bar */}
       <rect x={0} y={0} width={4} height={NODE_H} rx={2} fill={color} pointerEvents="none" />
+      {/* Kind chip */}
+      <foreignObject x={10} y={6} width={NODE_W - 20} height={14} pointerEvents="none">
+        <div style={{ fontSize: 8, letterSpacing: 0.6, textTransform: "uppercase", color: "hsl(var(--muted-foreground))", fontWeight: 600 }}>
+          {NODE_KIND_LABEL[node.type] || node.type}
+          {node.alertRelevant && " · alerting"}
+        </div>
+      </foreignObject>
       {/* Icon */}
-      <foreignObject x={12} y={16} width={32} height={32} pointerEvents="none">
-        <div style={{ background: color, borderRadius: 6, padding: 6, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <Icon style={{ width: 18, height: 18, color: "#fff" }} />
+      <foreignObject x={10} y={24} width={28} height={28} pointerEvents="none">
+        <div style={{ background: color, borderRadius: 6, padding: 5, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <Icon style={{ width: 16, height: 16, color: "#fff" }} />
         </div>
       </foreignObject>
       {/* Label */}
-      <text x={52} y={30} fontSize={11} fontWeight={600} fill="hsl(var(--foreground))" pointerEvents="none">{node.label.length > 16 ? node.label.slice(0, 15) + "…" : node.label}</text>
-      <text x={52} y={46} fontSize={9} fill="hsl(var(--muted-foreground))" pointerEvents="none">{node.type === "device" ? (node.interface_id || "No device") : node.type.replace(/_/g, " ")}</text>
+      <text x={44} y={38} fontSize={11} fontWeight={600} fill="hsl(var(--foreground))" pointerEvents="none">
+        {node.label.length > 20 ? node.label.slice(0, 19) + "…" : node.label}
+      </text>
+      <text x={44} y={51} fontSize={9} fill="hsl(var(--muted-foreground))" pointerEvents="none">
+        {subLabel.length > 22 ? subLabel.slice(0, 21) + "…" : subLabel}
+      </text>
+      {/* I/O counts */}
+      <text x={10} y={NODE_H - 8} fontSize={8} fill="hsl(var(--muted-foreground))" pointerEvents="none">
+        ▸ {inputs.length} in · {outputs.length} out
+      </text>
+      {isCritical && (
+        <text x={NODE_W - 10} y={NODE_H - 8} fontSize={8} fontWeight={700} fill="hsl(0, 72%, 51%)" textAnchor="end" pointerEvents="none">
+          CRITICAL
+        </text>
+      )}
       {/* Alert badge */}
       {alertCount > 0 && (
         <>
@@ -179,34 +214,46 @@ function CanvasNode({
           <text x={NODE_W - 12} y={16} fontSize={9} fontWeight={700} fill="#fff" textAnchor="middle" pointerEvents="none">{alertCount}</text>
         </>
       )}
-      {/* Input port (left) — click to complete an in-flight connection */}
-      <g
-        onClick={(e) => { e.stopPropagation(); onCompleteConnect(); }}
-        onMouseDown={(e) => e.stopPropagation()}
-        style={{ cursor: "crosshair" }}
-      >
-        <circle cx={0} cy={NODE_H / 2} r={9} fill="transparent" />
-        <circle cx={0} cy={NODE_H / 2} r={5}
-          fill="hsl(var(--background))"
-          stroke="hsl(var(--primary))"
-          strokeWidth={1.5}
-          className="hover:fill-[hsl(var(--primary))] transition-colors"
-        />
-      </g>
-      {/* Output port (right) — click to start a connection */}
-      <g
-        onClick={(e) => { e.stopPropagation(); onStartConnect(); }}
-        onMouseDown={(e) => e.stopPropagation()}
-        style={{ cursor: "crosshair" }}
-      >
-        <circle cx={NODE_W} cy={NODE_H / 2} r={9} fill="transparent" />
-        <circle cx={NODE_W} cy={NODE_H / 2} r={5}
-          fill={isConnectSource ? "hsl(var(--primary))" : "hsl(var(--background))"}
-          stroke="hsl(var(--primary))"
-          strokeWidth={1.5}
-          className="hover:fill-[hsl(var(--primary))] transition-colors"
-        />
-      </g>
+      {/* Input ports (left) — one per declared input, default 1 */}
+      {Array.from({ length: inputCount }).map((_, i) => {
+        const cy = ((i + 1) * NODE_H) / (inputCount + 1);
+        return (
+          <g
+            key={`in-${i}`}
+            onClick={(e) => { e.stopPropagation(); onCompleteConnect(); }}
+            onMouseDown={(e) => e.stopPropagation()}
+            style={{ cursor: "crosshair" }}
+          >
+            <circle cx={0} cy={cy} r={9} fill="transparent" />
+            <circle cx={0} cy={cy} r={5}
+              fill="hsl(var(--background))"
+              stroke="hsl(var(--primary))"
+              strokeWidth={1.5}
+              className="hover:fill-[hsl(var(--primary))] transition-colors"
+            />
+          </g>
+        );
+      })}
+      {/* Output ports (right) */}
+      {Array.from({ length: outputCount }).map((_, i) => {
+        const cy = ((i + 1) * NODE_H) / (outputCount + 1);
+        return (
+          <g
+            key={`out-${i}`}
+            onClick={(e) => { e.stopPropagation(); onStartConnect(); }}
+            onMouseDown={(e) => e.stopPropagation()}
+            style={{ cursor: "crosshair" }}
+          >
+            <circle cx={NODE_W} cy={cy} r={9} fill="transparent" />
+            <circle cx={NODE_W} cy={cy} r={5}
+              fill={isConnectSource ? "hsl(var(--primary))" : "hsl(var(--background))"}
+              stroke="hsl(var(--primary))"
+              strokeWidth={1.5}
+              className="hover:fill-[hsl(var(--primary))] transition-colors"
+            />
+          </g>
+        );
+      })}
     </g>
   );
 }
