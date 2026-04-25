@@ -19,6 +19,7 @@ import DataStoragePage from "./pages/DataStoragePage";
 import MetadataConstructorPage from "./pages/MetadataConstructorPage";
 import AIPage from "./pages/AIPage";
 import RebuildPage from "./pages/RebuildPage";
+import MetadataConfiguratorPage from "./pages/MetadataConfiguratorPage";
 import ReportsPage from "./pages/ReportsPage";
 import LoginPage from "./pages/LoginPage";
 import SensorMapPage from "./pages/SensorMapPage";
@@ -70,6 +71,7 @@ const App = () => {
                   <Route path="/data-storage" element={<DataStoragePage />} />
                   <Route path="/metadata" element={<MetadataConstructorPage />} />
                   <Route path="/metadata/rebuild" element={<RebuildPage />} />
+                  <Route path="/metadata/configurator" element={<MetadataConfiguratorPage />} />
                   <Route path="/reports" element={<ReportsPage />} />
                   <Route path="/ai" element={<AIPage />} />
                   <Route path="/admin" element={<AdminPage />} />
