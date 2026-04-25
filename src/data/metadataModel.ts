@@ -121,13 +121,13 @@ export function getMetadataDisplayFor(equipmentId: string) {
   const eq = EQUIPMENT.find((e) => e.equipmentId === equipmentId);
   if (!eq || !eq.metadata) return [];
   const fields = getMetadataFieldsFor(equipmentId);
-  return fields
-    .map((f) => {
-      const v = eq.metadata?.[f.key];
-      if (v === undefined || v === null || v === "") return null;
-      return { key: f.key, label: f.label, value: v, unit: f.unit };
-    })
-    .filter((x): x is { key: string; label: string; value: string | number | boolean; unit?: string } => Boolean(x));
+  const out: Array<{ key: string; label: string; value: string | number | boolean; unit?: string }> = [];
+  for (const f of fields) {
+    const v = eq.metadata?.[f.key];
+    if (v === undefined || v === null || v === "") continue;
+    out.push({ key: f.key, label: f.label, value: v, unit: f.unit });
+  }
+  return out;
 }
 
 export type { EquipmentCategory };
