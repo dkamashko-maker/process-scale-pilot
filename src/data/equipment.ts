@@ -40,6 +40,24 @@ export interface Equipment {
   latestEvidenceRef: string | null;
   /** Optional tiny preview series (upstream cards only) */
   trendPreview?: number[];
+
+  // ── Shared model extensions (additive, optional) ──
+  /** Process criticality tier — drives alerting weight & dashboard sort */
+  criticality?: "high" | "medium" | "low";
+  /** All batches currently or recently associated with this equipment */
+  currentBatchIds?: string[];
+  /** Method ids that can run on this equipment (analytical) or recipes used */
+  relatedMethodIds?: string[];
+  /** Sensor ids physically attached to this equipment */
+  relatedSensorIds?: string[];
+  /** Reusable, category-aware metadata key/value bag (tooltips, workflow nodes) */
+  metadata?: Record<string, string | number | boolean>;
+  /** Aggregate runtime hours (lifetime) */
+  runtime?: { totalHours: number; sinceLastServiceHours: number };
+  /** Duration of the current/last process run, in minutes */
+  processDuration?: { currentMin: number | null; lastCompletedMin: number | null };
+  /** Free-form operator-visible note */
+  notes?: string;
 }
 
 // ── Seed fleet ──────────────────────────────────────────────────────────
