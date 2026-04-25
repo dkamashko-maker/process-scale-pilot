@@ -884,7 +884,7 @@ export default function RebuildPage() {
 
       <div className="flex flex-1 min-h-0">
         {/* ══════════ LEFT PALETTE ══════════ */}
-        <div className={`border-r bg-card shrink-0 flex flex-col transition-all ${paletteCollapsed ? "w-10" : "w-56"}`}>
+        <div className={`border-r bg-card shrink-0 flex flex-col transition-all ${paletteCollapsed ? "w-10" : "w-64"}`}>
           <div className="flex items-center justify-between p-2 border-b">
             {!paletteCollapsed && <span className="text-xs font-semibold text-muted-foreground uppercase">Palette</span>}
             <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => setPaletteCollapsed(!paletteCollapsed)}>
@@ -1109,7 +1109,7 @@ export default function RebuildPage() {
         </div>
 
         {/* ══════════ RIGHT INSPECTOR ══════════ */}
-        <div className={`border-l bg-card shrink-0 flex flex-col transition-all ${inspectorCollapsed ? "w-10" : "w-72"}`}>
+        <div className={`border-l bg-card shrink-0 flex flex-col transition-all ${inspectorCollapsed ? "w-10" : "w-[340px]"}`}>
           <div className="flex items-center justify-between p-2 border-b">
             {!inspectorCollapsed && <span className="text-xs font-semibold text-muted-foreground uppercase">Inspector</span>}
             <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => setInspectorCollapsed(!inspectorCollapsed)}>
