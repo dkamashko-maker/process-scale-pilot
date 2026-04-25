@@ -514,3 +514,237 @@ export function getRecentAlertsForEquipment(id: string): Array<{
     timestamp: new Date(base - a.offsetMin * 60_000).toISOString(),
   }));
 }
+
+// ── Shared model augmentation ───────────────────────────────────────────
+// Adds criticality, batch/method/sensor relations, metadata, runtime,
+// processDuration and notes to each seeded equipment unit. Applied at
+// module load so existing imports keep working without code changes.
+
+type EquipmentAugment = Partial<Pick<
+  Equipment,
+  | "criticality"
+  | "currentBatchIds"
+  | "relatedMethodIds"
+  | "relatedSensorIds"
+  | "metadata"
+  | "runtime"
+  | "processDuration"
+  | "notes"
+>>;
+
+const EQUIPMENT_AUGMENTS: Record<string, EquipmentAugment> = {
+  // ── Upstream ──
+  "UP-001": {
+    criticality: "high",
+    currentBatchIds: ["B-250420-SD01"],
+    relatedSensorIds: ["S-UP001-TEMP", "S-UP001-PH", "S-UP001-DO", "S-UP001-AGI"],
+    metadata: {
+      workingVolumeL: 10,
+      vesselType: "Single-use seed bioreactor",
+      cellLine: "CHO-K1 mAb-07",
+      cultureMode: "Fed-batch",
+      controlLoops: "T / pH / DO / agitation",
+      qualifiedFor: "Seed train",
+    },
+    runtime: { totalHours: 8421, sinceLastServiceHours: 312 },
+    processDuration: { currentMin: null, lastCompletedMin: 96 * 60 },
+    notes: "Idle between seed expansions. Next inoculation scheduled for 2026-04-25.",
+  },
+  "UP-002": {
+    criticality: "high",
+    currentBatchIds: ["B-250423-PD01"],
+    relatedSensorIds: ["S-UP002-TEMP", "S-UP002-PH", "S-UP002-DO", "S-UP002-AGI", "S-UP002-CO2"],
+    metadata: {
+      workingVolumeL: 200,
+      vesselType: "Stainless production bioreactor",
+      cellLine: "CHO-K1 mAb-07",
+      cultureMode: "Fed-batch",
+      controlLoops: "T / pH / DO / agitation / gas mix",
+      qualifiedFor: "GMP production",
+    },
+    runtime: { totalHours: 14760, sinceLastServiceHours: 188 },
+    processDuration: { currentMin: 14 * 24 * 60 + 220, lastCompletedMin: 15 * 24 * 60 },
+    notes: "Day 14 — harvest window opening. DO trending downward, expected.",
+  },
+
+  // ── Downstream ──
+  "DS-101": {
+    criticality: "medium",
+    currentBatchIds: ["B-250423-DS04"],
+    relatedSensorIds: ["S-DS101-RPM", "S-DS101-TEMP"],
+    metadata: { bowlVolumeL: 1.2, maxRpm: 12000, cipQualified: true },
+    runtime: { totalHours: 5210, sinceLastServiceHours: 96 },
+    processDuration: { currentMin: 28, lastCompletedMin: 35 },
+    notes: "Clarification cycle in progress.",
+  },
+  "DS-102": {
+    criticality: "medium",
+    currentBatchIds: [],
+    relatedSensorIds: ["S-DS102-RPM", "S-DS102-TEMP"],
+    metadata: { bowlVolumeL: 1.2, maxRpm: 12000, cipQualified: true },
+    runtime: { totalHours: 4980, sinceLastServiceHours: 410 },
+    processDuration: { currentMin: null, lastCompletedMin: 32 },
+    notes: "Standby. Next scheduled cycle on B-250424-DS05.",
+  },
+  "DS-201": {
+    criticality: "high",
+    currentBatchIds: ["B-250423-DS04"],
+    relatedSensorIds: ["S-DS201-UV280", "S-DS201-COND", "S-DS201-PRES"],
+    relatedMethodIds: ["M-PROTA-CAP-V3"],
+    metadata: { columnVolumeMl: 250, resin: "Protein A MabSelect SuRe", maxPressureBar: 5 },
+    runtime: { totalHours: 7340, sinceLastServiceHours: 145 },
+    processDuration: { currentMin: 52, lastCompletedMin: 78 },
+    notes: "Capture chromatography — connection degraded, polling continues.",
+  },
+  "DS-202": {
+    criticality: "medium",
+    currentBatchIds: ["B-250423-DS04"],
+    relatedSensorIds: ["S-DS202-TMP", "S-DS202-FLOW"],
+    metadata: { cassetteKDa: 30, membraneArea_m2: 0.5 },
+    runtime: { totalHours: 6120, sinceLastServiceHours: 220 },
+    processDuration: { currentMin: 110, lastCompletedMin: 145 },
+    notes: "UF/DF concentration ongoing.",
+  },
+  "DS-301": {
+    criticality: "low",
+    currentBatchIds: [],
+    relatedSensorIds: ["S-DS301-WFI"],
+    metadata: { cycleType: "WFI rinse", maxVialsPerHour: 6000 },
+    runtime: { totalHours: 3210, sinceLastServiceHours: 70 },
+    processDuration: { currentMin: null, lastCompletedMin: 22 },
+  },
+  "DS-302": {
+    criticality: "medium",
+    currentBatchIds: ["B-250423-DS04"],
+    relatedSensorIds: ["S-DS302-TEMP"],
+    metadata: { setpointC: 300, soakMin: 30 },
+    runtime: { totalHours: 4015, sinceLastServiceHours: 60 },
+    processDuration: { currentMin: 165, lastCompletedMin: 240 },
+  },
+  "DS-401": {
+    criticality: "high",
+    currentBatchIds: ["B-250423-DS04"],
+    relatedSensorIds: ["S-DS401-VAC", "S-DS401-SHELF", "S-DS401-COND"],
+    metadata: { shelves: 5, recipe: "Lyo cycle – mAb standard", chamberVolumeL: 220 },
+    runtime: { totalHours: 8910, sinceLastServiceHours: 540 },
+    processDuration: { currentMin: 240, lastCompletedMin: 30 * 60 },
+    notes: "FAULT — vacuum out of range during primary drying. Awaiting engineering review.",
+  },
+  "DS-402": {
+    criticality: "medium",
+    currentBatchIds: ["B-250423-DS04"],
+    relatedSensorIds: ["S-DS402-FLOW", "S-DS402-WEIGHT"],
+    metadata: { vialFormat: "1 mL", fillAccuracyPct: 0.5 },
+    runtime: { totalHours: 5500, sinceLastServiceHours: 80 },
+    processDuration: { currentMin: 38, lastCompletedMin: 62 },
+  },
+  "DS-403": {
+    criticality: "low",
+    currentBatchIds: ["B-250423-DS04"],
+    relatedSensorIds: ["S-DS403-VISION"],
+    metadata: { labelFormat: "2D DataMatrix", capType: "20mm flip-off" },
+    runtime: { totalHours: 4760, sinceLastServiceHours: 120 },
+    processDuration: { currentMin: 33, lastCompletedMin: 60 },
+  },
+
+  // ── Analytical ──
+  "AN-101": {
+    criticality: "high",
+    currentBatchIds: ["B-250423-AR07"],
+    relatedMethodIds: ["3b"],
+    relatedSensorIds: ["S-AN101-UV", "S-AN101-PRES"],
+    metadata: { column: "TSKgel SuperSW3000", injectionUl: 20, runtimeMin: 25 },
+    runtime: { totalHours: 9120, sinceLastServiceHours: 210 },
+    processDuration: { currentMin: null, lastCompletedMin: 25 },
+  },
+  "AN-102": {
+    criticality: "high",
+    currentBatchIds: ["B-250423-AR07"],
+    relatedMethodIds: ["4"],
+    relatedSensorIds: ["S-AN102-UV", "S-AN102-COND"],
+    metadata: { column: "ProPac WCX-10", injectionUl: 25, runtimeMin: 35 },
+    runtime: { totalHours: 8650, sinceLastServiceHours: 180 },
+    processDuration: { currentMin: null, lastCompletedMin: 35 },
+  },
+  "AN-103": {
+    criticality: "medium",
+    currentBatchIds: ["B-250422-AR06"],
+    relatedSensorIds: ["S-AN103-UV"],
+    metadata: { column: "C18", injectionUl: 10, runtimeMin: 20 },
+    runtime: { totalHours: 4310, sinceLastServiceHours: 95 },
+    processDuration: { currentMin: null, lastCompletedMin: 20 },
+  },
+  "AN-104": {
+    criticality: "high",
+    currentBatchIds: ["B-250423-AR07"],
+    relatedMethodIds: ["3c"],
+    metadata: { gelType: "CE-SDS reduced", runtimeMin: 30 },
+    runtime: { totalHours: 6020, sinceLastServiceHours: 140 },
+    processDuration: { currentMin: null, lastCompletedMin: 30 },
+  },
+  "AN-105": {
+    criticality: "high",
+    currentBatchIds: ["B-250423-AR07"],
+    relatedMethodIds: ["6a"],
+    metadata: { plateFormat: "96-well", absorbanceNm: 450 },
+    runtime: { totalHours: 7200, sinceLastServiceHours: 60 },
+    processDuration: { currentMin: null, lastCompletedMin: 90 },
+    notes: "Plate result auto-flagged for review.",
+  },
+  "AN-106": {
+    criticality: "low",
+    currentBatchIds: ["B-250423-AR07"],
+    relatedMethodIds: ["6c"],
+    metadata: { wavelengthRangeNm: "190–900" },
+    runtime: { totalHours: 3120, sinceLastServiceHours: 40 },
+    processDuration: { currentMin: null, lastCompletedMin: 5 },
+  },
+  "AN-107": {
+    criticality: "high",
+    currentBatchIds: ["B-250423-AR07"],
+    relatedMethodIds: ["6b"],
+    metadata: { plateFormat: "384-well", chemistry: "TaqMan" },
+    runtime: { totalHours: 5410, sinceLastServiceHours: 88 },
+    processDuration: { currentMin: null, lastCompletedMin: 110 },
+  },
+  "AN-108": {
+    criticality: "medium",
+    currentBatchIds: ["B-250422-AR06"],
+    metadata: { method: "LAL kinetic chromogenic", entryMode: "manual" },
+    runtime: { totalHours: 1800, sinceLastServiceHours: 20 },
+    processDuration: { currentMin: null, lastCompletedMin: 60 },
+  },
+  "AN-109": {
+    criticality: "medium",
+    currentBatchIds: ["B-250423-AR07"],
+    metadata: { samplingMode: "off-line", measurand: "VCD / viability" },
+    runtime: { totalHours: 4990, sinceLastServiceHours: 70 },
+    processDuration: { currentMin: null, lastCompletedMin: 4 },
+  },
+  "AN-110": {
+    criticality: "medium",
+    currentBatchIds: ["B-250423-AR07"],
+    relatedMethodIds: ["5b"],
+    metadata: { detector: "FLR", column: "HILIC" },
+    runtime: { totalHours: 3850, sinceLastServiceHours: 110 },
+    processDuration: { currentMin: null, lastCompletedMin: 45 },
+  },
+  "AN-111": {
+    criticality: "medium",
+    currentBatchIds: ["B-250423-AR07"],
+    relatedMethodIds: ["5a"],
+    metadata: { detector: "PAD", column: "CarboPac PA20" },
+    runtime: { totalHours: 4200, sinceLastServiceHours: 130 },
+    processDuration: { currentMin: null, lastCompletedMin: 40 },
+  },
+};
+
+for (const eq of EQUIPMENT) {
+  const aug = EQUIPMENT_AUGMENTS[eq.equipmentId];
+  if (aug) Object.assign(eq, aug);
+  // Ensure currentBatchIds is always present and aligned with currentBatch
+  if (!eq.currentBatchIds) {
+    eq.currentBatchIds = eq.currentBatch ? [eq.currentBatch] : [];
+  }
+}
+
