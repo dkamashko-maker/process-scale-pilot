@@ -562,17 +562,36 @@ export default function EquipmentDashboardV2Page() {
 
 // ── Tiny supporting components ───────────────────────────────────────────
 
-function KpiTile({ label, value, Icon }: { label: string; value: number; Icon: React.ComponentType<{ className?: string }> }) {
+type KpiTone = "primary" | "active" | "idle" | "warning" | "error";
+
+function KpiTile({
+  label, value, Icon, tone = "primary",
+}: {
+  label: string;
+  value: number;
+  Icon: React.ComponentType<{ className?: string }>;
+  tone?: KpiTone;
+}) {
+  const toneCfg: Record<KpiTone, { iconBg: string; iconCls: string; ring: string }> = {
+    primary: { iconBg: "bg-primary/10",        iconCls: "text-primary",        ring: "hover:border-primary/40" },
+    active:  { iconBg: "bg-status-active/15",  iconCls: "text-status-active",  ring: "hover:border-status-active/50" },
+    idle:    { iconBg: "bg-status-idle/15",    iconCls: "text-status-idle",    ring: "hover:border-status-idle/40" },
+    warning: { iconBg: "bg-status-warning/15", iconCls: "text-status-warning", ring: "hover:border-status-warning/50" },
+    error:   { iconBg: "bg-status-error/15",   iconCls: "text-status-error",   ring: "hover:border-status-error/50" },
+  };
+  const cfg = toneCfg[tone];
   return (
-    <Card className="p-3">
-      <div className="flex items-center justify-between gap-2">
-        <div className="min-w-0">
-          <div className="text-[10px] uppercase tracking-wide text-muted-foreground truncate">{label}</div>
-          <div className="text-lg font-semibold mt-0.5 leading-tight">{value}</div>
+    <div className={`rounded-lg border bg-card p-4 shadow-tile transition-all ${cfg.ring}`}>
+      <div className="flex items-center gap-3">
+        <div className={`h-10 w-10 rounded-md flex items-center justify-center ${cfg.iconBg}`}>
+          <Icon className={`h-5 w-5 ${cfg.iconCls}`} />
         </div>
-        <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
+        <div className="min-w-0">
+          <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium truncate">{label}</div>
+          <div className="text-2xl font-bold leading-tight tabular-nums">{value}</div>
+        </div>
       </div>
-    </Card>
+    </div>
   );
 }
 
