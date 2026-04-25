@@ -909,7 +909,7 @@ export default function RebuildPage() {
                         <button
                           key={iface.id}
                           className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-xs hover:bg-accent/50 transition-colors text-left"
-                          onClick={() => addNode("device", iface.display_name, iface.id)}
+                          onClick={() => addDeviceNode(iface.display_name, iface.id)}
                         >
                           <Icon className="h-3.5 w-3.5 text-primary shrink-0" />
                           <div className="min-w-0">
