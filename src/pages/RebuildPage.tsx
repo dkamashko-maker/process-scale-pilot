@@ -83,6 +83,10 @@ const UTILITY_NODES = [
 
 const NODE_COLORS: Record<string, string> = {
   device: "hsl(var(--primary))",
+  equipment: "hsl(195, 85%, 45%)",
+  method: "hsl(280, 70%, 55%)",
+  decision: "hsl(38, 92%, 50%)",
+  data_op: "hsl(215, 25%, 47%)",
   range_check: "hsl(173, 58%, 39%)",
   unit_consistency: "hsl(43, 96%, 56%)",
   event_overlay: "hsl(27, 87%, 67%)",
@@ -91,9 +95,31 @@ const NODE_COLORS: Record<string, string> = {
   merge: "hsl(215, 25%, 47%)",
 };
 
+const NODE_KIND_LABEL: Record<string, string> = {
+  device: "Device",
+  equipment: "Equipment",
+  method: "Method",
+  decision: "Decision",
+  data_op: "Data op",
+  range_check: "Range check",
+  unit_consistency: "Unit check",
+  event_overlay: "Event overlay",
+  ml_insight: "ML insight",
+  alert_generator: "Alert generator",
+  merge: "Merge",
+};
+
+const NODE_KIND_ICON: Record<string, typeof FlaskConical> = {
+  equipment: Boxes,
+  method: Beaker,
+  decision: GitBranch,
+  data_op: FileText,
+};
+
 const GRID_SIZE = 20;
-const NODE_W = 180;
-const NODE_H = 72;
+const NODE_W = 200;
+const NODE_H = 86;
+
 
 function snapToGrid(v: number) { return Math.round(v / GRID_SIZE) * GRID_SIZE; }
 
