@@ -475,10 +475,10 @@ export default function IntegratedDashboardPage() {
 
       {/* Global KPIs — equipment-fleet framing (multi-batch) */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <KpiCard label="Total Interfaces" value={INTERFACES.length} trend="neutral" animationDelay={0} />
-        <KpiCard label="Connected" value={connectedCount} trend="neutral" animationDelay={50} />
-        <KpiCard label="Events (24h)" value={events24h.length} trend="neutral" animationDelay={100} />
-        <KpiCard label="Bioreactor Runs" value={RUNS.length} trend="neutral" animationDelay={150} />
+        <KpiCard label="Total Interfaces" value={INTERFACES.length} Icon={Cpu}          tone="primary" animationDelay={0} />
+        <KpiCard label="Connected"        value={connectedCount}    Icon={CheckCircle2} tone="active"  animationDelay={50} />
+        <KpiCard label="Events (24h)"     value={events24h.length}  Icon={CalendarClock} tone="idle"   animationDelay={100} />
+        <KpiCard label="Bioreactor Runs"  value={RUNS.length}       Icon={FlaskConical} tone="primary" animationDelay={150} />
       </div>
 
       <Tabs value={activeTab} onValueChange={(v) => navigate(`/dashboard?tab=${v}`, { replace: true })} className="space-y-6">
