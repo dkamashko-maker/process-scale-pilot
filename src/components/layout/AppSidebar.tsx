@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   Database, Construction, Brain, Activity, FileText,
-  Map, ChevronDown, ChevronRight, Workflow, Boxes,
+  Map, ChevronDown, ChevronRight, Workflow, Boxes, GitBranch,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { RUNS } from "@/data/runData";
@@ -70,15 +70,26 @@ export function AppSidebar() {
               </SidebarMenuItem>
 
               {!collapsed && equipmentOpen && (
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    className={`flex items-center gap-3 pl-8 pr-3 py-1.5 text-sm rounded-lg transition-colors cursor-pointer hover:bg-accent ${location.pathname === "/equipment/sensor-map" ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:text-foreground"}`}
-                    onClick={() => navigate("/equipment/sensor-map")}
-                  >
-                    <Map className="h-4 w-4 flex-shrink-0" />
-                    <span>Sensor Map</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
+                <>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      className={`flex items-center gap-3 pl-8 pr-3 py-1.5 text-sm rounded-lg transition-colors cursor-pointer hover:bg-accent ${location.pathname === "/equipment/sensor-map" ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                      onClick={() => navigate("/equipment/sensor-map")}
+                    >
+                      <Map className="h-4 w-4 flex-shrink-0" />
+                      <span>Sensor Map</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      className={`flex items-center gap-3 pl-8 pr-3 py-1.5 text-sm rounded-lg transition-colors cursor-pointer hover:bg-accent ${location.pathname === "/equipment/material-flow" ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                      onClick={() => navigate("/equipment/material-flow")}
+                    >
+                      <GitBranch className="h-4 w-4 flex-shrink-0" />
+                      <span>Material Flow</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </>
               )}
 
               {/* Metadata Constructor with expandable sub-items */}
