@@ -1955,3 +1955,124 @@ function MiniKpi({ label, value, accent }: { label: string; value: number | stri
     </div>
   );
 }
+
+// ── Port list editor (named inputs / outputs) ──
+function PortListEditor({
+  label, values, onChange, placeholder,
+}: {
+  label: string;
+  values: string[];
+  onChange: (next: string[]) => void;
+  placeholder?: string;
+}) {
+  return (
+    <div>
+      <div className="flex items-center justify-between">
+        <Label className="text-[9px] text-muted-foreground">{label}</Label>
+        <Button
+          variant="ghost" size="sm" className="h-5 text-[9px] gap-0.5"
+          onClick={() => onChange([...values, ""])}
+        >
+          <Plus className="h-2.5 w-2.5" /> Add
+        </Button>
+      </div>
+      <div className="space-y-1 mt-1">
+        {values.length === 0 && (
+          <p className="text-[9px] text-muted-foreground italic px-1">No {label.toLowerCase()} declared.</p>
+        )}
+        {values.map((v, i) => (
+          <div key={i} className="flex items-center gap-1">
+            <Input
+              className="h-6 text-[10px]"
+              placeholder={placeholder}
+              value={v}
+              onChange={(e) => {
+                const next = [...values];
+                next[i] = e.target.value;
+                onChange(next);
+              }}
+            />
+            <Button
+              variant="ghost" size="sm" className="h-6 w-6 p-0 shrink-0"
+              onClick={() => onChange(values.filter((_, j) => j !== i))}
+              title="Remove"
+            >
+              <X className="h-3 w-3" />
+            </Button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── Metadata key/value editor ──
+function MetadataEditor({
+  metadata, onChange,
+}: {
+  metadata: Record<string, string | number | boolean>;
+  onChange: (next: Record<string, string | number | boolean>) => void;
+}) {
+  const entries = Object.entries(metadata);
+  return (
+    <div className="rounded-md border bg-muted/20 p-2 space-y-2">
+      <div className="flex items-center justify-between">
+        <p className="text-[10px] uppercase text-muted-foreground font-semibold">Metadata</p>
+        <Button
+          variant="ghost" size="sm" className="h-5 text-[9px] gap-0.5"
+          onClick={() => {
+            let i = 1;
+            let key = `field_${i}`;
+            while (key in metadata) { i += 1; key = `field_${i}`; }
+            onChange({ ...metadata, [key]: "" });
+          }}
+        >
+          <Plus className="h-2.5 w-2.5" /> Add field
+        </Button>
+      </div>
+      {entries.length === 0 && (
+        <p className="text-[9px] text-muted-foreground italic">No metadata fields. Reusable in tooltips and reports.</p>
+      )}
+      {entries.map(([k, v]) => (
+        <div key={k} className="flex items-center gap-1">
+          <Input
+            className="h-6 text-[10px] w-1/2"
+            value={k}
+            onChange={(e) => {
+              const newKey = e.target.value;
+              if (!newKey || newKey === k) return;
+              const next: Record<string, string | number | boolean> = {};
+              for (const [kk, vv] of entries) next[kk === k ? newKey : kk] = vv;
+              onChange(next);
+            }}
+          />
+          <Input
+            className="h-6 text-[10px] flex-1"
+            value={String(v)}
+            onChange={(e) => {
+              const raw = e.target.value;
+              const num = Number(raw);
+              const parsed: string | number | boolean =
+                raw === "true" ? true
+              : raw === "false" ? false
+              : raw !== "" && !Number.isNaN(num) ? num
+              : raw;
+              onChange({ ...metadata, [k]: parsed });
+            }}
+          />
+          <Button
+            variant="ghost" size="sm" className="h-6 w-6 p-0 shrink-0"
+            onClick={() => {
+              const next = { ...metadata };
+              delete next[k];
+              onChange(next);
+            }}
+            title="Remove"
+          >
+            <X className="h-3 w-3" />
+          </Button>
+        </div>
+      ))}
+    </div>
+  );
+}
