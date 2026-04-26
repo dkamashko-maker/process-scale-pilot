@@ -305,18 +305,20 @@ function Node({
 interface EdgeProps {
   fromId: string;
   toId: string;
-  /** Connection-level selected batches (in selection order) */
   highlightBatches: string[];
   selectedBatches: string[];
-  /** True when no link was modeled but we want to show absence */
   missing?: boolean;
-  /** "blocked" connection state from the data model */
   blocked?: boolean;
   label?: string;
+  /** Hovered node id — when set and matches one endpoint, paint this edge in
+   *  the node's status colour. When set but no endpoint matches, dim the edge. */
+  hoveredId?: string | null;
+  hoveredStatusColor?: string;
 }
 
 function Edge({
   fromId, toId, highlightBatches, selectedBatches, missing, blocked, label,
+  hoveredId, hoveredStatusColor,
 }: EdgeProps) {
   const a = POS.get(fromId);
   const b = POS.get(toId);
