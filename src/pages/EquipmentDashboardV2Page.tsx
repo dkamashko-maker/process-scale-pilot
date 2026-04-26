@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,12 +7,12 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
 } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
+import { OverviewHeader } from "@/components/shared/PageHeader";
+import { KpiCard } from "@/components/shared/KpiCard";
 import {
   EQUIPMENT, getFleetKpis, getRecentAlertsForEquipment,
   type Equipment, type EquipmentCategory, type EquipmentStatus,
@@ -22,76 +21,92 @@ import { getRunForEquipmentId } from "@/data/runData";
 import {
   Activity, AlertTriangle, Search, Wifi, WifiOff, CircleDot,
   FileText, BookOpen, LineChart, Bell, Database, ScrollText, UploadCloud, Cable,
-  Hash, Layers, Clock, FlaskConical, Filter as FilterIcon, Microscope,
+  Hash, Layers, Clock, ArrowUpRight, ArrowDownRight, X,
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { EquipmentTooltip } from "@/components/equipment/EquipmentTooltip";
 
+// ── Category accent (subtle — used for tab + 3px left card border only) ──
+const CATEGORY: Record<
+  EquipmentCategory,
+  { label: string; short: string; activeBg: string; activeText: string; border: string; tint: string }
+> = {
+  upstream: {
+    label: "Upstream Process Equipment",
+    short: "Upstream",
+    activeBg: "bg-blue-50",
+    activeText: "text-blue-700",
+    border: "border-l-blue-500",
+    tint: "border-blue-200",
+  },
+  downstream: {
+    label: "Downstream Process Equipment",
+    short: "Downstream",
+    activeBg: "bg-teal-50",
+    activeText: "text-teal-700",
+    border: "border-l-teal-500",
+    tint: "border-teal-200",
+  },
+  analytical: {
+    label: "Analytical Equipment & Assays",
+    short: "Analytical",
+    activeBg: "bg-amber-50",
+    activeText: "text-amber-700",
+    border: "border-l-amber-500",
+    tint: "border-amber-200",
+  },
+};
+
 // ── Small visual helpers ────────────────────────────────────────────────
 
-function StatusChip({ status }: { status: EquipmentStatus }) {
-  const cfg = {
-    active: {
-      cls: "bg-status-active/15 text-status-active border-status-active/30",
-      dot: "bg-status-active animate-pulse",
-      label: "Active",
-    },
-    idle: {
-      cls: "bg-status-idle/10 text-status-idle border-status-idle/25",
-      dot: "bg-status-idle",
-      label: "Idle",
-    },
-    error: {
-      cls: "bg-status-error/15 text-status-error border-status-error/30",
-      dot: "bg-status-error animate-pulse",
-      label: "Error",
-    },
-  }[status];
-  return (
-    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-[11px] font-medium ${cfg.cls}`}>
-      <span className={`h-1.5 w-1.5 rounded-full ${cfg.dot}`} />
-      {cfg.label}
-    </span>
-  );
+function StatusBadge({ status }: { status: EquipmentStatus }) {
+  if (status === "active") return <Badge variant="success">Active</Badge>;
+  if (status === "error")  return <Badge variant="danger">Alerting</Badge>;
+  return <Badge variant="neutral">Idle</Badge>;
 }
 
-function ConnectionDot({ health }: { health: Equipment["connectionHealth"] }) {
+function ConnectionLine({ health }: { health: Equipment["connectionHealth"] }) {
   const cfg = {
     connected: { Icon: Wifi,      cls: "text-status-active",  label: "Connected" },
     degraded:  { Icon: CircleDot, cls: "text-status-warning", label: "Degraded" },
     offline:   { Icon: WifiOff,   cls: "text-status-error",   label: "Offline" },
   }[health];
   return (
-    <span className={`inline-flex items-center gap-1 text-[11px] font-medium ${cfg.cls}`} title={cfg.label}>
-      <cfg.Icon className="h-3.5 w-3.5" />
+    <span className={`inline-flex items-center gap-1 text-[11px] font-medium ${cfg.cls}`}>
+      <cfg.Icon className="h-3 w-3" />
       {cfg.label}
     </span>
   );
 }
 
-function AlertChip({ count, critical }: { count: number; critical: boolean }) {
+/** Severity breakdown chip — "1 critical · 1 warning" style */
+function AlertBreakdown({ count, critical }: { count: number; critical: boolean }) {
   if (count === 0) {
     return (
-      <span className="text-[11px] text-muted-foreground inline-flex items-center gap-1">
+      <span className="text-[11px] text-text-secondary inline-flex items-center gap-1">
         <Bell className="h-3 w-3" /> No alerts
       </span>
     );
   }
+  const criticals = critical ? 1 : 0;
+  const warnings = count - criticals;
+  const parts: string[] = [];
+  if (criticals) parts.push(`${criticals} critical`);
+  if (warnings)  parts.push(`${warnings} warning${warnings > 1 ? "s" : ""}`);
   return (
     <span
-      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[11px] font-medium ${
-        critical
-          ? "bg-status-error/15 text-status-error border-status-error/30"
-          : "bg-status-warning/15 text-status-warning border-status-warning/30"
+      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium ${
+        critical ? "bg-[hsl(var(--pill-danger-bg))] text-[hsl(var(--pill-danger-fg))]"
+                 : "bg-[hsl(var(--pill-warning-bg))] text-[hsl(var(--pill-warning-fg))]"
       }`}
     >
       <AlertTriangle className="h-3 w-3" />
-      {count} alert{count > 1 ? "s" : ""}
+      {parts.join(" · ")}
     </span>
   );
 }
 
-function Sparkline({ data }: { data: number[] }) {
+function Sparkline({ data, label }: { data: number[]; label?: string }) {
   if (!data?.length) return null;
   const w = 96, h = 28;
   const min = Math.min(...data), max = Math.max(...data);
@@ -100,173 +115,127 @@ function Sparkline({ data }: { data: number[] }) {
   const pts = data.map((v, i) => `${i * step},${h - ((v - min) / range) * h}`).join(" ");
   const area = `0,${h} ${pts} ${w},${h}`;
   return (
-    <svg width={w} height={h} className="text-primary overflow-visible">
-      <defs>
-        <linearGradient id="spark-fill" x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%" stopColor="currentColor" stopOpacity="0.25" />
-          <stop offset="100%" stopColor="currentColor" stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      <polygon fill="url(#spark-fill)" points={area} />
-      <polyline fill="none" stroke="currentColor" strokeWidth="1.75" points={pts} strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
+    <div className="flex items-center justify-between rounded-md bg-secondary px-2.5 py-1.5">
+      {label && (
+        <span className="text-[10px] uppercase tracking-wide text-text-secondary">{label}</span>
+      )}
+      <svg width={w} height={h} className="text-primary overflow-visible">
+        <defs>
+          <linearGradient id="spark-fill" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stopColor="currentColor" stopOpacity="0.25" />
+            <stop offset="100%" stopColor="currentColor" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        <polygon fill="url(#spark-fill)" points={area} />
+        <polyline fill="none" stroke="currentColor" strokeWidth="1.75" points={pts} strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </div>
   );
 }
 
-// ── Tile shell ──
-function tileShell(status: EquipmentStatus, manual = false): string {
-  const base =
-    "group cursor-pointer rounded-lg border transition-all duration-200 shadow-tile hover:shadow-tile-hover hover:-translate-y-0.5";
-  if (manual) return `${base} bg-muted/30 border-dashed border-border hover:border-muted-foreground/40`;
-  if (status === "error")  return `${base} bg-tile-error border-status-error/30 hover:border-status-error/60`;
-  if (status === "active") return `${base} bg-tile-active border-border hover:border-primary/50`;
-  return `${base} bg-tile-idle border-border hover:border-primary/40`;
-}
+// ── Operational equipment card ──────────────────────────────────────────
 
-// ── Cards (one component per category) ──────────────────────────────────
-
-function UpstreamCard({ eq, onOpen }: { eq: Equipment; onOpen: () => void }) {
-  const showBatchPhase = eq.status === "active" || eq.status === "error";
-  return (
-    <EquipmentTooltip equipment={eq}>
-      <div className={tileShell(eq.status)} onClick={onOpen}>
-        <div className="p-4 pb-3">
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0">
-              <div className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">Bioreactor</div>
-              <div className="text-base font-semibold leading-tight truncate">{eq.equipmentName}</div>
-              <div className="text-[11px] text-muted-foreground mt-0.5 font-mono">{eq.equipmentId}</div>
-            </div>
-            <StatusChip status={eq.status} />
-          </div>
-        </div>
-        <div className="px-4 pb-4 space-y-2.5">
-          {showBatchPhase ? (
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Batch</div>
-                <div className="font-mono text-xs truncate">{eq.currentBatch ?? "—"}</div>
-              </div>
-              <div>
-                <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Phase</div>
-                <div className="text-xs truncate">{eq.processPhase}</div>
-              </div>
-            </div>
-          ) : (
-            <div>
-              <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Last operation</div>
-              <div className="text-xs">{format(new Date(eq.lastOperationAt), "MMM d, HH:mm")}</div>
-            </div>
-          )}
-          {eq.trendPreview && (
-            <div className="flex items-center justify-between rounded-md bg-muted/40 px-2.5 py-1.5">
-              <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Temp trend</span>
-              <Sparkline data={eq.trendPreview} />
-            </div>
-          )}
-          <div className="flex items-center justify-between pt-1 border-t">
-            <ConnectionDot health={eq.connectionHealth} />
-            <AlertChip count={eq.alertCount} critical={eq.criticalAlert} />
-          </div>
-        </div>
-      </div>
-    </EquipmentTooltip>
-  );
-}
-
-function DownstreamCard({ eq, onOpen }: { eq: Equipment; onOpen: () => void }) {
-  const showBatch = eq.status === "active" || eq.status === "error";
-  return (
-    <EquipmentTooltip equipment={eq}>
-      <div className={tileShell(eq.status)} onClick={onOpen}>
-        <div className="p-4 pb-3">
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0">
-              <div className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">Operational</div>
-              <div className="text-base font-semibold leading-tight truncate">{eq.equipmentName}</div>
-              <div className="text-[11px] text-muted-foreground mt-0.5 font-mono">{eq.equipmentId}</div>
-            </div>
-            <StatusChip status={eq.status} />
-          </div>
-        </div>
-        <div className="px-4 pb-4 space-y-2.5">
-          {showBatch ? (
-            <div>
-              <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Batch</div>
-              <div className="font-mono text-xs truncate">{eq.currentBatch ?? "—"}</div>
-            </div>
-          ) : (
-            <div>
-              <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Last operation</div>
-              <div className="text-xs">{format(new Date(eq.lastOperationAt), "MMM d, HH:mm")}</div>
-            </div>
-          )}
-          <div className="flex items-center justify-between pt-1 border-t">
-            <ConnectionDot health={eq.connectionHealth} />
-            <AlertChip count={eq.alertCount} critical={eq.criticalAlert} />
-          </div>
-        </div>
-      </div>
-    </EquipmentTooltip>
-  );
-}
-
-function AnalyticalCard({ eq, onOpen }: { eq: Equipment; onOpen: () => void }) {
+function EquipmentCard({
+  eq,
+  onOpen,
+  onCta,
+}: {
+  eq: Equipment;
+  onOpen: () => void;
+  onCta: () => void;
+}) {
+  const cat = CATEGORY[eq.equipmentCategory];
+  const isActive = eq.status === "active" || eq.status === "error";
+  const isAnalytical = eq.equipmentCategory === "analytical";
   const isManual = eq.integrationMode === "manual";
+  const cta = isActive ? "View run" : "Start run";
+
+  // Card chrome — Operational card type from design system
   return (
     <EquipmentTooltip equipment={eq}>
-      <div className={tileShell(eq.status, isManual)} onClick={onOpen}>
-        <div className="p-4 pb-3">
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0">
-              <div className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">
-                {isManual ? "Manual upload" : "Analytical"}
-              </div>
-              <div className={`text-base font-semibold leading-tight truncate ${isManual ? "text-muted-foreground" : ""}`}>
-                {eq.equipmentName}
-              </div>
-              <div className="text-[11px] text-muted-foreground mt-0.5 font-mono">{eq.equipmentId}</div>
+      <div
+        onClick={onOpen}
+        className={`group relative card-operational border-l-[3px] ${cat.border} cursor-pointer transition-colors hover:border-primary hover:border-l-[3px]`}
+      >
+        {/* Header row */}
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div className="min-w-0">
+            <div className="text-[11px] uppercase tracking-wide text-text-secondary font-medium">
+              {isAnalytical ? (isManual ? "Manual upload" : "Analytical") : cat.short}
             </div>
-            <span
-              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-medium ${
-                isManual
-                  ? "bg-muted text-muted-foreground border-border"
-                  : "bg-primary/10 text-primary border-primary/25"
-              }`}
-            >
-              {isManual ? <UploadCloud className="h-3 w-3" /> : <Cable className="h-3 w-3" />}
-              {isManual ? "Manual" : "Online"}
-            </span>
+            <div className="text-[14px] font-medium leading-tight truncate text-foreground">
+              {eq.equipmentName}
+            </div>
+            <div className="text-[11px] text-text-secondary mt-0.5 font-mono">{eq.equipmentId}</div>
           </div>
+          <StatusBadge status={eq.status} />
         </div>
-        <div className="px-4 pb-4 space-y-2 text-xs">
-          <div className="flex items-start gap-1.5">
-            <Layers className="h-3 w-3 mt-0.5 text-muted-foreground shrink-0" />
-            <div className="min-w-0">
-              <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Method</div>
-              <div className="truncate">{eq.methodName ?? "—"}</div>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <div className="flex items-start gap-1.5">
-              <Hash className="h-3 w-3 mt-0.5 text-muted-foreground shrink-0" />
-              <div className="min-w-0">
-                <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Batch</div>
-                <div className="font-mono truncate">{eq.currentBatch ?? "—"}</div>
+
+        {/* Body — varies by category and state */}
+        <div className="space-y-2.5">
+          {isAnalytical ? (
+            <>
+              <div className="flex items-start gap-1.5 text-[12px]">
+                <Layers className="h-3 w-3 mt-0.5 text-text-secondary shrink-0" />
+                <div className="min-w-0">
+                  <div className="text-[11px] uppercase tracking-wide text-text-secondary">Method</div>
+                  <div className="truncate">{eq.methodName ?? "—"}</div>
+                </div>
               </div>
-            </div>
-            <div className="flex items-start gap-1.5">
-              <Clock className="h-3 w-3 mt-0.5 text-muted-foreground shrink-0" />
-              <div className="min-w-0">
-                <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Last data</div>
-                <div className="truncate">{format(new Date(eq.lastDataReceivedAt), "MMM d, HH:mm")}</div>
+              <div className="grid grid-cols-2 gap-2 text-[12px]">
+                <div className="flex items-start gap-1.5">
+                  <Hash className="h-3 w-3 mt-0.5 text-text-secondary shrink-0" />
+                  <div className="min-w-0">
+                    <div className="text-[11px] uppercase tracking-wide text-text-secondary">Batch</div>
+                    <div className="font-mono truncate">{eq.currentBatch ?? "—"}</div>
+                  </div>
+                </div>
+                <div className="flex items-start gap-1.5">
+                  <Clock className="h-3 w-3 mt-0.5 text-text-secondary shrink-0" />
+                  <div className="min-w-0">
+                    <div className="text-[11px] uppercase tracking-wide text-text-secondary">Last data</div>
+                    <div className="truncate">{format(new Date(eq.lastDataReceivedAt), "MMM d, HH:mm")}</div>
+                  </div>
+                </div>
               </div>
+            </>
+          ) : isActive ? (
+            <>
+              <div className="grid grid-cols-2 gap-2 text-[12px]">
+                <div>
+                  <div className="text-[11px] uppercase tracking-wide text-text-secondary">Batch</div>
+                  <div className="font-mono truncate">{eq.currentBatch ?? "—"}</div>
+                </div>
+                <div>
+                  <div className="text-[11px] uppercase tracking-wide text-text-secondary">Phase</div>
+                  <div className="truncate">{eq.processPhase}</div>
+                </div>
+              </div>
+              {eq.trendPreview && (
+                <Sparkline data={eq.trendPreview} label="Temp · 7d" />
+              )}
+            </>
+          ) : (
+            <div className="rounded-md bg-secondary px-2.5 py-2">
+              <div className="text-[11px] uppercase tracking-wide text-text-secondary">Last operation</div>
+              <div className="text-[12px]">{format(new Date(eq.lastOperationAt), "MMM d, HH:mm")}</div>
+              <div className="text-[11px] text-text-secondary italic mt-0.5">No active run</div>
             </div>
+          )}
+
+          {/* Footer: connection + alert breakdown + hover CTA */}
+          <div className="flex items-center justify-between pt-2 mt-1 border-t border-border-tertiary">
+            <ConnectionLine health={eq.connectionHealth} />
+            <AlertBreakdown count={eq.alertCount} critical={eq.criticalAlert} />
           </div>
-          <div className="flex items-center justify-between pt-1 border-t">
-            <ConnectionDot health={eq.connectionHealth} />
-            <AlertChip count={eq.alertCount} critical={eq.criticalAlert} />
-          </div>
+
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onCta(); }}
+            className="opacity-0 group-hover:opacity-100 transition-opacity inline-flex items-center gap-1 text-[12px] font-medium text-primary hover:underline"
+          >
+            {cta} <ArrowUpRight className="h-3 w-3" />
+          </button>
         </div>
       </div>
     </EquipmentTooltip>
@@ -295,78 +264,74 @@ function EquipmentDrawer({
         <SheetHeader>
           <div className="flex items-center justify-between gap-2">
             <SheetTitle>{equipment.equipmentName}</SheetTitle>
-            <StatusChip status={equipment.status} />
+            <StatusBadge status={equipment.status} />
           </div>
           <SheetDescription className="font-mono text-xs">{equipment.equipmentId}</SheetDescription>
         </SheetHeader>
 
         <div className="mt-6 space-y-5 text-sm">
-          {/* Status block */}
-          <div className="space-y-2">
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <div className="text-xs text-muted-foreground">Connection</div>
-                <ConnectionDot health={equipment.connectionHealth} />
-              </div>
-              <div>
-                <div className="text-xs text-muted-foreground">Mode</div>
-                <div className="capitalize text-xs">{equipment.integrationMode}</div>
-              </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <div className="text-xs text-text-secondary">Connection</div>
+              <ConnectionLine health={equipment.connectionHealth} />
+            </div>
+            <div>
+              <div className="text-xs text-text-secondary">Mode</div>
+              <div className="capitalize text-xs">{equipment.integrationMode}</div>
             </div>
           </div>
 
           <Separator />
 
-          {/* Category-specific block */}
           {isAnalytical ? (
             <div className="space-y-2">
               <div>
-                <div className="text-xs text-muted-foreground">Last result received</div>
+                <div className="text-xs text-text-secondary">Last result received</div>
                 <div className="text-sm">
                   {format(new Date(equipment.lastDataReceivedAt), "MMM d, yyyy HH:mm")}
-                  <span className="text-muted-foreground ml-2">
+                  <span className="text-text-secondary ml-2">
                     ({formatDistanceToNow(new Date(equipment.lastDataReceivedAt), { addSuffix: true })})
                   </span>
                 </div>
               </div>
               <div>
-                <div className="text-xs text-muted-foreground">Latest batch / series</div>
+                <div className="text-xs text-text-secondary">Latest batch / series</div>
                 <div className="font-mono text-xs">{equipment.currentBatch ?? "—"}</div>
               </div>
               <div>
-                <div className="text-xs text-muted-foreground">Method</div>
+                <div className="text-xs text-text-secondary">Method</div>
                 <div className="text-sm">{equipment.methodName ?? "—"}</div>
               </div>
               <div>
-                <div className="text-xs text-muted-foreground">Upload mode</div>
-                <Badge variant={equipment.integrationMode === "manual" ? "outline" : "secondary"} className="gap-1 text-[10px] mt-0.5">
+                <div className="text-xs text-text-secondary">Upload mode</div>
+                <Badge variant={equipment.integrationMode === "manual" ? "neutral" : "success"} className="gap-1 mt-0.5">
                   {equipment.integrationMode === "manual"
                     ? <><UploadCloud className="h-3 w-3" /> Manual load</>
                     : <><Cable className="h-3 w-3" /> Online-integrated</>}
                 </Badge>
               </div>
               <div>
-                <div className="text-xs text-muted-foreground">File / result reference</div>
+                <div className="text-xs text-text-secondary">File / result reference</div>
                 <div className="font-mono text-xs">{equipment.latestEvidenceRef ?? "—"}</div>
               </div>
             </div>
           ) : (
             <div className="space-y-2">
               <div>
-                <div className="text-xs text-muted-foreground">Assigned batch</div>
+                <div className="text-xs text-text-secondary">Assigned batch</div>
                 <div className="font-mono text-xs">{equipment.currentBatch ?? "—"}</div>
               </div>
               <div>
-                <div className="text-xs text-muted-foreground">Process phase</div>
+                <div className="text-xs text-text-secondary">Process phase</div>
                 <div className="text-sm">{equipment.processPhase}</div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <div className="text-xs text-muted-foreground">Last operation</div>
+                  <div className="text-xs text-text-secondary">Last operation</div>
                   <div className="text-xs">{format(new Date(equipment.lastOperationAt), "MMM d, HH:mm")}</div>
                 </div>
                 <div>
-                  <div className="text-xs text-muted-foreground">Last data received</div>
+                  <div className="text-xs text-text-secondary">Last data received</div>
                   <div className="text-xs">{format(new Date(equipment.lastDataReceivedAt), "MMM d, HH:mm")}</div>
                 </div>
               </div>
@@ -375,20 +340,19 @@ function EquipmentDrawer({
 
           <Separator />
 
-          {/* Alerts */}
           <div>
-            <div className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
+            <div className="text-xs text-text-secondary mb-2 flex items-center gap-1">
               <AlertTriangle className="h-3 w-3" /> Recent alerts
             </div>
             {alerts.length === 0 ? (
-              <p className="text-xs text-muted-foreground">No recent alerts.</p>
+              <p className="text-xs text-text-secondary">No recent alerts.</p>
             ) : (
               <ul className="space-y-2">
                 {alerts.map((a) => (
                   <li key={a.id} className="text-xs border-l-2 pl-2"
                       style={{ borderColor: a.severity === "critical" ? "hsl(var(--destructive))" : a.severity === "warning" ? "hsl(38 92% 50%)" : "hsl(var(--muted-foreground))" }}>
                     <div className="font-medium">{a.message}</div>
-                    <div className="text-muted-foreground">{format(new Date(a.timestamp), "MMM d, HH:mm")}</div>
+                    <div className="text-text-secondary">{format(new Date(a.timestamp), "MMM d, HH:mm")}</div>
                   </li>
                 ))}
               </ul>
@@ -397,7 +361,6 @@ function EquipmentDrawer({
 
           <Separator />
 
-          {/* Actions */}
           <div className="grid grid-cols-1 gap-2">
             <Button variant="outline" size="sm" className="justify-start" onClick={() => navigate("/data-storage")}>
               <Database className="h-4 w-4 mr-2" /> View ledger records
@@ -434,22 +397,33 @@ function EquipmentDrawer({
 // ── Page ─────────────────────────────────────────────────────────────────
 
 type StatusFilter = "all" | EquipmentStatus;
+const STATUS_LABEL: Record<StatusFilter, string> = {
+  all: "All statuses", active: "Active", idle: "Idle", error: "Alerting",
+};
 
 export default function EquipmentDashboardV2Page() {
+  const navigate = useNavigate();
   const kpis = useMemo(() => getFleetKpis(), []);
   const [tab, setTab] = useState<EquipmentCategory>("upstream");
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
-  const [alertsOnly, setAlertsOnly] = useState(false);
   const [selected, setSelected] = useState<Equipment | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   const openCard = (eq: Equipment) => { setSelected(eq); setDrawerOpen(true); };
 
-  const filteredFor = (cat: EquipmentCategory) => {
-    return EQUIPMENT.filter((e) => e.equipmentCategory === cat).filter((e) => {
+  const handleCta = (eq: Equipment) => {
+    if (eq.status === "active" || eq.status === "error") {
+      const run = getRunForEquipmentId(eq.equipmentId);
+      navigate(run ? `/run/${run.run_id}` : "/equipment");
+    } else {
+      openCard(eq);
+    }
+  };
+
+  const filteredFor = (cat: EquipmentCategory) =>
+    EQUIPMENT.filter((e) => e.equipmentCategory === cat).filter((e) => {
       if (statusFilter !== "all" && e.status !== statusFilter) return false;
-      if (alertsOnly && e.alertCount === 0) return false;
       if (query) {
         const q = query.toLowerCase();
         if (!(
@@ -459,151 +433,141 @@ export default function EquipmentDashboardV2Page() {
       }
       return true;
     });
-  };
+
+  // Trend stubs (no historical series in fixture data — render only when meaningful)
+  const connectedTrend: "up" | "down" | undefined = kpis.connected > 0 ? "up" : undefined;
+  const activeTrend: "up" | "down" | undefined = kpis.active > 0 ? "up" : undefined;
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-end justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Equipment Dashboard</h1>
-          <p className="text-sm text-muted-foreground mt-1.5">
-            Operational equipment, assays and connection status across the fleet.
-          </p>
-        </div>
-      </div>
+    <div className="p-6 stack-page">
+      <OverviewHeader
+        title="Equipment Dashboard"
+        description="Operational equipment, assays and connection status across the fleet."
+      />
 
-      {/* KPI strip — polished, scannable, commercial */}
+      {/* KPI summary strip — Summary card style */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-        <KpiTile label="Connected"               value={kpis.connected}               Icon={Wifi}           tone="primary" />
-        <KpiTile label="Active"                  value={kpis.active}                  Icon={Activity}       tone="active" />
-        <KpiTile label="Idle"                    value={kpis.idle}                    Icon={CircleDot}      tone="idle" />
-        <KpiTile label="With alerts"             value={kpis.withAlerts}              Icon={AlertTriangle}  tone={kpis.withAlerts > 0 ? "warning" : "idle"} />
-        <KpiTile label="Uploads today"           value={kpis.analyticalUploadsToday}  Icon={UploadCloud}    tone="primary" />
+        <SummaryTile
+          label="Connected"
+          value={kpis.connected}
+          Icon={Wifi}
+          tone="primary"
+          trend={connectedTrend}
+        />
+        <SummaryTile
+          label="Active"
+          value={kpis.active}
+          Icon={Activity}
+          tone="active"
+          trend={activeTrend}
+        />
+        <SummaryTile label="Idle" value={kpis.idle} Icon={CircleDot} tone="idle" />
+        <SummaryTile
+          label="With alerts"
+          value={kpis.withAlerts}
+          Icon={AlertTriangle}
+          tone="warning"
+          highlight={kpis.withAlerts > 0 ? "warning" : undefined}
+        />
+        <SummaryTile
+          label="Uploads today"
+          value={kpis.analyticalUploadsToday}
+          Icon={UploadCloud}
+          tone="primary"
+          demoted={kpis.analyticalUploadsToday === 0}
+        />
       </div>
 
-      {/* Utility controls */}
-      <Card>
-        <CardContent className="py-4 flex flex-wrap items-center gap-3">
-          <div className="relative flex-1 min-w-[220px] max-w-xs">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search by name or ID…"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              className="pl-8 h-9"
-            />
-          </div>
-          <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)}>
-            <SelectTrigger className="w-36 h-9">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All statuses</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="idle">Idle</SelectItem>
-              <SelectItem value="error">Error</SelectItem>
-            </SelectContent>
-          </Select>
-          <div className="flex items-center gap-2 ml-auto">
-            <Switch id="alerts-only" checked={alertsOnly} onCheckedChange={setAlertsOnly} />
-            <Label htmlFor="alerts-only" className="text-sm">Alerts only</Label>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Category tabs — primary navigation */}
+      {/* Category tabs + inline search/filter */}
       <Tabs value={tab} onValueChange={(v) => setTab(v as EquipmentCategory)}>
-        {(() => {
-          const tabsMeta = [
-            {
-              value: "upstream" as const,
-              label: "Upstream Process Equipment",
-              short: "Upstream",
-              desc: "Bioreactors, media prep, seed train",
-              Icon: FlaskConical,
-              accent: "from-chart-1/15 to-chart-1/5 border-chart-1/40 text-chart-1",
-              activeRing: "data-[state=active]:ring-chart-1/60",
-            },
-            {
-              value: "downstream" as const,
-              label: "Downstream Process Equipment",
-              short: "Downstream",
-              desc: "Filtration, chromatography, formulation",
-              Icon: FilterIcon,
-              accent: "from-chart-2/15 to-chart-2/5 border-chart-2/40 text-chart-2",
-              activeRing: "data-[state=active]:ring-chart-2/60",
-            },
-            {
-              value: "analytical" as const,
-              label: "Analytical Equipment & Assays",
-              short: "Analytical",
-              desc: "HPLC, qPCR, endotoxin, identity",
-              Icon: Microscope,
-              accent: "from-chart-3/15 to-chart-3/5 border-chart-3/40 text-chart-3",
-              activeRing: "data-[state=active]:ring-chart-3/60",
-            },
-          ];
-          return (
-            <TabsList className="h-auto w-full grid grid-cols-1 md:grid-cols-3 gap-3 bg-transparent p-0">
-              {tabsMeta.map(({ value, label, desc, Icon, accent, activeRing }) => {
-                const count = filteredFor(value).length;
-                const isActive = tab === value;
-                return (
-                  <TabsTrigger
-                    key={value}
-                    value={value}
-                    className={`group relative flex items-center gap-4 h-auto justify-start text-left rounded-xl border-2 px-5 py-4 bg-gradient-to-br ${accent} bg-card transition-all
-                      hover:shadow-tile-hover hover:-translate-y-0.5
-                      data-[state=active]:bg-foreground data-[state=active]:text-background data-[state=active]:border-foreground data-[state=active]:shadow-tile-hover
-                      data-[state=inactive]:opacity-90 ${activeRing} data-[state=active]:ring-4`}
-                  >
-                    <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border-2 transition-colors
-                      ${isActive ? "bg-background/15 border-background/30 text-background" : "bg-background border-current"}`}>
-                      <Icon className="h-6 w-6" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className={`text-base font-bold leading-tight tracking-tight ${isActive ? "text-background" : "text-foreground"}`}>
-                          {label}
-                        </span>
-                      </div>
-                      <p className={`text-xs mt-0.5 leading-snug ${isActive ? "text-background/75" : "text-muted-foreground"}`}>
-                        {desc}
-                      </p>
-                    </div>
-                    <Badge
-                      variant="secondary"
-                      className={`shrink-0 text-sm font-bold px-2.5 py-1 rounded-md tabular-nums
-                        ${isActive ? "bg-background text-foreground" : "bg-background border border-current"}`}
-                    >
-                      {count}
-                    </Badge>
-                  </TabsTrigger>
-                );
-              })}
-            </TabsList>
-          );
-        })()}
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <TabsList className="h-auto bg-transparent p-0 gap-2 flex-wrap">
+            {(Object.keys(CATEGORY) as EquipmentCategory[]).map((value) => {
+              const meta = CATEGORY[value];
+              const count = filteredFor(value).length;
+              return (
+                <TabsTrigger
+                  key={value}
+                  value={value}
+                  className={`h-9 px-3.5 rounded-full border text-[13px] font-medium gap-2 transition-colors
+                    border-border-tertiary text-text-secondary
+                    hover:text-foreground hover:border-foreground/30
+                    data-[state=active]:${meta.activeBg} data-[state=active]:${meta.activeText} data-[state=active]:${meta.tint}`}
+                >
+                  <span>{meta.label}</span>
+                  <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-background/70 border border-current/20 text-[11px] tabular-nums">
+                    {count}
+                  </span>
+                </TabsTrigger>
+              );
+            })}
+          </TabsList>
 
-        <TabsContent value="upstream" className="mt-4">
-          <CardGrid
-            items={filteredFor("upstream")}
-            renderCard={(eq) => <UpstreamCard key={eq.equipmentId} eq={eq} onOpen={() => openCard(eq)} />}
-          />
-        </TabsContent>
-        <TabsContent value="downstream" className="mt-4">
-          <CardGrid
-            items={filteredFor("downstream")}
-            renderCard={(eq) => <DownstreamCard key={eq.equipmentId} eq={eq} onOpen={() => openCard(eq)} />}
-          />
-        </TabsContent>
-        <TabsContent value="analytical" className="mt-4">
-          <CardGrid
-            items={filteredFor("analytical")}
-            renderCard={(eq) => <AnalyticalCard key={eq.equipmentId} eq={eq} onOpen={() => openCard(eq)} />}
-          />
-        </TabsContent>
+          {/* Search + status — right-aligned */}
+          <div className="flex items-center gap-2 ml-auto">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-text-secondary" />
+              <Input
+                placeholder="Search by name or ID…"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                className="pl-8 h-9 w-[220px]"
+              />
+              {query && (
+                <button
+                  type="button"
+                  onClick={() => setQuery("")}
+                  className="absolute right-2 top-2.5 text-text-secondary hover:text-foreground"
+                  aria-label="Clear search"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+
+            {statusFilter === "all" ? (
+              <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)}>
+                <SelectTrigger className="w-[140px] h-9">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All statuses</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="idle">Idle</SelectItem>
+                  <SelectItem value="error">Alerting</SelectItem>
+                </SelectContent>
+              </Select>
+            ) : (
+              <div className="inline-flex items-center gap-1.5 h-9 pl-3 pr-1.5 rounded-md bg-blue-50 border border-blue-200 text-blue-700 text-[13px] font-medium">
+                {STATUS_LABEL[statusFilter]}
+                <button
+                  type="button"
+                  onClick={() => setStatusFilter("all")}
+                  className="h-6 w-6 inline-flex items-center justify-center rounded-sm hover:bg-blue-100"
+                  aria-label="Clear status filter"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {(["upstream", "downstream", "analytical"] as EquipmentCategory[]).map((cat) => (
+          <TabsContent key={cat} value={cat} className="mt-5">
+            <CardGrid
+              items={filteredFor(cat)}
+              renderCard={(eq) => (
+                <EquipmentCard
+                  key={eq.equipmentId}
+                  eq={eq}
+                  onOpen={() => openCard(eq)}
+                  onCta={() => handleCta(eq)}
+                />
+              )}
+            />
+          </TabsContent>
+        ))}
       </Tabs>
 
       <EquipmentDrawer equipment={selected} open={drawerOpen} onOpenChange={setDrawerOpen} />
@@ -611,36 +575,48 @@ export default function EquipmentDashboardV2Page() {
   );
 }
 
-// ── Tiny supporting components ───────────────────────────────────────────
+// ── Summary tile (KPI) ──────────────────────────────────────────────────
 
 type KpiTone = "primary" | "active" | "idle" | "warning" | "error";
 
-function KpiTile({
-  label, value, Icon, tone = "primary",
+function SummaryTile({
+  label, value, Icon, tone = "primary", trend, highlight, demoted,
 }: {
   label: string;
   value: number;
   Icon: React.ComponentType<{ className?: string }>;
   tone?: KpiTone;
+  trend?: "up" | "down";
+  highlight?: "warning";
+  demoted?: boolean;
 }) {
-  const toneCfg: Record<KpiTone, { iconBg: string; iconCls: string; ring: string }> = {
-    primary: { iconBg: "bg-primary/10",        iconCls: "text-primary",        ring: "hover:border-primary/40" },
-    active:  { iconBg: "bg-status-active/15",  iconCls: "text-status-active",  ring: "hover:border-status-active/50" },
-    idle:    { iconBg: "bg-status-idle/15",    iconCls: "text-status-idle",    ring: "hover:border-status-idle/40" },
-    warning: { iconBg: "bg-status-warning/15", iconCls: "text-status-warning", ring: "hover:border-status-warning/50" },
-    error:   { iconBg: "bg-status-error/15",   iconCls: "text-status-error",   ring: "hover:border-status-error/50" },
+  const TONE_ICON: Record<KpiTone, string> = {
+    primary: "text-primary",
+    active:  "text-status-active",
+    idle:    "text-text-secondary",
+    warning: "text-status-warning",
+    error:   "text-status-error",
   };
-  const cfg = toneCfg[tone];
+  const bg = highlight === "warning"
+    ? "bg-amber-50"
+    : "bg-secondary";
+  const valueCls = demoted
+    ? "text-[18px] text-text-secondary"
+    : "text-kpi text-foreground";
+
   return (
-    <div className={`rounded-lg border bg-card p-4 shadow-tile transition-all ${cfg.ring}`}>
-      <div className="flex items-center gap-3">
-        <div className={`h-10 w-10 rounded-md flex items-center justify-center ${cfg.iconBg}`}>
-          <Icon className={`h-5 w-5 ${cfg.iconCls}`} />
-        </div>
-        <div className="min-w-0">
-          <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium truncate">{label}</div>
-          <div className="text-2xl font-bold leading-tight tabular-nums">{value}</div>
-        </div>
+    <div className={`rounded-lg p-4 ${bg}`}>
+      <div className="flex items-start justify-between gap-3">
+        <p className="text-[13px] font-normal text-text-secondary">{label}</p>
+        <Icon className={`h-4 w-4 shrink-0 ${TONE_ICON[tone]}`} />
+      </div>
+      <div className="mt-2 flex items-baseline gap-1.5">
+        <p className={`tabular-nums leading-none ${valueCls}`}>{value}</p>
+        {trend && !demoted && (
+          trend === "up"
+            ? <ArrowUpRight className="h-3.5 w-3.5 text-status-active" />
+            : <ArrowDownRight className="h-3.5 w-3.5 text-status-error" />
+        )}
       </div>
     </div>
   );
@@ -655,10 +631,10 @@ function CardGrid({
 }) {
   if (items.length === 0) {
     return (
-      <Card className="p-10 text-center text-sm text-muted-foreground border-dashed">
+      <div className="card-data p-10 text-center text-sm text-text-secondary border-dashed">
         <ScrollText className="h-6 w-6 mx-auto mb-2 opacity-50" />
         No equipment matches the current filters.
-      </Card>
+      </div>
     );
   }
   return (
