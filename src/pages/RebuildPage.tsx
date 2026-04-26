@@ -184,107 +184,158 @@ function CanvasNode({
   : node.type === "method"   ? (node.linkedMethodId || "Custom method")
   : (NODE_KIND_LABEL[node.type] || node.type.replace(/_/g, " "));
 
-  const inputs = node.inputs ?? [];
-  const outputs = node.outputs ?? [];
-  const inputCount = Math.max(1, inputs.length);
-  const outputCount = Math.max(1, outputs.length);
-  const isCritical = node.criticality === "high";
+  const stage = stageOf(node.type);
+  const stageMeta = STAGE_META[stage];
+  const color = stageMeta.stroke;
+
+  // Misconfiguration detection — distinct from stage colour
+  const isMisconfigured =
+    (node.type === "device" && !node.interface_id) ||
+    (node.type === "equipment" && !node.linkedEquipmentId && !node.label);
+
+  const SELECT_BLUE = "hsl(214, 84%, 56%)";
+  const ERROR_RED = "hsl(0, 72%, 51%)";
+
+  const headerH = 18;
 
   return (
     <g
       transform={`translate(${node.x},${node.y})`}
       className="select-none"
     >
+      {/* Selected state — light blue overlay underlay */}
+      {selected && (
+        <rect
+          x={-3} y={-3} width={NODE_W + 6} height={NODE_H + 6} rx={10}
+          fill={SELECT_BLUE} opacity={0.08} pointerEvents="none"
+        />
+      )}
+      {/* Card */}
       <rect
         width={NODE_W}
         height={NODE_H}
         rx={8}
         fill="hsl(var(--card))"
-        stroke={selected ? color : isConnectSource ? "hsl(var(--primary))" : isCritical ? "hsl(0, 72%, 51%)" : "hsl(var(--border))"}
-        strokeWidth={selected || isConnectSource || isCritical ? 2.5 : 1}
+        stroke={selected ? SELECT_BLUE : isConnectSource ? SELECT_BLUE : color}
+        strokeWidth={selected ? 2 : 1}
         filter={selected ? "drop-shadow(0 4px 12px rgba(0,0,0,0.15))" : "drop-shadow(0 1px 3px rgba(0,0,0,0.08))"}
         onClick={(e) => { e.stopPropagation(); onSelect(); }}
         onMouseDown={(e) => { e.stopPropagation(); onDragStart(e); }}
         style={{ cursor: "grab" }}
       />
-      {/* Color accent bar */}
-      <rect x={0} y={0} width={4} height={NODE_H} rx={2} fill={color} pointerEvents="none" />
-      {/* Kind chip */}
-      <foreignObject x={10} y={6} width={NODE_W - 20} height={14} pointerEvents="none">
-        <div style={{ fontSize: 8, letterSpacing: 0.6, textTransform: "uppercase", color: "hsl(var(--muted-foreground))", fontWeight: 600 }}>
+      {/* Stage colour header strip — bg-50 wash */}
+      <rect
+        x={1} y={1} width={NODE_W - 2} height={headerH} rx={7}
+        fill={color} opacity={0.10} pointerEvents="none"
+      />
+      <rect
+        x={1} y={headerH - 1} width={NODE_W - 2} height={2}
+        fill={color} opacity={0.5} pointerEvents="none"
+      />
+      {/* Type label (matches stage colour) */}
+      <foreignObject x={10} y={3} width={NODE_W - 20} height={headerH} pointerEvents="none">
+        <div style={{ fontSize: 10, lineHeight: "16px", letterSpacing: 0.6, textTransform: "uppercase", color, fontWeight: 700 }}>
           {NODE_KIND_LABEL[node.type] || node.type}
-          {node.alertRelevant && " · alerting"}
+          {node.alertRelevant && " · ALERTING"}
         </div>
       </foreignObject>
+
       {/* Icon */}
-      <foreignObject x={10} y={24} width={28} height={28} pointerEvents="none">
+      <foreignObject x={10} y={headerH + 8} width={28} height={28} pointerEvents="none">
         <div style={{ background: color, borderRadius: 6, padding: 5, display: "flex", alignItems: "center", justifyContent: "center" }}>
           <Icon style={{ width: 16, height: 16, color: "#fff" }} />
         </div>
       </foreignObject>
-      {/* Label */}
-      <text x={44} y={38} fontSize={11} fontWeight={600} fill="hsl(var(--foreground))" pointerEvents="none">
-        {node.label.length > 20 ? node.label.slice(0, 19) + "…" : node.label}
+      {/* Name */}
+      <text x={44} y={headerH + 22} fontSize={14} fontWeight={500} fill="hsl(var(--foreground))" pointerEvents="none">
+        {node.label.length > 18 ? node.label.slice(0, 17) + "…" : node.label}
       </text>
-      <text x={44} y={51} fontSize={9} fill="hsl(var(--muted-foreground))" pointerEvents="none">
+      <text x={44} y={headerH + 36} fontSize={10} fill="hsl(var(--muted-foreground))" pointerEvents="none">
         {subLabel.length > 22 ? subLabel.slice(0, 21) + "…" : subLabel}
       </text>
-      {/* I/O counts */}
-      <text x={10} y={NODE_H - 8} fontSize={8} fill="hsl(var(--muted-foreground))" pointerEvents="none">
-        ▸ {inputs.length} in · {outputs.length} out
-      </text>
+
       {isCritical && (
-        <text x={NODE_W - 10} y={NODE_H - 8} fontSize={8} fontWeight={700} fill="hsl(0, 72%, 51%)" textAnchor="end" pointerEvents="none">
+        <text x={NODE_W - 8} y={NODE_H - 6} fontSize={9} fontWeight={700} fill={ERROR_RED} textAnchor="end" pointerEvents="none">
           CRITICAL
         </text>
       )}
+
       {/* Alert badge */}
       {alertCount > 0 && (
         <>
-          <circle cx={NODE_W - 12} cy={12} r={9} fill="hsl(0, 72%, 51%)" pointerEvents="none" />
+          <circle cx={NODE_W - 12} cy={12} r={9} fill={ERROR_RED} pointerEvents="none" />
           <text x={NODE_W - 12} y={16} fontSize={9} fontWeight={700} fill="#fff" textAnchor="middle" pointerEvents="none">{alertCount}</text>
         </>
       )}
-      {/* Input ports (left) — one per declared input, default 1 */}
+
+      {/* Input port dots — left edge, filled in stage colour */}
       {Array.from({ length: inputCount }).map((_, i) => {
         const cy = ((i + 1) * NODE_H) / (inputCount + 1);
+        const dataType = inputs[i] || "input";
         return (
           <g
             key={`in-${i}`}
             onClick={(e) => { e.stopPropagation(); onCompleteConnect(); }}
             onMouseDown={(e) => e.stopPropagation()}
             style={{ cursor: "crosshair" }}
+            className="group/port"
           >
-            <circle cx={0} cy={cy} r={9} fill="transparent" />
+            <circle cx={0} cy={cy} r={10} fill="transparent" />
             <circle cx={0} cy={cy} r={5}
-              fill="hsl(var(--background))"
-              stroke="hsl(var(--primary))"
-              strokeWidth={1.5}
-              className="hover:fill-[hsl(var(--primary))] transition-colors"
+              fill={color}
+              stroke="hsl(var(--card))"
+              strokeWidth={2}
+              className="transition-transform group-hover/port:scale-150"
             />
+            {/* hover label */}
+            <foreignObject x={-90} y={cy - 10} width={80} height={20}
+              style={{ pointerEvents: "none", opacity: 0 }}
+              className="group-hover/port:opacity-100 transition-opacity">
+              <div style={{ fontSize: 9, padding: "2px 5px", background: "hsl(var(--popover))", color: "hsl(var(--popover-foreground))", border: "1px solid hsl(var(--border))", borderRadius: 4, textAlign: "right", fontFamily: "monospace" }}>
+                {dataType}
+              </div>
+            </foreignObject>
           </g>
         );
       })}
-      {/* Output ports (right) */}
+      {/* Output port dots — right edge */}
       {Array.from({ length: outputCount }).map((_, i) => {
         const cy = ((i + 1) * NODE_H) / (outputCount + 1);
+        const dataType = outputs[i] || (stage === "output" ? "alert" : stage === "analysis" ? "insight" : "timeseries");
         return (
           <g
             key={`out-${i}`}
             onClick={(e) => { e.stopPropagation(); onStartConnect(); }}
             onMouseDown={(e) => e.stopPropagation()}
             style={{ cursor: "crosshair" }}
+            className="group/port"
           >
-            <circle cx={NODE_W} cy={cy} r={9} fill="transparent" />
+            <circle cx={NODE_W} cy={cy} r={10} fill="transparent" />
             <circle cx={NODE_W} cy={cy} r={5}
-              fill={isConnectSource ? "hsl(var(--primary))" : "hsl(var(--background))"}
-              stroke="hsl(var(--primary))"
-              strokeWidth={1.5}
-              className="hover:fill-[hsl(var(--primary))] transition-colors"
+              fill={isConnectSource ? SELECT_BLUE : color}
+              stroke="hsl(var(--card))"
+              strokeWidth={2}
+              className="transition-transform group-hover/port:scale-150"
             />
+            <foreignObject x={NODE_W + 10} y={cy - 10} width={80} height={20}
+              style={{ pointerEvents: "none", opacity: 0 }}
+              className="group-hover/port:opacity-100 transition-opacity">
+              <div style={{ fontSize: 9, padding: "2px 5px", background: "hsl(var(--popover))", color: "hsl(var(--popover-foreground))", border: "1px solid hsl(var(--border))", borderRadius: 4, fontFamily: "monospace" }}>
+                {dataType}
+              </div>
+            </foreignObject>
           </g>
         );
       })}
+
+      {/* Misconfigured / disconnected error overlay — red dashed border */}
+      {isMisconfigured && (
+        <rect
+          x={-1} y={-1} width={NODE_W + 2} height={NODE_H + 2} rx={9}
+          fill="none" stroke={ERROR_RED} strokeWidth={1} strokeDasharray="4 3"
+          pointerEvents="none"
+        />
+      )}
     </g>
   );
 }
