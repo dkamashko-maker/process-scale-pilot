@@ -490,7 +490,7 @@ export default function EquipmentDashboardV2Page() {
                   className={`h-9 px-3.5 rounded-full border text-[13px] font-medium gap-2 transition-colors
                     border-border-tertiary text-text-secondary
                     hover:text-foreground hover:border-foreground/30
-                    data-[state=active]:${meta.activeBg} data-[state=active]:${meta.activeText} data-[state=active]:${meta.tint}`}
+                    ${meta.activeTab}`}
                 >
                   <span>{meta.label}</span>
                   <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-background/70 border border-current/20 text-[11px] tabular-nums">
