@@ -664,6 +664,8 @@ export default function SensorMapPage() {
                     node={n}
                     selectedBatches={selectedBatches}
                     isHub={hubIds.has(n.eq.equipmentId)}
+                    hoveredId={hoveredId}
+                    onHover={setHoveredId}
                   />
                 ))}
               </svg>
