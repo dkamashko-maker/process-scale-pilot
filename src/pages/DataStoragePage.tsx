@@ -299,7 +299,7 @@ export default function DataStoragePage() {
                 </div>
 
                 {activeFilterCount > 0 && (
-                  <Button variant="ghost" size="sm" className="ml-auto h-8 text-xs gap-1 text-info" onClick={clearFilters}>
+                  <Button variant="ghost" size="sm" className="ml-auto h-8 text-xs gap-1 text-blue-600" onClick={clearFilters}>
                     <X className="h-3 w-3" /> Clear filters ({activeFilterCount})
                   </Button>
                 )}
@@ -395,14 +395,14 @@ export default function DataStoragePage() {
                 const dot =
                   s === "critical" ? "bg-status-error" :
                   s === "warning"  ? "bg-status-warning" :
-                  s === "info"     ? "bg-info" : "";
+                  s === "info"     ? "bg-blue-500" : "";
                 return (
                   <button
                     key={s}
                     onClick={() => setSeverityFilter(s)}
                     className={`inline-flex items-center gap-2 h-8 px-3 rounded-full border text-[12px] font-medium transition-colors capitalize
                       ${isActive
-                        ? "bg-blue-50 border-blue-200 text-info"
+                        ? "bg-blue-50 border-blue-200 text-blue-600"
                         : "border-border-tertiary text-text-secondary hover:text-foreground hover:border-foreground/30"}`}
                   >
                     {dot && <span className={`h-1.5 w-1.5 rounded-full ${dot}`} />}
@@ -621,7 +621,7 @@ function FilterDropdown({
       <SelectTrigger
         style={{ width }}
         className={`h-8 text-xs transition-colors
-          ${active ? "text-info border-b-2 border-b-info rounded-b-none" : ""}`}
+          ${active ? "text-blue-600 border-b-2 border-b-blue-500 rounded-b-none" : ""}`}
       >
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
