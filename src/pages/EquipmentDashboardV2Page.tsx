@@ -29,31 +29,29 @@ import { EquipmentTooltip } from "@/components/equipment/EquipmentTooltip";
 // ── Category accent (subtle — used for tab + 3px left card border only) ──
 const CATEGORY: Record<
   EquipmentCategory,
-  { label: string; short: string; activeBg: string; activeText: string; border: string; tint: string }
+  { label: string; short: string; border: string; activeTab: string }
 > = {
   upstream: {
     label: "Upstream Process Equipment",
     short: "Upstream",
-    activeBg: "bg-blue-50",
-    activeText: "text-blue-700",
     border: "border-l-blue-500",
-    tint: "border-blue-200",
+    // Full class strings so Tailwind JIT sees them literally
+    activeTab:
+      "data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:border-blue-200",
   },
   downstream: {
     label: "Downstream Process Equipment",
     short: "Downstream",
-    activeBg: "bg-teal-50",
-    activeText: "text-teal-700",
     border: "border-l-teal-500",
-    tint: "border-teal-200",
+    activeTab:
+      "data-[state=active]:bg-teal-50 data-[state=active]:text-teal-700 data-[state=active]:border-teal-200",
   },
   analytical: {
     label: "Analytical Equipment & Assays",
     short: "Analytical",
-    activeBg: "bg-amber-50",
-    activeText: "text-amber-700",
     border: "border-l-amber-500",
-    tint: "border-amber-200",
+    activeTab:
+      "data-[state=active]:bg-amber-50 data-[state=active]:text-amber-700 data-[state=active]:border-amber-200",
   },
 };
 
