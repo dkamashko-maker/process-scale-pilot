@@ -73,12 +73,21 @@
     --status-warning: 38 92% 50%;
     --status-warning-soft: 38 95% 94%;
 
-    /* Polished surfaces */
-    --tile-gradient-active: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(195 85% 97%) 100%);
-    --tile-gradient-idle: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(215 25% 96%) 100%);
-    --tile-gradient-error: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(0 80% 97%) 100%);
-    --shadow-tile: 0 1px 2px hsl(215 25% 27% / 0.04), 0 4px 12px hsl(215 25% 27% / 0.06);
-    --shadow-tile-hover: 0 6px 20px hsl(195 85% 45% / 0.18), 0 2px 6px hsl(215 25% 27% / 0.08);
+    /* ── Status pill palette (the only 4 variants permitted) ── */
+    --pill-success-bg: 142 70% 94%;   --pill-success-fg: 142 70% 22%;
+    --pill-warning-bg:  43 96% 92%;   --pill-warning-fg:  32 80% 28%;
+    --pill-danger-bg:    0 86% 95%;   --pill-danger-fg:    0 70% 35%;
+    --pill-neutral-bg: 215 16% 92%;   --pill-neutral-fg: 215 20% 30%;
+
+    /* Active nav tint — very light primary wash */
+    --nav-active-bg: 195 85% 96%;
+
+    /* Tile gradients kept as flat surfaces (enterprise tone, no decorative gradients) */
+    --tile-gradient-active: hsl(var(--card));
+    --tile-gradient-idle:   hsl(var(--card));
+    --tile-gradient-error:  hsl(var(--card));
+    --shadow-tile: 0 1px 2px hsl(215 25% 27% / 0.04);
+    --shadow-tile-hover: 0 1px 3px hsl(215 25% 27% / 0.08), 0 0 0 1px hsl(var(--border-tertiary));
   }
 
   .dark {
