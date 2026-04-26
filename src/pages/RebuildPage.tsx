@@ -170,7 +170,6 @@ function CanvasNode({
   onStartConnect: () => void;
   onCompleteConnect: () => void;
 }) {
-  const color = NODE_COLORS[node.type] || NODE_COLORS.device;
   const Icon =
     node.type === "device"
       ? (DEVICE_ICONS[node.interface_id || ""] || Gauge)
@@ -183,6 +182,12 @@ function CanvasNode({
   : node.type === "equipment"? (node.linkedEquipmentId || "Custom equipment")
   : node.type === "method"   ? (node.linkedMethodId || "Custom method")
   : (NODE_KIND_LABEL[node.type] || node.type.replace(/_/g, " "));
+
+  const inputs = node.inputs ?? [];
+  const outputs = node.outputs ?? [];
+  const inputCount = Math.max(1, inputs.length);
+  const outputCount = Math.max(1, outputs.length);
+  const isCritical = node.criticality === "high";
 
   const stage = stageOf(node.type);
   const stageMeta = STAGE_META[stage];
