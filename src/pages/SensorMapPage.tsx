@@ -422,8 +422,9 @@ function LegendSwatch({
 // ── Page ───────────────────────────────────────────────────────────────
 
 export default function SensorMapPage() {
-  const [selectedBatches, setSelectedBatches] = useState<string[]>([]);
+  const [selectedBatches, setSelectedBatches] = useState<string[]>(["B-250423-PD01"]);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
 
   const toggleBatch = (id: string) => {
     setSelectedBatches((prev) =>
