@@ -1,72 +1,59 @@
-import { TrendingUp, TrendingDown, Minus, type LucideIcon } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 interface KpiCardProps {
   label: string;
   value: string | number;
-  trend?: "up" | "down" | "neutral";
-  trendValue?: string;
+  /** Optional small caption shown beneath the value (e.g. "+3 vs last week"). */
   subtitle?: string;
+  /** Status icon ONLY (per spec, summary tiles do not carry decorative icons). */
+  Icon?: LucideIcon;
+  /** Tone applies a subtle status-color accent to the optional icon. */
+  tone?: "primary" | "active" | "idle" | "warning" | "error";
   className?: string;
   animationDelay?: number;
-  Icon?: LucideIcon;
-  tone?: "primary" | "active" | "idle" | "warning" | "error";
+  /**
+   * @deprecated Trend chips are not part of the Summary card anatomy.
+   * Kept only so existing call-sites continue to compile; values are ignored.
+   */
+  trend?: "up" | "down" | "neutral";
+  trendValue?: string;
 }
 
-const TONE_CFG: Record<NonNullable<KpiCardProps["tone"]>, { iconBg: string; iconCls: string; ring: string }> = {
-  primary: { iconBg: "bg-primary/10",        iconCls: "text-primary",        ring: "hover:border-primary/40" },
-  active:  { iconBg: "bg-status-active/15",  iconCls: "text-status-active",  ring: "hover:border-status-active/50" },
-  idle:    { iconBg: "bg-status-idle/15",    iconCls: "text-status-idle",    ring: "hover:border-status-idle/40" },
-  warning: { iconBg: "bg-status-warning/15", iconCls: "text-status-warning", ring: "hover:border-status-warning/50" },
-  error:   { iconBg: "bg-status-error/15",   iconCls: "text-status-error",   ring: "hover:border-status-error/50" },
+const TONE_ICON: Record<NonNullable<KpiCardProps["tone"]>, string> = {
+  primary: "text-primary",
+  active:  "text-status-active",
+  idle:    "text-text-secondary",
+  warning: "text-status-warning",
+  error:   "text-status-error",
 };
 
+/**
+ * Summary card (KPI tile) — Data Vest design system, type 1 of 3.
+ * bg-secondary · no border · radius 8px · padding 16px.
+ * Label 13/400 muted above, value 24/500 below. Status icon only (optional).
+ */
 export function KpiCard({
-  label, value, trend, trendValue, subtitle, className,
-  animationDelay = 0, Icon, tone = "primary",
+  label,
+  value,
+  subtitle,
+  Icon,
+  tone = "primary",
+  className,
+  animationDelay = 0,
 }: KpiCardProps) {
-  const cfg = TONE_CFG[tone];
-  const getTrendIcon = () => {
-    if (trend === "up") return <TrendingUp className="h-4 w-4 text-status-active" />;
-    if (trend === "down") return <TrendingDown className="h-4 w-4 text-status-error" />;
-    if (trend === "neutral") return <Minus className="h-4 w-4 text-muted-foreground" />;
-    return null;
-  };
-  const getTrendColor = () => {
-    if (trend === "up") return "text-status-active";
-    if (trend === "down") return "text-status-error";
-    return "text-muted-foreground";
-  };
-
   return (
     <div
-      className={`rounded-lg border bg-card p-5 shadow-tile transition-all opacity-0 animate-fade-in ${cfg.ring} ${className || ""}`}
+      className={`card-summary opacity-0 animate-fade-in ${className || ""}`}
       style={{ animationDelay: `${animationDelay}ms` }}
     >
-      <div className="flex items-start gap-4">
-        {Icon && (
-          <div className={`h-11 w-11 rounded-md flex items-center justify-center shrink-0 ${cfg.iconBg}`}>
-            <Icon className={`h-5 w-5 ${cfg.iconCls}`} />
-          </div>
-        )}
-        <div className="min-w-0 flex-1">
-          <p className="text-[11px] uppercase tracking-wider font-medium text-muted-foreground truncate">{label}</p>
-          <div className="flex items-baseline gap-2 mt-1">
-            <h3
-              className="text-3xl font-bold tracking-tight tabular-nums opacity-0 animate-count-up"
-              style={{ animationDelay: `${animationDelay + 150}ms` }}
-            >
-              {value}
-            </h3>
-            {trend && (
-              <div className={`flex items-center gap-1 text-xs font-medium ${getTrendColor()}`}>
-                {getTrendIcon()}
-                {trendValue && <span>{trendValue}</span>}
-              </div>
-            )}
-          </div>
-          {subtitle && <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>}
-        </div>
+      <div className="flex items-start justify-between gap-3">
+        <p className="text-[13px] font-normal text-text-secondary">{label}</p>
+        {Icon && <Icon className={`h-4 w-4 shrink-0 ${TONE_ICON[tone]}`} />}
       </div>
+      <p className="text-kpi tabular-nums text-foreground mt-2">{value}</p>
+      {subtitle && (
+        <p className="text-[11px] text-text-secondary mt-1">{subtitle}</p>
+      )}
     </div>
   );
 }
