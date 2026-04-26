@@ -1552,9 +1552,49 @@ export default function RebuildPage() {
                   )}
                 </div>
               ) : (
-                <div className="p-4 text-center text-muted-foreground text-xs mt-8">
-                  <Settings2 className="h-8 w-8 mx-auto mb-2 opacity-30" />
-                  Select a node to configure
+                <div className="p-3">
+                  <div className="rounded-md border bg-card p-3 space-y-2.5">
+                    <div className="flex items-center gap-2">
+                      <WorkflowIcon className="h-4 w-4 text-primary" />
+                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Pipeline summary</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold leading-tight">{pipeline.name}</p>
+                      <p className="text-[10px] text-muted-foreground font-mono mt-0.5">{pipeline.pipeline_id}</p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 pt-1">
+                      <div className="rounded border bg-muted/30 px-2 py-1.5">
+                        <p className="text-[9px] uppercase text-muted-foreground">Nodes</p>
+                        <p className="text-base font-semibold tabular-nums">{pipeline.nodes.length}</p>
+                      </div>
+                      <div className="rounded border bg-muted/30 px-2 py-1.5">
+                        <p className="text-[9px] uppercase text-muted-foreground">Connections</p>
+                        <p className="text-base font-semibold tabular-nums">{pipeline.edges.length}</p>
+                      </div>
+                    </div>
+                    <div className="space-y-1 pt-1 border-t">
+                      <div className="flex items-center justify-between text-[10px]">
+                        <span className="text-muted-foreground">Last saved</span>
+                        <span className="font-mono">{pipeline.updated_at ? format(new Date(pipeline.updated_at), "MMM d, HH:mm") : "—"}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-[10px]">
+                        <span className="text-muted-foreground">Last simulation</span>
+                        {simResults ? (
+                          <span className="flex items-center gap-1.5">
+                            <Badge variant={simResults.overall_status === "pass" ? "secondary" : simResults.overall_status === "warning" ? "outline" : "destructive"} className="text-[9px] h-4 px-1.5">
+                              {simResults.overall_status.toUpperCase()}
+                            </Badge>
+                            <span className="font-mono">{format(new Date(simResults.created_at), "MMM d, HH:mm")}</span>
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground italic">Not run yet</span>
+                        )}
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-muted-foreground italic pt-1 border-t">
+                      Select a node on the canvas to inspect or configure it.
+                    </p>
+                  </div>
                 </div>
               )}
 
