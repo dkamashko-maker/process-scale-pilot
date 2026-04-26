@@ -159,90 +159,128 @@ export default function RunMonitorPage() {
     }] : []),
   ];
 
+  // Critical-only shortcut — keep just the parameters flagged is_critical.
+  const handleCriticalOnly = () => {
+    setSelectedParams(PARAMETERS.filter((p) => p.is_critical).map((p) => p.parameter_code));
+  };
+
   return (
-    <div className="p-4 space-y-4">
-      {/* Header */}
-      <Card className="animate-fade-in">
-        <CardContent className="p-4">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div>
-                <h1 className="text-xl font-bold">{run.bioreactor_run}</h1>
-                <p className="text-xs text-muted-foreground font-mono">{run.run_id}</p>
-              </div>
-              <Badge variant="secondary">Active</Badge>
-              {isManager && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="gap-1.5 text-xs"
-                  onClick={() => {
-                    const report = createReportFromRun(run.run_id, user?.name || "Manager");
-                    toast({
-                      title: "Report generated",
-                      description: `${report.report_no} created with ${report.alert_ids.length} alerts, ${report.insight_ids.length} insights, and ${report.qc_rows.length} QC parameters.`,
-                    });
-                    navigate(`/reports?active=${report.report_id}`);
-                  }}
-                >
-                  <FileText className="h-3.5 w-3.5" /> Generate Report
-                </Button>
-              )}
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-x-6 gap-y-1 text-sm">
-              <div><span className="text-muted-foreground">Reactor</span><p className="font-medium">{run.reactor_id}</p></div>
-              <div><span className="text-muted-foreground">Cell Line</span><p className="font-medium text-xs">{run.cell_line.split("/")[1] || run.cell_line}</p></div>
-              <div><span className="text-muted-foreground">Protein</span><p className="font-medium text-xs truncate max-w-[180px]">{run.target_protein}</p></div>
-              <div><span className="text-muted-foreground">Strategy</span><p className="font-medium">{run.process_strategy}</p></div>
-              <div><span className="text-muted-foreground">Operator</span><p className="font-medium">{run.operator_id}</p></div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+    <div className="p-6 stack-page">
+      {/* ── Detail Page Header ── */}
+      <DetailHeader
+        name={run.bioreactor_run}
+        status={<Badge variant="success" withDot>Active</Badge>}
+        meta={[
+          { label: "Reactor ID",  value: run.reactor_id },
+          { label: "Cell Line",   value: run.cell_line.split("/")[1] || run.cell_line },
+          { label: "Protein",     value: <span className="truncate inline-block max-w-[180px] align-bottom">{run.target_protein}</span> },
+          { label: "Strategy",    value: run.process_strategy },
+          { label: "Operator",    value: run.operator_id },
+        ]}
+        actions={
+          isManager && (
+            <Button
+              className="gap-1.5"
+              onClick={() => {
+                const report = createReportFromRun(run.run_id, user?.name || "Manager");
+                toast({
+                  title: "Report generated",
+                  description: `${report.report_no} created with ${report.alert_ids.length} alerts, ${report.insight_ids.length} insights, and ${report.qc_rows.length} QC parameters.`,
+                });
+                navigate(`/reports?active=${report.report_id}`);
+              }}
+            >
+              <FileText className="h-4 w-4" /> Generate Report
+            </Button>
+          )
+        }
+      />
 
-      {/* Parameter Selector */}
+      {/* ── Parameter Picker — three labelled clusters with vertical rules ── */}
       <Card>
-        <CardContent className="p-3">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">Parameters</span>
-              <InfoTooltip content="Select parameters to overlay on the monitoring chart. Values are normalized to % of operating range." />
+        <CardContent className="p-4">
+          <div className="flex items-stretch gap-0 flex-wrap">
+            {CLUSTER_ORDER.map((cluster, idx) => {
+              const params = paramGroups[cluster.id] || [];
+              if (params.length === 0) return null;
+              return (
+                <div
+                  key={cluster.id}
+                  className={
+                    "flex flex-col gap-2 px-5 first:pl-0 " +
+                    (idx > 0 ? "border-l border-[hsl(var(--border-tertiary))]" : "")
+                  }
+                >
+                  <span className="text-[11px] uppercase tracking-wide text-text-secondary font-medium">
+                    {cluster.label}
+                  </span>
+                  <div className="flex flex-wrap gap-x-4 gap-y-2">
+                    {params.map((p) => {
+                      const checked = selectedParams.includes(p.parameter_code);
+                      const color = colorFor(p.parameter_code);
+                      return (
+                        <label
+                          key={p.parameter_code}
+                          className="flex items-center gap-2 text-[13px] text-foreground cursor-pointer whitespace-nowrap select-none"
+                        >
+                          <span
+                            className="relative inline-flex h-4 w-4 items-center justify-center rounded-[3px] border transition-colors"
+                            style={{
+                              borderColor: color,
+                              backgroundColor: checked ? color : "transparent",
+                            }}
+                            aria-hidden
+                          >
+                            {checked && (
+                              <svg
+                                viewBox="0 0 12 12"
+                                className="h-3 w-3 text-white"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth={2.5}
+                              >
+                                <path d="M2 6.5 L5 9 L10 3" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            )}
+                          </span>
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => toggleParam(p.parameter_code)}
+                            className="sr-only"
+                          />
+                          {p.display_name}
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* Right-aligned controls cluster */}
+            <div className="ml-auto flex items-center gap-5 pl-5 border-l border-[hsl(var(--border-tertiary))]">
+              <button
+                type="button"
+                onClick={handleCriticalOnly}
+                className="text-[13px] text-primary hover:underline whitespace-nowrap"
+              >
+                Critical only
+              </button>
+              <label className="flex items-center gap-2 text-[13px] text-text-secondary cursor-pointer whitespace-nowrap">
+                <Switch checked={showRangeBands} onCheckedChange={setShowRangeBands} className="h-4 w-7" />
+                Range bands
+              </label>
             </div>
-            <label className="flex items-center gap-2 text-xs cursor-pointer">
-              <Switch checked={showRangeBands} onCheckedChange={setShowRangeBands} className="h-4 w-7" />
-              Range Bands
-            </label>
-          </div>
-          <div className="flex flex-wrap gap-4">
-            {Object.entries(paramGroups).map(([group, params]) => (
-              <div key={group} className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs font-medium text-muted-foreground min-w-fit">{group}:</span>
-                {params.map((p) => (
-                  <label key={p.parameter_code} className="flex items-center gap-1 text-xs cursor-pointer whitespace-nowrap">
-                    <Checkbox
-                      checked={selectedParams.includes(p.parameter_code)}
-                      onCheckedChange={() => toggleParam(p.parameter_code)}
-                      className="h-3.5 w-3.5"
-                    />
-                    {p.display_name}
-                  </label>
-                ))}
-              </div>
-            ))}
           </div>
         </CardContent>
       </Card>
 
-      {/* Chart + Control Actions Side Panel */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-4">
+      {/* ── Chart + Control Actions Side Panel ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
         <ChartCard
           title="Process Monitoring"
-          subtitle={
-            <span className="flex items-center gap-1">
-              Parameter readings over time (% of operating range)
-              <InfoTooltip content="Each parameter is normalized to its operating range. Hover for actual values. Shaded band = acceptable range. Vertical markers = logged events." />
-            </span>
-          }
+          subtitle="Normalised % of operating range"
         >
           <ProcessChart
             timeseries={timeseries}
@@ -254,7 +292,7 @@ export default function RunMonitorPage() {
           />
         </ChartCard>
 
-        <Card className="overflow-hidden">
+        <Card kind="operational" className="overflow-hidden p-0">
           <ControlActionsPanel
             events={runEvents}
             runStartTime={run.start_time}
@@ -266,15 +304,12 @@ export default function RunMonitorPage() {
         </Card>
       </div>
 
-      {/* Event Log */}
+      {/* ── Event Log ── */}
       <ChartCard
         title="Event Log"
         subtitle={
           <div className="flex items-center justify-between w-full">
-            <span className="flex items-center gap-1">
-              Recorded events for this run
-              <InfoTooltip content="All logged events including feeds, base additions, and operator notes. Read-only for Viewer role." />
-            </span>
+            <span>Recorded events for this run</span>
             {canLogEvents && (
               <Button size="sm" onClick={openNewEvent}>Log Event</Button>
             )}
