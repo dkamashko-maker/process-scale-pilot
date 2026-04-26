@@ -280,7 +280,7 @@ export default function ReportsPage() {
                   {activeReport?.qc_rows.map((row, i) => {
                     const expanded = expandedRows.has(i);
                     return (
-                      <FragmentWithKey key={i}>
+                      <Fragment key={i}>
                         <TableRow
                           className={`cursor-pointer ${row.status === "Fail" ? "bg-destructive/5" : ""}`}
                           style={{ minHeight: 44 }}
@@ -314,7 +314,7 @@ export default function ReportsPage() {
                             </TableCell>
                           </TableRow>
                         )}
-                      </FragmentWithKey>
+                      </Fragment>
                     );
                   })}
                 </TableBody>
