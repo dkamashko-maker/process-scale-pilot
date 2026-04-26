@@ -83,18 +83,47 @@ const UTILITY_NODES = [
   { type: "merge" as const, label: "Merge", icon: Merge, description: "Merges data streams from multiple sources" },
 ];
 
+// Node stage classification — one of 4 enterprise lab stages
+type NodeStage = "input" | "processing" | "analysis" | "output";
+
+const STAGE_OF: Record<string, NodeStage> = {
+  device: "input",
+  equipment: "input",
+  range_check: "processing",
+  unit_consistency: "processing",
+  event_overlay: "processing",
+  data_op: "processing",
+  merge: "processing",
+  decision: "processing",
+  method: "processing",
+  ml_insight: "analysis",
+  alert_generator: "output",
+};
+
+// Stage palette — Tailwind utility classes for backgrounds + HSL strings for SVG strokes
+const STAGE_META: Record<NodeStage, { label: string; stroke: string; bgClass: string; textClass: string; borderClass: string; dotClass: string }> = {
+  input:      { label: "Equipment / Input",     stroke: "hsl(173, 58%, 39%)",  bgClass: "bg-teal-50",   textClass: "text-teal-700",   borderClass: "border-teal-300",   dotClass: "bg-teal-500" },
+  processing: { label: "Processing",            stroke: "hsl(214, 84%, 56%)",  bgClass: "bg-blue-50",   textClass: "text-blue-700",   borderClass: "border-blue-300",   dotClass: "bg-blue-500" },
+  analysis:   { label: "Analysis / ML",         stroke: "hsl(270, 60%, 55%)",  bgClass: "bg-purple-50", textClass: "text-purple-700", borderClass: "border-purple-300", dotClass: "bg-purple-500" },
+  output:     { label: "Output / Alert",        stroke: "hsl(38, 92%, 50%)",   bgClass: "bg-amber-50",  textClass: "text-amber-700",  borderClass: "border-amber-300",  dotClass: "bg-amber-500" },
+};
+
+const stageOf = (t: string): NodeStage => STAGE_OF[t] || "processing";
+const stageColor = (t: string) => STAGE_META[stageOf(t)].stroke;
+
+// Legacy NODE_COLORS — kept for palette icon dots so existing call sites keep working.
 const NODE_COLORS: Record<string, string> = {
-  device: "hsl(var(--primary))",
-  equipment: "hsl(195, 85%, 45%)",
-  method: "hsl(280, 70%, 55%)",
-  decision: "hsl(38, 92%, 50%)",
-  data_op: "hsl(215, 25%, 47%)",
-  range_check: "hsl(173, 58%, 39%)",
-  unit_consistency: "hsl(43, 96%, 56%)",
-  event_overlay: "hsl(27, 87%, 67%)",
+  device: "hsl(173, 58%, 39%)",
+  equipment: "hsl(173, 58%, 39%)",
+  method: "hsl(214, 84%, 56%)",
+  decision: "hsl(214, 84%, 56%)",
+  data_op: "hsl(214, 84%, 56%)",
+  range_check: "hsl(214, 84%, 56%)",
+  unit_consistency: "hsl(214, 84%, 56%)",
+  event_overlay: "hsl(214, 84%, 56%)",
   ml_insight: "hsl(270, 60%, 55%)",
-  alert_generator: "hsl(0, 72%, 51%)",
-  merge: "hsl(215, 25%, 47%)",
+  alert_generator: "hsl(38, 92%, 50%)",
+  merge: "hsl(214, 84%, 56%)",
 };
 
 const NODE_KIND_LABEL: Record<string, string> = {
