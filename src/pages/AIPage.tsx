@@ -288,12 +288,17 @@ function SummaryStat({ label, value }: { label: string; value: string }) {
 
 // ── AI Assistant Chat ──
 
-function AiAssistantChat() {
+function AiAssistantChat({ contextualPrompts }: { contextualPrompts: string[] }) {
   const [messages, setMessages] = useState<ChatMessage[]>(() => getChatHistory());
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  // Pre-focus the input on mount so users can type immediately.
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
 
   useEffect(() => {
     if (scrollRef.current) {
