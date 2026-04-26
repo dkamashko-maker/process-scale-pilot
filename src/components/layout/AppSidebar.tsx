@@ -57,14 +57,16 @@ export function AppSidebar() {
     <Sidebar className={collapsed ? "w-16" : "w-64"} collapsible="icon">
       <SidebarContent>
         <SidebarGroup>
-          <div className="px-4 py-6">
-            <h2 className={`text-section text-foreground ${collapsed ? "text-center" : ""}`}>
-              {collapsed ? "DV" : "Data Vest"}
-            </h2>
+          <div
+            className={collapsed ? "h-14 border-b border-sidebar-border" : "px-4 py-4 border-b border-sidebar-border"}
+          >
             {!collapsed && (
-              <p className="text-[11px] text-text-secondary mt-1">
-                Instrumental Data Collection &amp; Analytics
-              </p>
+              <>
+                <h2 className="text-section text-foreground">Data Vest</h2>
+                <p className="text-[11px] text-text-secondary mt-1">
+                  Instrumental Data Collection &amp; Analytics
+                </p>
+              </>
             )}
           </div>
           <SidebarGroupContent>
