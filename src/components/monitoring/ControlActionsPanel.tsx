@@ -153,7 +153,7 @@ export function ControlActionsPanel({
                 className={
                   "h-[22px] px-2 rounded-pill text-[11px] font-medium uppercase tracking-wide transition-colors " +
                   (active
-                    ? "bg-[hsl(var(--nav-active-bg))] text-primary"
+                    ? "bg-blue-50 text-primary"
                     : "bg-[hsl(var(--pill-neutral-bg))] text-text-secondary hover:text-foreground")
                 }
               >
