@@ -140,10 +140,14 @@ function Node({
   node,
   selectedBatches,
   isHub,
+  hoveredId,
+  onHover,
 }: {
   node: PositionedNode;
   selectedBatches: string[];
   isHub: boolean;
+  hoveredId: string | null;
+  onHover: (id: string | null) => void;
 }) {
   const { eq, x, y } = node;
   const batches = batchesOnEquipment(eq, selectedBatches);
@@ -151,8 +155,10 @@ function Node({
   const broken = eq.status === "error";
   const hasAlerts = eq.alertCount > 0;
   const sensors = getSensorsForEquipment(eq.equipmentId);
+  const isHovered = hoveredId === eq.equipmentId;
 
-  // Border color: hub > broken > batch highlight > category default
+  // Border priority — hub > broken (1.5px solid red, whole-card critical signal)
+  // > alerting (1px amber) > batch highlight > default.
   let borderColor = "hsl(var(--border))";
   let borderWidth = 1;
   if (isHub) {
@@ -160,108 +166,136 @@ function Node({
     borderWidth = 2.5;
   } else if (broken) {
     borderColor = "hsl(var(--status-error))";
-    borderWidth = 2;
+    borderWidth = 1.5;
+  } else if (hasAlerts) {
+    borderColor = "hsl(var(--status-warning))";
+    borderWidth = 1;
   } else if (isHighlighted) {
     borderColor = batchColorFor(batches[0], selectedBatches);
     borderWidth = 2;
   }
 
-  const fill =
-    broken
-      ? "hsl(0 80% 97%)"
-      : isHighlighted
-      ? "hsl(var(--card))"
-      : "hsl(var(--card))";
+  const fill = broken ? "hsl(0 80% 97%)" : "hsl(var(--card))";
 
-  const opacity = selectedBatches.length > 0 && !isHighlighted && !broken ? 0.55 : 1;
+  // Dim non-selected batches when batches are selected (existing behaviour),
+  // OR when another node is being hovered (so the highlighted-paths branch can shine).
+  let opacity = 1;
+  if (selectedBatches.length > 0 && !isHighlighted && !broken) opacity = 0.55;
+  if (hoveredId && hoveredId !== eq.equipmentId) opacity = Math.min(opacity, 0.5);
 
   return (
-    <g transform={`translate(${x}, ${y})`} style={{ opacity }}>
-      <EquipmentTooltip equipment={eq} side="top">
-        <foreignObject width={NODE_W} height={NODE_H} style={{ overflow: "visible" }}>
-          <div
-            className="rounded-lg shadow-tile h-full w-full px-3 py-2 flex flex-col gap-1.5"
-            style={{
-              borderStyle: "solid",
-              borderColor,
-              borderWidth,
-              background: fill,
-            }}
-          >
-            {/* Header row */}
-            <div className="flex items-start justify-between gap-2 min-w-0">
-              <div className="min-w-0">
-                <div className="text-[9px] uppercase tracking-wide text-muted-foreground font-medium">
-                  {eq.equipmentCategory === "upstream"
-                    ? "Bioreactor"
-                    : eq.equipmentCategory === "downstream"
-                    ? "Operational"
-                    : "Analytical"}
-                </div>
-                <div className="text-[12px] font-semibold leading-tight truncate">{eq.equipmentName}</div>
-                <div className="text-[9px] font-mono text-muted-foreground truncate">{eq.equipmentId}</div>
+    <g
+      transform={`translate(${x}, ${y})`}
+      style={{ opacity, transition: "opacity 0.15s" }}
+      onMouseEnter={() => onHover(eq.equipmentId)}
+      onMouseLeave={() => onHover(null)}
+    >
+      <foreignObject width={NODE_W} height={NODE_H} style={{ overflow: "visible" }}>
+        <div
+          className="rounded-lg shadow-tile h-full w-full px-3 py-2 flex flex-col gap-1.5 relative"
+          style={{
+            borderStyle: "solid",
+            borderColor,
+            borderWidth,
+            background: fill,
+          }}
+        >
+          {/* Header row */}
+          <div className="flex items-start justify-between gap-2 min-w-0">
+            <div className="min-w-0">
+              <div className="text-[9px] uppercase tracking-wide text-muted-foreground font-medium">
+                {eq.equipmentCategory === "upstream"
+                  ? "Bioreactor"
+                  : eq.equipmentCategory === "downstream"
+                  ? "Operational"
+                  : "Analytical"}
               </div>
-              <div className="flex items-center gap-1 shrink-0">
-                <StatusDot eq={eq} />
-                <ConnectionIcon health={eq.connectionHealth} />
-              </div>
+              <div className="text-[12px] font-semibold leading-tight truncate">{eq.equipmentName}</div>
+              <div className="text-[9px] font-mono text-muted-foreground truncate">{eq.equipmentId}</div>
             </div>
-
-            {/* Footer row: sensors + alert/broken/hub markers */}
-            <div className="mt-auto flex items-center justify-between gap-1">
-              <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground">
-                <Radio className="h-2.5 w-2.5" />
-                {sensors.length} sensor{sensors.length === 1 ? "" : "s"}
-              </span>
-              <div className="flex items-center gap-1">
-                {broken && (
-                  <span
-                    className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-semibold border bg-status-error/15 text-status-error border-status-error/40"
-                    title="Broken — explicit current state"
-                  >
-                    <Zap className="h-2.5 w-2.5" /> Broken
-                  </span>
-                )}
-                {hasAlerts && !broken && (
-                  <span
-                    className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-semibold border bg-status-warning/15 text-status-warning border-status-warning/40"
-                    title={`${eq.alertCount} alert${eq.alertCount === 1 ? "" : "s"}`}
-                  >
-                    <AlertTriangle className="h-2.5 w-2.5" /> {eq.alertCount}
-                  </span>
-                )}
-                {isHub && (
-                  <span
-                    className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-semibold border"
-                    style={{
-                      background: "hsl(38 95% 94%)",
-                      color: "hsl(38 92% 35%)",
-                      borderColor: "hsl(38 92% 50%)",
-                    }}
-                    title="Critical hub — multiple selected batch flows intersect here"
-                  >
-                    <Layers className="h-2.5 w-2.5" /> Hub
-                  </span>
-                )}
-              </div>
+            <div className="flex items-center gap-1 shrink-0">
+              <StatusDot eq={eq} />
+              <ConnectionIcon health={eq.connectionHealth} />
             </div>
-
-            {/* Batch dots — colored by selection */}
-            {batches.length > 0 && (
-              <div className="absolute -top-1.5 left-2 flex items-center gap-1">
-                {batches.map((b) => (
-                  <span
-                    key={b}
-                    className="h-2.5 w-2.5 rounded-full border border-background shadow-sm"
-                    style={{ background: batchColorFor(b, selectedBatches) }}
-                    title={b}
-                  />
-                ))}
-              </div>
-            )}
           </div>
-        </foreignObject>
-      </EquipmentTooltip>
+
+          {/* Footer: sensors + standardised top-right alert badge */}
+          <div className="mt-auto flex items-center justify-between gap-1">
+            <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground">
+              <Radio className="h-2.5 w-2.5" />
+              {sensors.length} sensor{sensors.length === 1 ? "" : "s"}
+            </span>
+            <div className="flex items-center gap-1">
+              {isHub && (
+                <span
+                  className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-semibold border"
+                  style={{
+                    background: "hsl(38 95% 94%)",
+                    color: "hsl(38 92% 35%)",
+                    borderColor: "hsl(38 92% 50%)",
+                  }}
+                  title="Critical hub — multiple selected batch flows intersect here"
+                >
+                  <Layers className="h-2.5 w-2.5" /> Hub
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Standardised top-right alert badge — global system */}
+          {(broken || hasAlerts) && (
+            <span
+              className={`absolute -top-2 -right-2 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold border-2 border-background shadow-sm ${
+                broken
+                  ? "bg-status-error text-white"
+                  : "bg-status-warning text-white"
+              }`}
+              title={broken ? "Broken" : `${eq.alertCount} alert${eq.alertCount === 1 ? "" : "s"}`}
+            >
+              {broken ? "!" : eq.alertCount}
+            </span>
+          )}
+
+          {/* Batch dots — coloured by selection */}
+          {batches.length > 0 && (
+            <div className="absolute -top-1.5 left-2 flex items-center gap-1">
+              {batches.map((b) => (
+                <span
+                  key={b}
+                  className="h-2.5 w-2.5 rounded-full border border-background shadow-sm"
+                  style={{ background: batchColorFor(b, selectedBatches) }}
+                  title={b}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Hover info mini-panel */}
+          {isHovered && (
+            <div
+              className="absolute left-full top-0 ml-2 z-20 w-64 rounded-md border bg-popover shadow-lg p-3 space-y-1.5 text-xs"
+              style={{ pointerEvents: "none" }}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-semibold truncate">{eq.equipmentName}</span>
+                <Badge variant="outline" className="text-[9px] capitalize shrink-0">{eq.equipmentCategory}</Badge>
+              </div>
+              <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[11px]">
+                <span className="text-muted-foreground">Equipment type</span>
+                <span className="text-right truncate">{eq.equipmentType ?? eq.equipmentCategory}</span>
+                <span className="text-muted-foreground">Sensors</span>
+                <span className="text-right">{sensors.length}</span>
+                <span className="text-muted-foreground">Active batch</span>
+                <span className="text-right truncate font-mono">
+                  {eq.currentBatch ?? (eq.currentBatchIds && eq.currentBatchIds[0]) ?? "—"}
+                </span>
+                <span className="text-muted-foreground">Last data</span>
+                <span className="text-right truncate">{eq.lastDataReceived ?? "—"}</span>
+              </div>
+            </div>
+          )}
+        </div>
+      </foreignObject>
     </g>
   );
 }
