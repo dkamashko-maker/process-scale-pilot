@@ -1613,43 +1613,10 @@ export default function RebuildPage() {
                   } className="text-[9px] uppercase">{simStatus}</Badge>
                 </div>
 
-                {/* Lifecycle controls */}
-                <div className="grid grid-cols-3 gap-1">
-                  {(simStatus === "idle" || simStatus === "stopped" || simStatus === "done") && (
-                    <Button size="sm" className="h-7 text-[10px] gap-1 col-span-3" onClick={handleStartSimulation}>
-                      <Play className="h-3 w-3" /> {simStatus === "done" ? "Run again" : "Start simulation"}
-                    </Button>
-                  )}
-                  {simStatus === "running" && (
-                    <>
-                      <Button size="sm" variant="outline" className="h-7 text-[10px] gap-1" onClick={handlePauseSimulation}>
-                        <Pause className="h-3 w-3" /> Pause
-                      </Button>
-                      <Button size="sm" variant="destructive" className="h-7 text-[10px] gap-1" onClick={handleStopSimulation}>
-                        <Square className="h-3 w-3" /> Stop
-                      </Button>
-                      <Button size="sm" variant="outline" className="h-7 text-[10px] gap-1" onClick={handleRestartSimulation}>
-                        <RotateCcw className="h-3 w-3" /> Restart
-                      </Button>
-                    </>
-                  )}
-                  {simStatus === "paused" && (
-                    <>
-                      <Button size="sm" className="h-7 text-[10px] gap-1" onClick={handleResumeSimulation}>
-                        <Play className="h-3 w-3" /> Resume
-                      </Button>
-                      <Button size="sm" variant="destructive" className="h-7 text-[10px] gap-1" onClick={handleStopSimulation}>
-                        <Square className="h-3 w-3" /> Stop
-                      </Button>
-                      <Button size="sm" variant="outline" className="h-7 text-[10px] gap-1" onClick={handleRestartSimulation}>
-                        <RotateCcw className="h-3 w-3" /> Restart
-                      </Button>
-                    </>
-                  )}
-                  <Button size="sm" variant="outline" className="h-7 text-[10px] gap-1 col-span-3" onClick={handleRebuildPipeline}>
-                    <Hammer className="h-3 w-3" /> Rebuild pipeline
-                  </Button>
-                </div>
+                {/* Run controls live in the top toolbar — only status + log shown here */}
+                <p className="text-[10px] text-muted-foreground italic">
+                  Use <span className="font-medium text-foreground">Start Simulation</span> in the top toolbar to run.
+                </p>
 
                 {/* Progress */}
                 {(simStatus === "running" || simStatus === "paused" || simStatus === "done") && (
