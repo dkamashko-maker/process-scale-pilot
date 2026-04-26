@@ -994,7 +994,7 @@ export default function RebuildPage() {
               <div className="p-2 space-y-3">
                 <div className="relative">
                   <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
-                  <Input className="h-7 text-xs pl-7" placeholder="Search…" value={paletteSearch} onChange={(e) => setPaletteSearch(e.target.value)} />
+                  <Input className="h-7 text-xs pl-7" placeholder="Search equipment…" value={paletteSearch} onChange={(e) => setPaletteSearch(e.target.value)} />
                 </div>
 
                 {/* Quick add — author from scratch */}
