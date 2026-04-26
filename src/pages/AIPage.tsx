@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
+import { differenceInHours, format } from "date-fns";
 import {
   LineChart, Line, XAxis, YAxis, ReferenceLine, ResponsiveContainer, Tooltip as RechartsTooltip,
 } from "recharts";
@@ -8,6 +9,7 @@ import {
   Brain, Lightbulb, Settings2, AlertTriangle, CheckCircle2,
   ExternalLink, Shield, Tag, TrendingUp, Zap, Info,
   MessageSquare, Send, Trash2, Download, Loader2, FileText,
+  X as XIcon, Activity, Clock, ArrowRight, HelpCircle,
 } from "lucide-react";
 import { InfoTooltip } from "@/components/shared/InfoTooltip";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,6 +19,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   AI_RECIPES, getInsights, toggleRecipe, generateInsights,
   type AiRecipe, type AiInsight, type InsightSeverity,
@@ -25,7 +29,23 @@ import {
   sendMessage, getChatHistory, clearChatHistory, generateReportContent,
   type ChatMessage, type SparklineDataset,
 } from "@/data/aiAssistant";
-import { INTERFACES } from "@/data/runData";
+import { INTERFACES, RUNS } from "@/data/runData";
+
+const SEVERITY_CONFIG: Record<InsightSeverity, { icon: typeof AlertTriangle; cls: string; label: string }> = {
+  critical: { icon: AlertTriangle, cls: "bg-destructive/15 text-destructive", label: "Critical" },
+  warning: { icon: AlertTriangle, cls: "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300", label: "Warning" },
+  info: { icon: Info, cls: "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300", label: "Info" },
+  success: { icon: CheckCircle2, cls: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300", label: "OK" },
+};
+
+const CATEGORY_ICONS: Record<string, typeof Shield> = {
+  quality: Shield,
+  completeness: Tag,
+  trend: TrendingUp,
+  anomaly: Zap,
+};
+
+const READONLY_DISMISS_KEY = "insights-readonly-banner-dismissed";
 
 const SEVERITY_CONFIG: Record<InsightSeverity, { icon: typeof AlertTriangle; cls: string; label: string }> = {
   critical: { icon: AlertTriangle, cls: "bg-destructive/15 text-destructive", label: "Critical" },
