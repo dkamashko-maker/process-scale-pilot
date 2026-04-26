@@ -666,17 +666,23 @@ export default function SensorMapPage() {
                   />
                 ))}
 
-                {/* Nodes */}
-                {LAYOUT.map((n) => (
-                  <Node
-                    key={n.eq.equipmentId}
-                    node={n}
-                    selectedBatches={selectedBatches}
-                    isHub={hubIds.has(n.eq.equipmentId)}
-                    hoveredId={hoveredId}
-                    onHover={setHoveredId}
-                  />
-                ))}
+                {/* Nodes — render hovered node last so its tooltip paints above siblings */}
+                {[...LAYOUT]
+                  .sort((a, b) => {
+                    if (a.eq.equipmentId === hoveredId) return 1;
+                    if (b.eq.equipmentId === hoveredId) return -1;
+                    return 0;
+                  })
+                  .map((n) => (
+                    <Node
+                      key={n.eq.equipmentId}
+                      node={n}
+                      selectedBatches={selectedBatches}
+                      isHub={hubIds.has(n.eq.equipmentId)}
+                      hoveredId={hoveredId}
+                      onHover={setHoveredId}
+                    />
+                  ))}
               </svg>
             </div>
           </CardContent>
