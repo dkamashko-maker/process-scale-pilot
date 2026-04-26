@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
+import { differenceInHours, format } from "date-fns";
 import {
   LineChart, Line, XAxis, YAxis, ReferenceLine, ResponsiveContainer, Tooltip as RechartsTooltip,
 } from "recharts";
@@ -8,6 +9,7 @@ import {
   Brain, Lightbulb, Settings2, AlertTriangle, CheckCircle2,
   ExternalLink, Shield, Tag, TrendingUp, Zap, Info,
   MessageSquare, Send, Trash2, Download, Loader2, FileText,
+  X as XIcon, Activity, Clock, ArrowRight, HelpCircle,
 } from "lucide-react";
 import { InfoTooltip } from "@/components/shared/InfoTooltip";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,6 +19,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   AI_RECIPES, getInsights, toggleRecipe, generateInsights,
   type AiRecipe, type AiInsight, type InsightSeverity,
@@ -25,7 +29,7 @@ import {
   sendMessage, getChatHistory, clearChatHistory, generateReportContent,
   type ChatMessage, type SparklineDataset,
 } from "@/data/aiAssistant";
-import { INTERFACES } from "@/data/runData";
+import { INTERFACES, RUNS } from "@/data/runData";
 
 const SEVERITY_CONFIG: Record<InsightSeverity, { icon: typeof AlertTriangle; cls: string; label: string }> = {
   critical: { icon: AlertTriangle, cls: "bg-destructive/15 text-destructive", label: "Critical" },
@@ -41,24 +45,78 @@ const CATEGORY_ICONS: Record<string, typeof Shield> = {
   anomaly: Zap,
 };
 
-const QUICK_PROMPTS = [
+const READONLY_DISMISS_KEY = "insights-readonly-banner-dismissed";
+
+// (deduplicated — config defined above)
+
+// Generic fallback prompts (only used when no active run is detected)
+const GENERIC_PROMPTS = [
   "What is the current process status?",
   "Show me pH trends and forecast",
   "Are there any alerts or deviations?",
   "Data quality summary",
-  "Generate a full process report",
 ];
+
+/** Resolve the currently-active run from the dataset (first in_progress = R-456). */
+function getActiveRunContext() {
+  const run = RUNS[0]; // R-456 — Prod Bioreactor (#002)
+  if (!run) return null;
+  const start = new Date(run.start_time);
+  const end = new Date(run.end_time);
+  const now = new Date();
+  const elapsedH = Math.max(0, differenceInHours(now < end ? now : end, start));
+  const totalH = Math.max(1, differenceInHours(end, start));
+  // Phase heuristic from elapsed/total
+  const pct = elapsedH / totalH;
+  const phase =
+    pct < 0.15 ? "Lag / inoculation"
+    : pct < 0.45 ? "Exponential growth"
+    : pct < 0.75 ? "Production / fed-batch feed"
+    : pct < 1   ? "Late stationary"
+    : "Harvest";
+  const nextMilestone =
+    pct < 0.45 ? "Switch to fed-batch feed schedule"
+    : pct < 0.75 ? "Peak titre — start daily HPLC sampling"
+    : pct < 1   ? "Harvest decision window"
+    : "Harvest complete";
+  return { run, elapsedH, totalH, phase, nextMilestone };
+}
+
+/** Build run-specific contextual suggestions (always returns 3-4 items). */
+function buildContextualPrompts(ctx: ReturnType<typeof getActiveRunContext>, insights: AiInsight[]): string[] {
+  if (!ctx) return GENERIC_PROMPTS.slice(0, 4);
+  const out: string[] = [];
+  // Add prompts derived from top warnings
+  const warn = insights.find((i) => i.severity === "critical") || insights.find((i) => i.severity === "warning");
+  if (warn) out.push(`${warn.title} — analyse the trend`);
+  out.push(`Summarise ${ctx.run.bioreactor_run} progress (currently in ${ctx.phase.toLowerCase()})`);
+  out.push(`Compare current batch ${ctx.run.batch_id} pH profile to the previous batch`);
+  out.push("Forecast dissolved O₂ for the next 8 hours");
+  return out.slice(0, 4);
+}
 
 export default function AIPage() {
   const navigate = useNavigate();
   const [, setTick] = useState(0);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [bannerDismissed, setBannerDismissed] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return window.localStorage.getItem(READONLY_DISMISS_KEY) === "1";
+  });
 
   const insights = useMemo(() => getInsights(), []);
+  const activeCtx = useMemo(() => getActiveRunContext(), []);
+  const contextPrompts = useMemo(() => buildContextualPrompts(activeCtx, insights), [activeCtx, insights]);
 
   const handleToggle = useCallback((id: string) => {
     toggleRecipe(id);
     generateInsights();
     setTick((t) => t + 1);
+  }, []);
+
+  const dismissBanner = useCallback(() => {
+    setBannerDismissed(true);
+    if (typeof window !== "undefined") window.localStorage.setItem(READONLY_DISMISS_KEY, "1");
   }, []);
 
   const goEvidence = useCallback((insight: AiInsight) => {
@@ -71,105 +129,176 @@ export default function AIPage() {
 
   const critCount = insights.filter((i) => i.severity === "critical").length;
   const warnCount = insights.filter((i) => i.severity === "warning").length;
+  const activeRecipes = AI_RECIPES.filter((r) => r.enabled).length;
 
   return (
-    <div className="p-6 space-y-6 animate-fade-in">
-      {/* Header — explicitly distinguishes Insights from Reports */}
-      <div className="space-y-2">
-        <div className="flex items-center gap-2">
-          <Brain className="h-5 w-5 text-primary" />
-          <h2 className="text-xl font-semibold">Insights</h2>
-          <Badge variant="outline" className="gap-1 text-[10px] border-primary/40 text-primary">
-            <Lightbulb className="h-3 w-3" /> Read-only
-          </Badge>
-          <InfoTooltip content="Insights are observational analytics derived from your data. They are not reports — nothing here can be edited, signed, or archived." />
-          <Button
-            variant="ghost"
-            size="sm"
-            className="ml-auto text-xs gap-1"
-            onClick={() => navigate("/reports")}
-          >
-            <FileText className="h-3.5 w-3.5" /> Go to Reports
-          </Button>
-        </div>
-        <div className="rounded-md border border-dashed bg-muted/30 px-3 py-2">
-          <p className="text-xs text-muted-foreground">
-            <span className="font-medium text-foreground">Insights are observations, not reports.</span>{" "}
-            They are generated automatically from process data, are read-only, and cannot be signed,
-            edited, or used as compliance evidence. For signed deliverables, see{" "}
-            <button onClick={() => navigate("/reports")} className="underline hover:text-foreground">Reports</button>.
-          </p>
-        </div>
-      </div>
-
-      {/* KPI */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <KpiMini label="Total Insights" value={insights.length} />
-        <KpiMini label="Critical" value={critCount} accent={critCount > 0} />
-        <KpiMini label="Warnings" value={warnCount} />
-        <KpiMini label="Active Recipes" value={AI_RECIPES.filter((r) => r.enabled).length} />
-      </div>
-
-      <Tabs defaultValue="assistant" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="assistant" className="gap-1.5">
-            <MessageSquare className="h-3.5 w-3.5" />
-            AI Assistant
-          </TabsTrigger>
-          <TabsTrigger value="insights" className="gap-1.5">
-            <Lightbulb className="h-3.5 w-3.5" />
-            Insights Feed
-          </TabsTrigger>
-          <TabsTrigger value="config" className="gap-1.5">
-            <Settings2 className="h-3.5 w-3.5" />
-            AI Config
-          </TabsTrigger>
-        </TabsList>
-
-        {/* ─── AI Assistant ─── */}
-        <TabsContent value="assistant" className="space-y-0">
-          <AiAssistantChat />
-        </TabsContent>
-
-        {/* ─── Insights Feed ─── */}
-        <TabsContent value="insights" className="space-y-3">
-          {insights.length === 0 ? (
-            <Card>
-              <CardContent className="p-8 text-center text-muted-foreground">
-                <CheckCircle2 className="h-8 w-8 mx-auto mb-2 text-emerald-500" />
-                <p className="text-sm font-medium">No insights to display</p>
-                <p className="text-xs">Enable recipes in AI Config to generate insights.</p>
-              </CardContent>
-            </Card>
-          ) : (
-            insights.map((insight) => (
-              <InsightCard key={insight.id} insight={insight} onOpenEvidence={() => goEvidence(insight)} />
-            ))
+    <TooltipProvider delayDuration={150}>
+      <div className="p-6 space-y-6 animate-fade-in">
+        {/* Header */}
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <Brain className="h-5 w-5 text-primary" />
+            <h2 className="text-xl font-semibold">Insights</h2>
+            {bannerDismissed && (
+              <Badge variant="secondary" className="gap-1 text-[10px]">
+                <Info className="h-3 w-3" /> Read-only
+              </Badge>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="ml-auto text-xs gap-1"
+              onClick={() => navigate("/reports")}
+            >
+              <FileText className="h-3.5 w-3.5" /> Go to Reports
+            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSettingsOpen(true)} aria-label="AI configuration">
+                  <Settings2 className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">AI configuration</TooltipContent>
+            </Tooltip>
+          </div>
+          {!bannerDismissed && (
+            <div className="rounded-md border border-dashed bg-muted/30 px-3 py-2 flex items-start gap-2">
+              <Info className="h-3.5 w-3.5 text-muted-foreground mt-0.5 shrink-0" />
+              <p className="text-xs text-muted-foreground flex-1">
+                <span className="font-medium text-foreground">Insights are observations, not reports.</span>{" "}
+                They are generated automatically from process data, are read-only, and cannot be signed,
+                edited, or used as compliance evidence. For signed deliverables, see{" "}
+                <button onClick={() => navigate("/reports")} className="underline hover:text-foreground">Reports</button>.
+              </p>
+              <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0 -mt-0.5 -mr-1" onClick={dismissBanner} aria-label="Dismiss">
+                <XIcon className="h-3.5 w-3.5" />
+              </Button>
+            </div>
           )}
-        </TabsContent>
+        </div>
 
-        {/* ─── AI Config ─── */}
-        <TabsContent value="config" className="space-y-4">
-          <p className="text-xs text-muted-foreground">
-            Enable or disable insight recipes. Changes regenerate insights immediately. Recipes apply to matching interfaces.
-          </p>
-          {AI_RECIPES.map((recipe) => (
-            <RecipeCard key={recipe.id} recipe={recipe} onToggle={() => handleToggle(recipe.id)} />
-          ))}
-        </TabsContent>
-      </Tabs>
+        {/* Current process summary — renders automatically from active run */}
+        {activeCtx && (
+          <Card className="border-primary/30 bg-primary/[0.02]">
+            <CardContent className="p-4 flex flex-wrap items-start gap-x-6 gap-y-3">
+              <div className="flex items-center gap-2 min-w-0">
+                <Activity className="h-4 w-4 text-primary shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">Current process</p>
+                  <p className="text-sm font-semibold truncate">{activeCtx.run.bioreactor_run}</p>
+                </div>
+              </div>
+              <SummaryStat label="Phase" value={activeCtx.phase} />
+              <SummaryStat label="Elapsed" value={`${activeCtx.elapsedH} h / ${activeCtx.totalH} h`} />
+              <SummaryStat label="Next milestone" value={activeCtx.nextMilestone} />
+              <div className="flex items-start gap-2 ml-auto min-w-0 max-w-md">
+                <AlertTriangle className="h-3.5 w-3.5 text-amber-500 mt-0.5 shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">Top warnings</p>
+                  {insights.filter((i) => i.severity === "critical" || i.severity === "warning").slice(0, 2).map((i) => (
+                    <p key={i.id} className="text-xs truncate">{i.title}</p>
+                  ))}
+                  {insights.filter((i) => i.severity === "critical" || i.severity === "warning").length === 0 && (
+                    <p className="text-xs text-muted-foreground italic">No active warnings</p>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* KPI */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <KpiMini label="Total Insights" value={insights.length} />
+          <KpiMini label="Critical" value={critCount} accent={critCount > 0 ? "critical" : "neutral"} />
+          <KpiMini label="Warnings" value={warnCount} accent={warnCount > 0 ? "warning" : "neutral"} />
+          <KpiMini
+            label="Active Recipes"
+            value={activeRecipes}
+            tooltip="Recipes are pre-configured analytical rules that evaluate incoming process data automatically."
+          />
+        </div>
+
+        <Tabs defaultValue="assistant" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="assistant" className="gap-1.5">
+              <MessageSquare className="h-3.5 w-3.5" />
+              AI Assistant
+            </TabsTrigger>
+            <TabsTrigger value="insights" className="gap-1.5">
+              <Lightbulb className="h-3.5 w-3.5" />
+              Feed ({insights.length})
+            </TabsTrigger>
+          </TabsList>
+
+          {/* ─── AI Assistant ─── */}
+          <TabsContent value="assistant" className="space-y-0">
+            <AiAssistantChat contextualPrompts={contextPrompts} />
+          </TabsContent>
+
+          {/* ─── Insights Feed ─── */}
+          <TabsContent value="insights" className="space-y-3">
+            {insights.length === 0 ? (
+              <Card>
+                <CardContent className="p-8 text-center text-muted-foreground">
+                  <CheckCircle2 className="h-8 w-8 mx-auto mb-2 text-emerald-500" />
+                  <p className="text-sm font-medium">No insights to display</p>
+                  <p className="text-xs">Enable recipes in the settings panel to generate insights.</p>
+                </CardContent>
+              </Card>
+            ) : (
+              insights.map((insight) => (
+                <InsightCard key={insight.id} insight={insight} onOpenEvidence={() => goEvidence(insight)} />
+              ))
+            )}
+          </TabsContent>
+        </Tabs>
+
+        {/* ─── AI Config slide-over ─── */}
+        <Sheet open={settingsOpen} onOpenChange={setSettingsOpen}>
+          <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
+            <SheetHeader>
+              <SheetTitle className="flex items-center gap-2">
+                <Settings2 className="h-4 w-4 text-primary" /> AI Configuration
+              </SheetTitle>
+              <SheetDescription className="text-xs">
+                Enable or disable insight recipes. Changes regenerate insights immediately.
+              </SheetDescription>
+            </SheetHeader>
+            <div className="mt-4 space-y-3">
+              {AI_RECIPES.map((recipe) => (
+                <RecipeCard key={recipe.id} recipe={recipe} onToggle={() => handleToggle(recipe.id)} />
+              ))}
+            </div>
+          </SheetContent>
+        </Sheet>
+      </div>
+    </TooltipProvider>
+  );
+}
+
+function SummaryStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="min-w-0">
+      <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">{label}</p>
+      <p className="text-xs font-medium truncate">{value}</p>
     </div>
   );
 }
 
 // ── AI Assistant Chat ──
 
-function AiAssistantChat() {
+function AiAssistantChat({ contextualPrompts }: { contextualPrompts: string[] }) {
   const [messages, setMessages] = useState<ChatMessage[]>(() => getChatHistory());
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  // Pre-focus the input on mount so users can type immediately.
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -256,7 +385,7 @@ function AiAssistantChat() {
               </p>
             </div>
             <div className="flex flex-wrap gap-2 justify-center max-w-md">
-              {QUICK_PROMPTS.map((prompt) => (
+              {contextualPrompts.map((prompt) => (
                 <Button
                   key={prompt}
                   variant="outline"
@@ -287,7 +416,7 @@ function AiAssistantChat() {
       <div className="border-t border-border p-3 space-y-2">
         {messages.length > 0 && (
           <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-            {QUICK_PROMPTS.map((prompt) => (
+            {contextualPrompts.map((prompt) => (
               <Button
                 key={prompt}
                 variant="outline"
@@ -479,12 +608,35 @@ function RecipeCard({ recipe, onToggle }: { recipe: AiRecipe; onToggle: () => vo
   );
 }
 
-function KpiMini({ label, value, accent }: { label: string; value: number; accent?: boolean }) {
+function KpiMini({
+  label, value, accent = "neutral", tooltip,
+}: {
+  label: string;
+  value: number;
+  accent?: "neutral" | "critical" | "warning";
+  tooltip?: string;
+}) {
+  const valueCls =
+    accent === "critical" ? "text-destructive"
+    : accent === "warning" ? "text-amber-600 dark:text-amber-400"
+    : "text-foreground";
   return (
-    <Card>
+    <Card className={accent === "neutral" ? "bg-secondary/40" : ""}>
       <CardContent className="p-3">
-        <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{label}</p>
-        <p className={`text-xl font-bold mt-0.5 ${accent ? "text-destructive" : ""}`}>{value}</p>
+        <div className="flex items-center gap-1">
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{label}</p>
+          {tooltip && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button className="text-muted-foreground hover:text-foreground" aria-label={`About ${label}`}>
+                  <HelpCircle className="h-3 w-3" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-xs text-xs">{tooltip}</TooltipContent>
+            </Tooltip>
+          )}
+        </div>
+        <p className={`text-xl font-bold mt-0.5 ${valueCls}`}>{value}</p>
       </CardContent>
     </Card>
   );
