@@ -280,9 +280,8 @@ export default function ReportsPage() {
                   {activeReport?.qc_rows.map((row, i) => {
                     const expanded = expandedRows.has(i);
                     return (
-                      <>
+                      <FragmentWithKey key={i}>
                         <TableRow
-                          key={`r-${i}`}
                           className={`cursor-pointer ${row.status === "Fail" ? "bg-destructive/5" : ""}`}
                           style={{ minHeight: 44 }}
                           onClick={() => toggleRow(i)}
@@ -303,7 +302,7 @@ export default function ReportsPage() {
                           <TableCell className="text-xs py-2.5">{row.responsiblePerson}</TableCell>
                         </TableRow>
                         {expanded && (
-                          <TableRow key={`d-${i}`} className="bg-secondary/40">
+                          <TableRow className="bg-secondary/40">
                             <TableCell />
                             <TableCell colSpan={6} className="py-3">
                               <div className="text-[11px] uppercase tracking-wide text-text-secondary font-medium mb-1">
@@ -315,7 +314,7 @@ export default function ReportsPage() {
                             </TableCell>
                           </TableRow>
                         )}
-                      </>
+                      </FragmentWithKey>
                     );
                   })}
                 </TableBody>
