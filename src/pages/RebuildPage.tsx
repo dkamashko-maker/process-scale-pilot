@@ -907,64 +907,75 @@ export default function RebuildPage() {
 
   return (
     <div className="h-[calc(100vh-64px)] flex flex-col animate-fade-in">
-      {/* ── Top bar ── */}
+      {/* ── Top action bar ── */}
       <div className="flex items-center gap-2 px-4 py-2 border-b bg-card shrink-0">
-        <Settings2 className="h-4 w-4 text-primary" />
-        <span className="text-sm font-semibold">Metadata Constructor → Rebuild</span>
-        <Badge variant="outline" className="text-[9px] ml-1">PROTOTYPE</Badge>
-        <InfoTooltip content="Configure operating conditions and simulate system behavior. ML features use heuristic methods on historical data." />
-        <Separator orientation="vertical" className="h-5 mx-2" />
+        <Button asChild variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1 text-muted-foreground hover:text-foreground">
+          <Link to="/metadata/constructor"><ArrowLeft className="h-3.5 w-3.5" /> Back</Link>
+        </Button>
+        <Separator orientation="vertical" className="h-5" />
         <Input
-          className="h-7 w-48 text-xs"
+          aria-label="Pipeline name"
+          className="h-7 w-56 text-sm font-medium border-transparent hover:border-border focus:border-input bg-transparent px-2"
           value={pipeline.name}
           onChange={(e) => setPipeline((p) => ({ ...p, name: e.target.value }))}
         />
-        <div className="ml-auto flex items-center gap-1.5">
-          <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={handleSave}>
-            <Save className="h-3 w-3" /> Save
+        <InfoTooltip content="Configure operating conditions and simulate system behavior. ML features use heuristic methods on historical data." />
+
+        <div className="ml-auto flex items-center gap-2">
+          <Badge variant="outline" className="text-[10px] uppercase tracking-wide">Prototype</Badge>
+          <Separator orientation="vertical" className="h-5" />
+
+          {/* Save — solid secondary */}
+          <Button size="sm" className="h-8 text-xs gap-1.5 bg-foreground text-background hover:bg-foreground/90" onClick={handleSave}>
+            <Save className="h-3.5 w-3.5" /> Save
           </Button>
-          <Separator orientation="vertical" className="h-5 mx-1" />
+
+          {/* Start Simulation — PRIMARY */}
           {(simStatus === "idle" || simStatus === "stopped" || simStatus === "done") && (
-            <Button size="sm" className="h-7 text-xs gap-1" onClick={handleStartSimulation}>
-              <Play className="h-3 w-3" /> {simStatus === "done" || simStatus === "stopped" ? "Run again" : "Start"}
+            <Button size="sm" className="h-8 text-xs gap-1.5" onClick={handleStartSimulation}>
+              <Play className="h-3.5 w-3.5" /> {simStatus === "done" || simStatus === "stopped" ? "Run again" : "Start Simulation"}
             </Button>
           )}
           {simStatus === "running" && (
             <>
-              <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={handlePauseSimulation}>
-                <Pause className="h-3 w-3" /> Pause
+              <Button size="sm" variant="outline" className="h-8 text-xs gap-1.5" onClick={handlePauseSimulation}>
+                <Pause className="h-3.5 w-3.5" /> Pause
               </Button>
-              <Button size="sm" variant="destructive" className="h-7 text-xs gap-1" onClick={handleStopSimulation}>
-                <Square className="h-3 w-3" /> Stop
+              <Button size="sm" variant="destructive" className="h-8 text-xs gap-1.5" onClick={handleStopSimulation}>
+                <Square className="h-3.5 w-3.5" /> Stop
               </Button>
             </>
           )}
           {simStatus === "paused" && (
             <>
-              <Button size="sm" className="h-7 text-xs gap-1" onClick={handleResumeSimulation}>
-                <Play className="h-3 w-3" /> Resume
+              <Button size="sm" className="h-8 text-xs gap-1.5" onClick={handleResumeSimulation}>
+                <Play className="h-3.5 w-3.5" /> Resume
               </Button>
-              <Button size="sm" variant="destructive" className="h-7 text-xs gap-1" onClick={handleStopSimulation}>
-                <Square className="h-3 w-3" /> Stop
+              <Button size="sm" variant="destructive" className="h-8 text-xs gap-1.5" onClick={handleStopSimulation}>
+                <Square className="h-3.5 w-3.5" /> Stop
               </Button>
             </>
           )}
           {(simStatus === "done" || simStatus === "stopped" || simStatus === "paused") && (
-            <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={handleRestartSimulation}>
-              <RotateCcw className="h-3 w-3" /> Restart
+            <Button size="sm" variant="ghost" className="h-8 text-xs gap-1.5" onClick={handleRestartSimulation}>
+              <RotateCcw className="h-3.5 w-3.5" /> Restart
             </Button>
           )}
-          <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={handleRebuildPipeline} title="Reset simulation state and prepare to rebuild">
-            <Hammer className="h-3 w-3" /> Rebuild
+
+          {/* Rebuild — ghost / outlined (de-emphasised) */}
+          <Button size="sm" variant="ghost" className="h-8 text-xs gap-1.5 text-muted-foreground hover:text-foreground" onClick={handleRebuildPipeline} title="Reset simulation state and prepare to rebuild">
+            <Hammer className="h-3.5 w-3.5" /> Rebuild
           </Button>
-          <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => {
+
+          {/* Configure — tertiary link-style */}
+          <Button size="sm" variant="link" className="h-8 text-xs gap-1 px-1 text-muted-foreground hover:text-foreground" onClick={() => {
             setSimConfig((c) => ({
               ...c,
               selected_interface_ids: deviceNodesInPipeline.map((n) => n.interface_id!),
             }));
             setShowSimModal(true);
           }} title="Advanced simulation configuration">
-            <Settings2 className="h-3 w-3" /> Configure…
+            <Settings2 className="h-3.5 w-3.5" /> Configure…
           </Button>
         </div>
       </div>
