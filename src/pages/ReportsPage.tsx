@@ -186,7 +186,7 @@ export default function ReportsPage() {
       <div className="p-6 max-w-[1400px] mx-auto stack-page">
         <OverviewHeader
           title="Reports"
-          description="Document-centric view: review the latest signed/unsigned report and generate new content. For observational analytics, see Insights."
+          description="Document-centric view: review the latest signed/unsigned report and generate new content. For observational analytics, see GenAI."
         />
 
         {/* ─────────── 1. REPORT SELECTOR HEADER — visually dominant ─────────── */}
@@ -230,7 +230,8 @@ export default function ReportsPage() {
           </div>
         </div>
 
-        {/* ─────────── 2. QC REPORT CONTENT ─────────── */}
+        {/* ─────────── 2. QC REPORT CONTENT + SIGN & COMMENT (side-by-side) ─────────── */}
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_340px] gap-4 items-start">
         <Card>
           <CardHeader className="py-3 px-4">
             <div className="flex items-center justify-between gap-3 flex-wrap">
@@ -323,8 +324,8 @@ export default function ReportsPage() {
           </CardContent>
         </Card>
 
-        {/* ─────────── 3. SIGN & COMMENT ─────────── */}
-        <Card>
+        {/* ─────────── 3. SIGN & COMMENT — beside QC report ─────────── */}
+        <Card className="lg:sticky lg:top-4">
           <CardHeader className="py-3 px-4">
             <CardTitle className="text-[14px] font-medium flex items-center gap-2">
               <Shield className="h-4 w-4" /> Sign &amp; Comment
@@ -377,6 +378,7 @@ export default function ReportsPage() {
             )}
           </CardContent>
         </Card>
+        </div>
 
         {/* ─────────── 4. REPORT GENERATOR — visually lighter, collapsed by default ─────────── */}
         <Collapsible open={generatorOpen} onOpenChange={setGeneratorOpen}>

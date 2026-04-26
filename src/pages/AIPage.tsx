@@ -138,7 +138,7 @@ export default function AIPage() {
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <Brain className="h-5 w-5 text-primary" />
-            <h2 className="text-xl font-semibold">Insights</h2>
+            <h2 className="text-xl font-semibold">GenAI</h2>
             {bannerDismissed && (
               <Badge variant="secondary" className="gap-1 text-[10px]">
                 <Info className="h-3 w-3" /> Read-only
