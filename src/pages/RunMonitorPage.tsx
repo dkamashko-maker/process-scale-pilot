@@ -1,18 +1,17 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { RUNS, PARAMETERS, getTimeseries } from "@/data/runData";
 import { FileText } from "lucide-react";
 import { useEvents } from "@/contexts/EventsContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { ProcessChart } from "@/components/monitoring/ProcessChart";
+import { ProcessChart, colorFor } from "@/components/monitoring/ProcessChart";
 import { ControlActionsPanel } from "@/components/monitoring/ControlActionsPanel";
 import { ChartCard } from "@/components/shared/ChartCard";
 import { DataTable } from "@/components/shared/DataTable";
-import { InfoTooltip } from "@/components/shared/InfoTooltip";
+import { DetailHeader } from "@/components/shared/PageHeader";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -22,6 +21,13 @@ import { useToast } from "@/hooks/use-toast";
 import { createReportFromRun } from "@/data/reportsStore";
 import { format } from "date-fns";
 import type { ParameterDef, ProcessEvent } from "@/data/runTypes";
+
+/** Cluster order matches the spec exactly so the visual rhythm is enforced. */
+const CLUSTER_ORDER: { id: ParameterDef["type_priority"]; label: string }[] = [
+  { id: "Critical",  label: "Critical" },
+  { id: "Important", label: "Important" },
+  { id: "Monitored", label: "Monitored" },
+];
 
 const EVENT_TYPES = ["FEED", "BASE_ADDITION", "ANTIFOAM", "INDUCER", "ADDITIVE", "HARVEST", "SAMPLE", "NOTE"];
 
