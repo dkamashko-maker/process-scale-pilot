@@ -163,36 +163,62 @@ export default function MetadataConstructorPage() {
 
   const navigate = useNavigate();
 
+  // Counts for KPI/tab badges
+  const incompleteRecordCount = stats.incomplete;
+  const templateCount = LABEL_TEMPLATES.length;
+
+  // Tab control
+  const [activeTab, setActiveTab] = useState<"templates" | "labeling">("templates");
+
+  const jumpToBulkIncomplete = useCallback(() => {
+    setCompletenessFilter("incomplete");
+    setPage(0);
+    setSelected(new Set());
+    setActiveTab("labeling");
+  }, []);
+
   return (
-    <div className="p-6 space-y-4 animate-fade-in">
-      {/* Header */}
-      <div className="flex items-center gap-2">
-        <Construction className="h-5 w-5 text-primary" />
-        <h2 className="text-xl font-semibold">Metadata Constructor</h2>
-        <InfoTooltip content="Define label templates, apply metadata to records, and track completeness scores." />
-        <Button variant="outline" size="sm" className="ml-auto h-7 text-xs gap-1" onClick={() => navigate("/metadata/rebuild")}>
-          <Settings2 className="h-3 w-3" /> Open Rebuild Canvas
-        </Button>
-      </div>
+    <div className="p-6 stack-page animate-fade-in">
+      <OverviewHeader
+        title="Metadata Constructor"
+        description="Define label templates, apply metadata to records, and track completeness scores."
+      />
 
-      {/* KPI */}
+      {/* KPI strip — Summary card style */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <KpiMini icon={<Layers className="h-4 w-4" />} label="Total Records" value={stats.total} />
-        <KpiMini icon={<CheckCircle2 className="h-4 w-4 text-emerald-500" />} label="Complete" value={stats.complete} onClick={() => { setCompletenessFilter("complete"); setPage(0); }} />
-        <KpiMini icon={<AlertTriangle className="h-4 w-4 text-amber-500" />} label="Incomplete" value={stats.incomplete} onClick={() => { setCompletenessFilter("incomplete"); setPage(0); }} />
-        <KpiMini icon={<Tag className="h-4 w-4 text-muted-foreground" />} label="Templates" value={LABEL_TEMPLATES.length} />
+        <SummaryTile label="Total records"  value={stats.total}      Icon={Layers} />
+        <SummaryTile label="Complete"       value={stats.complete}   Icon={CheckCircle2} tone="active" />
+        <SummaryTile
+          label="Incomplete"
+          value={incompleteRecordCount}
+          Icon={AlertTriangle}
+          tone="warning"
+          highlight={incompleteRecordCount > 0}
+          onClick={jumpToBulkIncomplete}
+        />
+        <SummaryTile label="Templates"      value={templateCount}    Icon={Tag} />
       </div>
 
-      <Tabs defaultValue="templates" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="templates">Label Templates</TabsTrigger>
-          <TabsTrigger value="labeling">Bulk Labeling</TabsTrigger>
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "templates" | "labeling")}>
+        <TabsList className="h-auto bg-transparent p-0 gap-2">
+          <PillTab value="templates"  label="Label Templates" count={templateCount} />
+          <PillTab value="labeling"   label="Bulk Labeling"   count={incompleteRecordCount} countSuffix="pending" pendingTone />
         </TabsList>
 
         {/* ─── Templates Tab ─── */}
-        <TabsContent value="templates" className="space-y-4">
+        <TabsContent value="templates" className="mt-4 space-y-3">
           {LABEL_TEMPLATES.map((tpl) => (
-            <TemplateCard key={tpl.template_id} template={tpl} />
+            <TemplateCard
+              key={tpl.template_id}
+              template={tpl}
+              recordCount={recordsWithCompleteness.filter((r) => r.completeness.template?.template_id === tpl.template_id).length}
+              onOpenRebuild={() => navigate("/metadata/rebuild")}
+              onOpenRecords={() => {
+                setCompletenessFilter("all");
+                setPage(0);
+                setActiveTab("labeling");
+              }}
+            />
           ))}
         </TabsContent>
 
