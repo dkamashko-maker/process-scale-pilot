@@ -1022,31 +1022,61 @@ export default function RebuildPage() {
 
                 <Separator />
 
-                {/* Equipment catalog */}
-                <div>
-                  <p className="text-[10px] font-semibold text-muted-foreground uppercase mb-1.5 flex items-center gap-1">
-                    <Boxes className="h-3 w-3" /> Equipment catalog
-                  </p>
-                  <div className="space-y-1">
-                    {filteredEquipment.map((eq) => (
-                      <button
-                        key={eq.equipmentId}
-                        className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-xs hover:bg-accent/50 transition-colors text-left"
-                        onClick={() => addEquipmentNode(eq.equipmentId)}
-                        title={`${eq.equipmentName} · ${eq.equipmentCategory}`}
-                      >
-                        <span className="h-2 w-2 rounded-full shrink-0" style={{ background: NODE_COLORS.equipment }} />
-                        <div className="min-w-0">
-                          <p className="truncate font-medium">{eq.equipmentName}</p>
-                          <p className="text-[9px] text-muted-foreground font-mono">{eq.equipmentId} · {eq.equipmentCategory}</p>
+                {/* Equipment catalog — grouped by category */}
+                <TooltipProvider delayDuration={200}>
+                  {(["upstream", "downstream", "analytical"] as const).map((cat) => {
+                    const itemsInCat = filteredEquipment.filter((e) => e.equipmentCategory === cat);
+                    const totalInCat = EQUIPMENT.filter((e) => e.equipmentCategory === cat).length;
+                    if (totalInCat === 0) return null;
+                    const catLabel = cat[0].toUpperCase() + cat.slice(1);
+                    return (
+                      <div key={cat}>
+                        <p className="text-[10px] font-semibold text-muted-foreground uppercase mb-1.5 flex items-center gap-1">
+                          <Boxes className="h-3 w-3" /> {catLabel}
+                          <span className="text-muted-foreground/70 normal-case font-normal">({totalInCat})</span>
+                        </p>
+                        <div className="space-y-1">
+                          {itemsInCat.length === 0 ? (
+                            <p className="text-[9px] text-muted-foreground italic px-2">No matches in {catLabel.toLowerCase()}.</p>
+                          ) : itemsInCat.map((eq) => {
+                            const statusColor =
+                              eq.status === "active" ? "bg-emerald-500"
+                              : eq.status === "error" || eq.status === "broken" ? "bg-destructive"
+                              : "bg-muted-foreground/40";
+                            const statusLabel =
+                              eq.status === "active" ? "Active / connected"
+                              : eq.status === "error" ? "Error"
+                              : eq.status === "broken" ? "Broken"
+                              : "Idle";
+                            return (
+                              <button
+                                key={eq.equipmentId}
+                                className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-xs hover:bg-accent/50 transition-colors text-left"
+                                onClick={() => addEquipmentNode(eq.equipmentId)}
+                                title={`${eq.equipmentName} · ${eq.equipmentCategory}`}
+                              >
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span className={`h-2 w-2 rounded-full shrink-0 ${statusColor}`} />
+                                  </TooltipTrigger>
+                                  <TooltipContent side="right" className="text-[10px]">
+                                    <p className="font-medium">{statusLabel}</p>
+                                    <p className="text-muted-foreground">Green = active · Grey = idle · Red = broken</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                                <div className="min-w-0">
+                                  <p className="truncate font-medium">{eq.equipmentName}</p>
+                                  <p className="text-[9px] text-muted-foreground font-mono">{eq.equipmentId}</p>
+                                </div>
+                              </button>
+                            );
+                          })}
                         </div>
-                      </button>
-                    ))}
-                    {filteredEquipment.length === 0 && (
-                      <p className="text-[9px] text-muted-foreground italic px-2">No matching equipment.</p>
-                    )}
-                  </div>
-                </div>
+                        <Separator className="mt-2" />
+                      </div>
+                    );
+                  })}
+                </TooltipProvider>
 
                 <Separator />
 
