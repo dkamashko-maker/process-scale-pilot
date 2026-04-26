@@ -273,12 +273,19 @@ function Node({
           {/* Hover info mini-panel */}
           {isHovered && (
             <div
-              className="absolute left-full top-0 ml-2 z-20 w-64 rounded-md border bg-popover shadow-lg p-3 space-y-1.5 text-xs"
-              style={{ pointerEvents: "none" }}
+              className="absolute left-full top-0 ml-2 z-20 w-64 rounded-md p-3 space-y-1.5 text-xs"
+              style={{
+                pointerEvents: "none",
+                backgroundColor: "hsl(var(--popover))",
+                color: "hsl(var(--popover-foreground))",
+                border: "1px solid hsl(var(--border))",
+                boxShadow: "0 8px 24px -4px hsl(0 0% 0% / 0.18), 0 2px 6px -2px hsl(0 0% 0% / 0.12)",
+                opacity: 1,
+              }}
             >
               <div className="flex items-center justify-between gap-2">
                 <span className="font-semibold truncate">{eq.equipmentName}</span>
-                <Badge variant="outline" className="text-[9px] capitalize shrink-0">{eq.equipmentCategory}</Badge>
+                <Badge variant="outline" className="text-[9px] capitalize shrink-0 bg-background">{eq.equipmentCategory}</Badge>
               </div>
               <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[11px]">
                 <span className="text-muted-foreground">Equipment type</span>
