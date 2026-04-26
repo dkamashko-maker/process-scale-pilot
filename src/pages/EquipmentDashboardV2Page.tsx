@@ -22,7 +22,7 @@ import { getRunForEquipmentId } from "@/data/runData";
 import {
   Activity, AlertTriangle, Search, Wifi, WifiOff, CircleDot,
   FileText, BookOpen, LineChart, Bell, Database, ScrollText, UploadCloud, Cable,
-  Hash, Layers, Clock,
+  Hash, Layers, Clock, FlaskConical, Filter as FilterIcon, Microscope,
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { EquipmentTooltip } from "@/components/equipment/EquipmentTooltip";
