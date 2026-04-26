@@ -230,7 +230,8 @@ export default function ReportsPage() {
           </div>
         </div>
 
-        {/* ─────────── 2. QC REPORT CONTENT ─────────── */}
+        {/* ─────────── 2. QC REPORT CONTENT + SIGN & COMMENT (side-by-side) ─────────── */}
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_340px] gap-4 items-start">
         <Card>
           <CardHeader className="py-3 px-4">
             <div className="flex items-center justify-between gap-3 flex-wrap">
@@ -323,8 +324,8 @@ export default function ReportsPage() {
           </CardContent>
         </Card>
 
-        {/* ─────────── 3. SIGN & COMMENT ─────────── */}
-        <Card>
+        {/* ─────────── 3. SIGN & COMMENT — beside QC report ─────────── */}
+        <Card className="lg:sticky lg:top-4">
           <CardHeader className="py-3 px-4">
             <CardTitle className="text-[14px] font-medium flex items-center gap-2">
               <Shield className="h-4 w-4" /> Sign &amp; Comment
