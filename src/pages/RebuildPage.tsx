@@ -1129,22 +1129,27 @@ export default function RebuildPage() {
 
         {/* ══════════ CENTER CANVAS ══════════ */}
         <div className="flex-1 min-w-0 relative overflow-hidden bg-muted/30">
-          {/* Canvas info bar */}
-          <div className="absolute top-2 left-2 z-10 flex items-center gap-2">
-            <Badge variant="secondary" className="text-[9px]">{pipeline.nodes.length} nodes</Badge>
-            <Badge variant="secondary" className="text-[9px]">{pipeline.edges.length} edges</Badge>
-            <Badge variant="outline" className="text-[9px]">Zoom: {(zoom * 100).toFixed(0)}%</Badge>
-            {!connectingFrom && pipeline.nodes.length >= 2 && (
-              <Badge variant="outline" className="text-[9px] text-muted-foreground">
-                Tip: click a node's right port → then a left port to connect
-              </Badge>
-            )}
-            {connectingFrom && (
-              <Badge variant="default" className="text-[9px] gap-1 animate-pulse">
-                Connecting… click the target node's left port
-                <button onClick={() => setConnectingFrom(null)} className="ml-1"><X className="h-2.5 w-2.5" /></button>
-              </Badge>
-            )}
+          {/* Canvas top overlay: stage colour legend (left) + run state (right) */}
+          <div className="absolute top-2 left-2 right-2 z-10 flex items-start justify-between gap-2 pointer-events-none">
+            <div className="flex items-center gap-3 px-3 py-1.5 rounded-md bg-card/90 backdrop-blur border shadow-sm pointer-events-auto">
+              {(["input","processing","analysis","output"] as const).map((s) => (
+                <div key={s} className="flex items-center gap-1.5">
+                  <span className={`h-2.5 w-2.5 rounded-sm ${STAGE_META[s].dotClass}`} />
+                  <span className="text-[11px] text-muted-foreground">{STAGE_META[s].label}</span>
+                </div>
+              ))}
+            </div>
+            <div className="flex items-center gap-2 pointer-events-auto">
+              <Badge variant="secondary" className="text-[10px]">{pipeline.nodes.length} nodes</Badge>
+              <Badge variant="secondary" className="text-[10px]">{pipeline.edges.length} edges</Badge>
+              <Badge variant="outline" className="text-[10px]">{(zoom * 100).toFixed(0)}%</Badge>
+              {connectingFrom && (
+                <Badge variant="default" className="text-[10px] gap-1 animate-pulse">
+                  Connecting… click target left port
+                  <button onClick={() => setConnectingFrom(null)} className="ml-1"><X className="h-2.5 w-2.5" /></button>
+                </Badge>
+              )}
+            </div>
           </div>
 
           <svg
