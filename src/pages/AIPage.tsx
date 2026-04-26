@@ -385,7 +385,7 @@ function AiAssistantChat({ contextualPrompts }: { contextualPrompts: string[] })
               </p>
             </div>
             <div className="flex flex-wrap gap-2 justify-center max-w-md">
-              {QUICK_PROMPTS.map((prompt) => (
+              {contextualPrompts.map((prompt) => (
                 <Button
                   key={prompt}
                   variant="outline"
@@ -416,7 +416,7 @@ function AiAssistantChat({ contextualPrompts }: { contextualPrompts: string[] })
       <div className="border-t border-border p-3 space-y-2">
         {messages.length > 0 && (
           <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-            {QUICK_PROMPTS.map((prompt) => (
+            {contextualPrompts.map((prompt) => (
               <Button
                 key={prompt}
                 variant="outline"
