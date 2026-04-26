@@ -15,10 +15,13 @@ export default {
     extend: {
       colors: {
         border: "hsl(var(--border))",
+        "border-tertiary": "hsl(var(--border-tertiary))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
+        "text-secondary": "hsl(var(--text-secondary))",
+        "text-tertiary": "hsl(var(--text-tertiary))",
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
