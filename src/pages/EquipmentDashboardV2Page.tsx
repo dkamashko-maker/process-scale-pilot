@@ -514,26 +514,77 @@ export default function EquipmentDashboardV2Page() {
 
       {/* Category tabs — primary navigation */}
       <Tabs value={tab} onValueChange={(v) => setTab(v as EquipmentCategory)}>
-        <TabsList className="h-auto w-full flex flex-wrap gap-2 bg-muted/50 p-1.5">
-          <TabsTrigger
-            value="upstream"
-            className="flex-1 min-w-[200px] text-base font-semibold py-3 px-5 data-[state=active]:bg-background data-[state=active]:shadow-sm"
-          >
-            Upstream Process Equipment
-          </TabsTrigger>
-          <TabsTrigger
-            value="downstream"
-            className="flex-1 min-w-[200px] text-base font-semibold py-3 px-5 data-[state=active]:bg-background data-[state=active]:shadow-sm"
-          >
-            Downstream Process Equipment
-          </TabsTrigger>
-          <TabsTrigger
-            value="analytical"
-            className="flex-1 min-w-[200px] text-base font-semibold py-3 px-5 data-[state=active]:bg-background data-[state=active]:shadow-sm"
-          >
-            Analytical Equipment &amp; Assays
-          </TabsTrigger>
-        </TabsList>
+        {(() => {
+          const tabsMeta = [
+            {
+              value: "upstream" as const,
+              label: "Upstream Process Equipment",
+              short: "Upstream",
+              desc: "Bioreactors, media prep, seed train",
+              Icon: FlaskConical,
+              accent: "from-chart-1/15 to-chart-1/5 border-chart-1/40 text-chart-1",
+              activeRing: "data-[state=active]:ring-chart-1/60",
+            },
+            {
+              value: "downstream" as const,
+              label: "Downstream Process Equipment",
+              short: "Downstream",
+              desc: "Filtration, chromatography, formulation",
+              Icon: FilterIcon,
+              accent: "from-chart-2/15 to-chart-2/5 border-chart-2/40 text-chart-2",
+              activeRing: "data-[state=active]:ring-chart-2/60",
+            },
+            {
+              value: "analytical" as const,
+              label: "Analytical Equipment & Assays",
+              short: "Analytical",
+              desc: "HPLC, qPCR, endotoxin, identity",
+              Icon: Microscope,
+              accent: "from-chart-3/15 to-chart-3/5 border-chart-3/40 text-chart-3",
+              activeRing: "data-[state=active]:ring-chart-3/60",
+            },
+          ];
+          return (
+            <TabsList className="h-auto w-full grid grid-cols-1 md:grid-cols-3 gap-3 bg-transparent p-0">
+              {tabsMeta.map(({ value, label, desc, Icon, accent, activeRing }) => {
+                const count = filteredFor(value).length;
+                const isActive = tab === value;
+                return (
+                  <TabsTrigger
+                    key={value}
+                    value={value}
+                    className={`group relative flex items-center gap-4 h-auto justify-start text-left rounded-xl border-2 px-5 py-4 bg-gradient-to-br ${accent} bg-card transition-all
+                      hover:shadow-tile-hover hover:-translate-y-0.5
+                      data-[state=active]:bg-foreground data-[state=active]:text-background data-[state=active]:border-foreground data-[state=active]:shadow-tile-hover
+                      data-[state=inactive]:opacity-90 ${activeRing} data-[state=active]:ring-4`}
+                  >
+                    <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border-2 transition-colors
+                      ${isActive ? "bg-background/15 border-background/30 text-background" : "bg-background border-current"}`}>
+                      <Icon className="h-6 w-6" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className={`text-base font-bold leading-tight tracking-tight ${isActive ? "text-background" : "text-foreground"}`}>
+                          {label}
+                        </span>
+                      </div>
+                      <p className={`text-xs mt-0.5 leading-snug ${isActive ? "text-background/75" : "text-muted-foreground"}`}>
+                        {desc}
+                      </p>
+                    </div>
+                    <Badge
+                      variant="secondary"
+                      className={`shrink-0 text-sm font-bold px-2.5 py-1 rounded-md tabular-nums
+                        ${isActive ? "bg-background text-foreground" : "bg-background border border-current"}`}
+                    >
+                      {count}
+                    </Badge>
+                  </TabsTrigger>
+                );
+              })}
+            </TabsList>
+          );
+        })()}
 
         <TabsContent value="upstream" className="mt-4">
           <CardGrid
