@@ -101,6 +101,14 @@ export default {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        pill: "20px",
+      },
+      fontSize: {
+        "page-title": ["20px", { lineHeight: "1.2", fontWeight: "500" }],
+        "section": ["16px", { lineHeight: "1.35", fontWeight: "500" }],
+        "label": ["13px", { lineHeight: "1.45", fontWeight: "400" }],
+        "kpi": ["24px", { lineHeight: "1.15", fontWeight: "500" }],
+        "pill": ["11px", { lineHeight: "1", fontWeight: "500", letterSpacing: "0.04em" }],
       },
       keyframes: {
         "accordion-down": {
