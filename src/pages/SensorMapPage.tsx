@@ -282,7 +282,7 @@ function Node({
               </div>
               <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[11px]">
                 <span className="text-muted-foreground">Equipment type</span>
-                <span className="text-right truncate">{eq.equipmentType ?? eq.equipmentCategory}</span>
+                <span className="text-right truncate capitalize">{eq.equipmentCategory}</span>
                 <span className="text-muted-foreground">Sensors</span>
                 <span className="text-right">{sensors.length}</span>
                 <span className="text-muted-foreground">Active batch</span>
@@ -290,7 +290,7 @@ function Node({
                   {eq.currentBatch ?? (eq.currentBatchIds && eq.currentBatchIds[0]) ?? "—"}
                 </span>
                 <span className="text-muted-foreground">Last data</span>
-                <span className="text-right truncate">{eq.lastDataReceived ?? "—"}</span>
+                <span className="text-right truncate">{eq.lastDataReceivedAt ?? "—"}</span>
               </div>
             </div>
           )}
