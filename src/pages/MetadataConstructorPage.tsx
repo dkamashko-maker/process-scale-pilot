@@ -473,64 +473,202 @@ export default function MetadataConstructorPage() {
 
 // ── Sub-components ──
 
-function TemplateCard({ template }: { template: LabelTemplate }) {
+function TemplateCard({
+  template,
+  recordCount,
+  onOpenRebuild,
+  onOpenRecords,
+}: {
+  template: LabelTemplate;
+  recordCount: number;
+  onOpenRebuild: () => void;
+  onOpenRecords: () => void;
+}) {
+  // Derive a stable last-edited date from the template id for prototype display
+  const stableDate = useMemo(() => {
+    let h = 0;
+    for (const c of template.template_id) h = (h * 31 + c.charCodeAt(0)) | 0;
+    const offset = Math.abs(h) % 60; // days back, 0–59
+    const d = new Date();
+    d.setDate(d.getDate() - offset);
+    return d;
+  }, [template.template_id]);
+
   return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm flex items-center gap-2">
-          <Tag className="h-4 w-4 text-primary" />
-          {template.name}
-          <Badge variant="outline" className="text-[10px] font-normal ml-auto">{template.template_id}</Badge>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <div className="text-[11px] text-muted-foreground">
-          Applies to: <span className="font-mono">{template.applies_to.interface_id}</span> / <span className="capitalize">{template.applies_to.data_type}</span>
-        </div>
-        <div>
-          <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1">Required Fields</p>
-          <div className="flex flex-wrap gap-1.5">
-            {template.required_fields.length > 0 ? template.required_fields.map((f) => (
-              <Badge key={f} variant="default" className="text-[10px]">{f}</Badge>
-            )) : <span className="text-[11px] text-muted-foreground italic">None</span>}
+    <div className="card-operational" style={{ padding: "12px 14px" }}>
+      {/* Header row */}
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-[14px] font-medium leading-tight text-foreground">{template.name}</span>
+            <span className="text-[12px] font-mono text-text-secondary">{template.template_id}</span>
           </div>
+          <p className="text-[12px] text-text-secondary mt-0.5">
+            Applies to: <span className="font-mono">{template.applies_to.interface_id}</span>
+            {" / "}<span className="capitalize">{template.applies_to.data_type}</span>
+          </p>
         </div>
-        <div>
-          <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1">Optional Fields</p>
-          <div className="flex flex-wrap gap-1.5">
-            {template.optional_fields.length > 0 ? template.optional_fields.map((f) => (
-              <Badge key={f} variant="outline" className="text-[10px]">{f}</Badge>
-            )) : <span className="text-[11px] text-muted-foreground italic">None</span>}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+        <button
+          onClick={onOpenRecords}
+          className="inline-flex items-center gap-1 text-[12px] text-blue-600 hover:underline whitespace-nowrap"
+        >
+          Applies to {recordCount.toLocaleString()} records <ArrowRight className="h-3 w-3" />
+        </button>
+      </div>
+
+      {/* Field pills */}
+      <div className="mt-3">
+        <OverflowPills
+          required={template.required_fields}
+          optional={template.optional_fields}
+          maxVisible={5}
+        />
+      </div>
+
+      {/* Footer */}
+      <div className="mt-3 flex items-center justify-between gap-3">
+        <span className="text-[11px] text-text-secondary">
+          Last edited: {format(stableDate, "MMM d, yyyy")}
+        </span>
+        <button
+          onClick={onOpenRebuild}
+          className="inline-flex items-center gap-1 text-[12px] text-blue-600 hover:underline"
+        >
+          Edit pipeline <ArrowRight className="h-3 w-3" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function OverflowPills({
+  required,
+  optional,
+  maxVisible,
+}: {
+  required: string[];
+  optional: string[];
+  maxVisible: number;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const all: Array<{ name: string; required: boolean }> = [
+    ...required.map((f) => ({ name: f, required: true })),
+    ...optional.map((f) => ({ name: f, required: false })),
+  ];
+  if (all.length === 0) {
+    return <span className="text-[11px] text-text-secondary italic">No fields defined</span>;
+  }
+  const visible = expanded ? all : all.slice(0, maxVisible);
+  const overflow = all.length - maxVisible;
+
+  return (
+    <div className="flex flex-wrap items-center gap-1.5">
+      {visible.map((f) => (
+        f.required ? (
+          <span
+            key={f.name}
+            className="inline-flex items-center px-2 h-[22px] rounded-full text-[11px] font-medium bg-teal-600 text-white"
+          >
+            {f.name}
+          </span>
+        ) : (
+          <span
+            key={f.name}
+            className="inline-flex items-center px-2 h-[22px] rounded-full text-[11px] font-medium bg-background text-text-secondary border border-border-tertiary"
+          >
+            {f.name}
+          </span>
+        )
+      ))}
+      {!expanded && overflow > 0 && (
+        <button
+          onClick={() => setExpanded(true)}
+          className="inline-flex items-center px-2 h-[22px] rounded-full text-[11px] font-medium bg-secondary text-text-secondary hover:bg-secondary/70"
+        >
+          +{overflow} more
+        </button>
+      )}
+    </div>
   );
 }
 
 function ScoreBadge({ score, large }: { score: number; large?: boolean }) {
   const cls = score === 100
-    ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300"
+    ? "bg-[hsl(var(--pill-success-bg))] text-[hsl(var(--pill-success-fg))]"
     : score >= 50
-      ? "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300"
-      : "bg-destructive/15 text-destructive";
+      ? "bg-[hsl(var(--pill-warning-bg))] text-[hsl(var(--pill-warning-fg))]"
+      : "bg-[hsl(var(--pill-danger-bg))] text-[hsl(var(--pill-danger-fg))]";
   return (
-    <span className={`inline-flex items-center justify-center rounded font-mono font-bold ${cls} ${large ? "px-3 py-1.5 text-sm" : "px-1.5 py-0.5 text-[10px]"}`}>
+    <span className={`inline-flex items-center justify-center rounded font-mono font-medium ${cls} ${large ? "px-3 py-1.5 text-sm" : "px-1.5 py-0.5 text-[10px]"}`}>
       {score}%
     </span>
   );
 }
 
-function KpiMini({ icon, label, value, onClick }: { icon: React.ReactNode; label: string; value: number; onClick?: () => void }) {
+// ── Summary KPI tile ──
+type Tone = "primary" | "active" | "warning";
+function SummaryTile({
+  label, value, Icon, tone = "primary", highlight, onClick,
+}: {
+  label: string;
+  value: number;
+  Icon: React.ComponentType<{ className?: string }>;
+  tone?: Tone;
+  highlight?: boolean;
+  onClick?: () => void;
+}) {
+  const ICON_TONE: Record<Tone, string> = {
+    primary: "text-text-secondary",
+    active:  "text-status-active",
+    warning: "text-status-warning",
+  };
+  const bg = highlight ? "bg-amber-50" : "bg-secondary";
+  const Wrapper: any = onClick ? "button" : "div";
   return (
-    <Card className={onClick ? "cursor-pointer hover:border-primary/40 transition-colors" : ""} onClick={onClick}>
-      <CardContent className="p-3 flex items-center gap-2">
-        <span className="text-muted-foreground">{icon}</span>
-        <div>
-          <p className="text-lg font-bold leading-none">{value.toLocaleString()}</p>
-          <p className="text-[10px] text-muted-foreground">{label}</p>
-        </div>
-      </CardContent>
-    </Card>
+    <Wrapper
+      onClick={onClick}
+      className={`text-left rounded-lg p-4 ${bg} ${onClick ? "hover:bg-secondary/70 transition-colors group" : ""}`}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <p className="text-[13px] font-normal text-text-secondary">{label}</p>
+        <Icon className={`h-4 w-4 shrink-0 ${ICON_TONE[tone]}`} />
+      </div>
+      <div className="mt-2 flex items-baseline justify-between">
+        <p className="text-kpi tabular-nums text-foreground leading-none">{value.toLocaleString()}</p>
+        {onClick && (
+          <ArrowRight className="h-3.5 w-3.5 text-text-secondary opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+        )}
+      </div>
+    </Wrapper>
   );
 }
+
+// ── Pill-style tab trigger with count ──
+function PillTab({
+  value, label, count, countSuffix, pendingTone,
+}: {
+  value: string;
+  label: string;
+  count: number;
+  countSuffix?: string;
+  pendingTone?: boolean;
+}) {
+  const showPending = pendingTone && count > 0;
+  return (
+    <TabsTrigger
+      value={value}
+      className="h-9 px-3.5 rounded-full border border-border-tertiary text-[13px] font-medium text-text-secondary gap-2 transition-colors
+        hover:text-foreground hover:border-foreground/30
+        data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:border-blue-200"
+    >
+      <span>{label}</span>
+      <span
+        className={`inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-[11px] tabular-nums
+          ${showPending ? "bg-[hsl(var(--pill-warning-bg))] text-[hsl(var(--pill-warning-fg))]" : "bg-background border border-current/20"}`}
+      >
+        {count}{countSuffix ? ` ${countSuffix}` : ""}
+      </span>
+    </TabsTrigger>
+  );
+}
+
