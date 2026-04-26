@@ -608,12 +608,35 @@ function RecipeCard({ recipe, onToggle }: { recipe: AiRecipe; onToggle: () => vo
   );
 }
 
-function KpiMini({ label, value, accent }: { label: string; value: number; accent?: boolean }) {
+function KpiMini({
+  label, value, accent = "neutral", tooltip,
+}: {
+  label: string;
+  value: number;
+  accent?: "neutral" | "critical" | "warning";
+  tooltip?: string;
+}) {
+  const valueCls =
+    accent === "critical" ? "text-destructive"
+    : accent === "warning" ? "text-amber-600 dark:text-amber-400"
+    : "text-foreground";
   return (
-    <Card>
+    <Card className={accent === "neutral" ? "bg-secondary/40" : ""}>
       <CardContent className="p-3">
-        <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{label}</p>
-        <p className={`text-xl font-bold mt-0.5 ${accent ? "text-destructive" : ""}`}>{value}</p>
+        <div className="flex items-center gap-1">
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{label}</p>
+          {tooltip && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button className="text-muted-foreground hover:text-foreground" aria-label={`About ${label}`}>
+                  <HelpCircle className="h-3 w-3" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-xs text-xs">{tooltip}</TooltipContent>
+            </Tooltip>
+          )}
+        </div>
+        <p className={`text-xl font-bold mt-0.5 ${valueCls}`}>{value}</p>
       </CardContent>
     </Card>
   );
