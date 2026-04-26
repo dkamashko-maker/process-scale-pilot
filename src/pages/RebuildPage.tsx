@@ -1278,7 +1278,31 @@ export default function RebuildPage() {
                     />
                   </div>
 
-                  {/* ─── Linked references ─── */}
+                  {/* How does this node work? — collapsible help */}
+                  <details className="rounded-md border bg-muted/30 group">
+                    <summary className="flex items-center gap-1.5 px-2 py-1.5 text-[11px] font-medium cursor-pointer select-none list-none">
+                      <HelpCircle className="h-3 w-3 text-primary" />
+                      <span>How does this node work?</span>
+                      <ChevronRight className="h-3 w-3 ml-auto transition-transform group-open:rotate-90" />
+                    </summary>
+                    <div className="px-2 pb-2 text-[11px] leading-relaxed text-muted-foreground">
+                      <p className="mb-1"><span className={`inline-block h-2 w-2 rounded-sm align-middle mr-1 ${STAGE_META[stageOf(selectedNode.type)].dotClass}`} /> Stage: <span className="font-medium text-foreground">{STAGE_META[stageOf(selectedNode.type)].label}</span></p>
+                      <p>
+                        {selectedNode.type === "device" && "An input node: streams timeseries from the selected device interface and the runs you associate with it. Downstream processing nodes consume these signals."}
+                        {selectedNode.type === "equipment" && "An input node representing a piece of physical lab equipment. It feeds material or sample streams into downstream processing steps."}
+                        {selectedNode.type === "method" && "A processing node describing an analytical or preparative method applied to the input stream."}
+                        {selectedNode.type === "range_check" && "A processing node that validates incoming parameter values against the configured min/max range and emits out-of-range episodes."}
+                        {selectedNode.type === "unit_consistency" && "A processing node that verifies the unit declared on each timeseries matches the parameter catalog. Mismatches raise a warning."}
+                        {selectedNode.type === "event_overlay" && "A processing node that aligns process events (feeds, base additions) onto the parameter timeline for downstream analysis."}
+                        {selectedNode.type === "merge" && "A processing node that combines multiple incoming streams into a single output."}
+                        {selectedNode.type === "decision" && "A processing node that routes flow based on a configured rule."}
+                        {selectedNode.type === "data_op" && "A processing node performing a custom data transformation on the stream."}
+                        {selectedNode.type === "ml_insight" && "An analysis node that scores anomalies and forecasts using heuristic ML on incoming signals. Threshold and horizon are configurable."}
+                        {selectedNode.type === "alert_generator" && "An output node that consolidates range violations, unit mismatches and forecast risks into operator alerts."}
+                      </p>
+                    </div>
+                  </details>
+
                   {(selectedNode.type === "equipment" || selectedNode.type === "method") && (
                     <div className="rounded-md border bg-muted/20 p-2 space-y-2">
                       <p className="text-[10px] uppercase text-muted-foreground font-semibold">Linked references</p>
