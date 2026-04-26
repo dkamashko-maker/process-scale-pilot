@@ -6,8 +6,10 @@ import {
   ChevronRight, ChevronLeft, AlertTriangle, CheckCircle2, Brain,
   Merge, Filter, Zap, BarChart3, LineChart as LineChartIcon, Clock,
   FileText, Shield, ArrowRight, Pause, Square, RotateCcw, Hammer, Download,
-  Boxes, Beaker, Workflow as WorkflowIcon, GitBranch, Sparkles,
+  Boxes, Beaker, Workflow as WorkflowIcon, GitBranch, Sparkles, ArrowLeft, HelpCircle,
 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Link } from "react-router-dom";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
