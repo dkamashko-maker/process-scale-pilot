@@ -1041,12 +1041,11 @@ export default function RebuildPage() {
                           ) : itemsInCat.map((eq) => {
                             const statusColor =
                               eq.status === "active" ? "bg-emerald-500"
-                              : eq.status === "error" || eq.status === "broken" ? "bg-destructive"
+                              : eq.status === "error" ? "bg-destructive"
                               : "bg-muted-foreground/40";
                             const statusLabel =
                               eq.status === "active" ? "Active / connected"
                               : eq.status === "error" ? "Error"
-                              : eq.status === "broken" ? "Broken"
                               : "Idle";
                             return (
                               <button
