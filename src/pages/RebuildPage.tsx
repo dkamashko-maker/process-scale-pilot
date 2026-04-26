@@ -6,8 +6,10 @@ import {
   ChevronRight, ChevronLeft, AlertTriangle, CheckCircle2, Brain,
   Merge, Filter, Zap, BarChart3, LineChart as LineChartIcon, Clock,
   FileText, Shield, ArrowRight, Pause, Square, RotateCcw, Hammer, Download,
-  Boxes, Beaker, Workflow as WorkflowIcon, GitBranch, Sparkles,
+  Boxes, Beaker, Workflow as WorkflowIcon, GitBranch, Sparkles, ArrowLeft, HelpCircle,
 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Link } from "react-router-dom";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -81,18 +83,47 @@ const UTILITY_NODES = [
   { type: "merge" as const, label: "Merge", icon: Merge, description: "Merges data streams from multiple sources" },
 ];
 
+// Node stage classification — one of 4 enterprise lab stages
+type NodeStage = "input" | "processing" | "analysis" | "output";
+
+const STAGE_OF: Record<string, NodeStage> = {
+  device: "input",
+  equipment: "input",
+  range_check: "processing",
+  unit_consistency: "processing",
+  event_overlay: "processing",
+  data_op: "processing",
+  merge: "processing",
+  decision: "processing",
+  method: "processing",
+  ml_insight: "analysis",
+  alert_generator: "output",
+};
+
+// Stage palette — Tailwind utility classes for backgrounds + HSL strings for SVG strokes
+const STAGE_META: Record<NodeStage, { label: string; stroke: string; bgClass: string; textClass: string; borderClass: string; dotClass: string }> = {
+  input:      { label: "Equipment / Input",     stroke: "hsl(173, 58%, 39%)",  bgClass: "bg-teal-50",   textClass: "text-teal-700",   borderClass: "border-teal-300",   dotClass: "bg-teal-500" },
+  processing: { label: "Processing",            stroke: "hsl(214, 84%, 56%)",  bgClass: "bg-blue-50",   textClass: "text-blue-700",   borderClass: "border-blue-300",   dotClass: "bg-blue-500" },
+  analysis:   { label: "Analysis / ML",         stroke: "hsl(270, 60%, 55%)",  bgClass: "bg-purple-50", textClass: "text-purple-700", borderClass: "border-purple-300", dotClass: "bg-purple-500" },
+  output:     { label: "Output / Alert",        stroke: "hsl(38, 92%, 50%)",   bgClass: "bg-amber-50",  textClass: "text-amber-700",  borderClass: "border-amber-300",  dotClass: "bg-amber-500" },
+};
+
+const stageOf = (t: string): NodeStage => STAGE_OF[t] || "processing";
+const stageColor = (t: string) => STAGE_META[stageOf(t)].stroke;
+
+// Legacy NODE_COLORS — kept for palette icon dots so existing call sites keep working.
 const NODE_COLORS: Record<string, string> = {
-  device: "hsl(var(--primary))",
-  equipment: "hsl(195, 85%, 45%)",
-  method: "hsl(280, 70%, 55%)",
-  decision: "hsl(38, 92%, 50%)",
-  data_op: "hsl(215, 25%, 47%)",
-  range_check: "hsl(173, 58%, 39%)",
-  unit_consistency: "hsl(43, 96%, 56%)",
-  event_overlay: "hsl(27, 87%, 67%)",
+  device: "hsl(173, 58%, 39%)",
+  equipment: "hsl(173, 58%, 39%)",
+  method: "hsl(214, 84%, 56%)",
+  decision: "hsl(214, 84%, 56%)",
+  data_op: "hsl(214, 84%, 56%)",
+  range_check: "hsl(214, 84%, 56%)",
+  unit_consistency: "hsl(214, 84%, 56%)",
+  event_overlay: "hsl(214, 84%, 56%)",
   ml_insight: "hsl(270, 60%, 55%)",
-  alert_generator: "hsl(0, 72%, 51%)",
-  merge: "hsl(215, 25%, 47%)",
+  alert_generator: "hsl(38, 92%, 50%)",
+  merge: "hsl(214, 84%, 56%)",
 };
 
 const NODE_KIND_LABEL: Record<string, string> = {
@@ -139,7 +170,6 @@ function CanvasNode({
   onStartConnect: () => void;
   onCompleteConnect: () => void;
 }) {
-  const color = NODE_COLORS[node.type] || NODE_COLORS.device;
   const Icon =
     node.type === "device"
       ? (DEVICE_ICONS[node.interface_id || ""] || Gauge)
@@ -159,101 +189,158 @@ function CanvasNode({
   const outputCount = Math.max(1, outputs.length);
   const isCritical = node.criticality === "high";
 
+  const stage = stageOf(node.type);
+  const stageMeta = STAGE_META[stage];
+  const color = stageMeta.stroke;
+
+  // Misconfiguration detection — distinct from stage colour
+  const isMisconfigured =
+    (node.type === "device" && !node.interface_id) ||
+    (node.type === "equipment" && !node.linkedEquipmentId && !node.label);
+
+  const SELECT_BLUE = "hsl(214, 84%, 56%)";
+  const ERROR_RED = "hsl(0, 72%, 51%)";
+
+  const headerH = 18;
+
   return (
     <g
       transform={`translate(${node.x},${node.y})`}
       className="select-none"
     >
+      {/* Selected state — light blue overlay underlay */}
+      {selected && (
+        <rect
+          x={-3} y={-3} width={NODE_W + 6} height={NODE_H + 6} rx={10}
+          fill={SELECT_BLUE} opacity={0.08} pointerEvents="none"
+        />
+      )}
+      {/* Card */}
       <rect
         width={NODE_W}
         height={NODE_H}
         rx={8}
         fill="hsl(var(--card))"
-        stroke={selected ? color : isConnectSource ? "hsl(var(--primary))" : isCritical ? "hsl(0, 72%, 51%)" : "hsl(var(--border))"}
-        strokeWidth={selected || isConnectSource || isCritical ? 2.5 : 1}
+        stroke={selected ? SELECT_BLUE : isConnectSource ? SELECT_BLUE : color}
+        strokeWidth={selected ? 2 : 1}
         filter={selected ? "drop-shadow(0 4px 12px rgba(0,0,0,0.15))" : "drop-shadow(0 1px 3px rgba(0,0,0,0.08))"}
         onClick={(e) => { e.stopPropagation(); onSelect(); }}
         onMouseDown={(e) => { e.stopPropagation(); onDragStart(e); }}
         style={{ cursor: "grab" }}
       />
-      {/* Color accent bar */}
-      <rect x={0} y={0} width={4} height={NODE_H} rx={2} fill={color} pointerEvents="none" />
-      {/* Kind chip */}
-      <foreignObject x={10} y={6} width={NODE_W - 20} height={14} pointerEvents="none">
-        <div style={{ fontSize: 8, letterSpacing: 0.6, textTransform: "uppercase", color: "hsl(var(--muted-foreground))", fontWeight: 600 }}>
+      {/* Stage colour header strip — bg-50 wash */}
+      <rect
+        x={1} y={1} width={NODE_W - 2} height={headerH} rx={7}
+        fill={color} opacity={0.10} pointerEvents="none"
+      />
+      <rect
+        x={1} y={headerH - 1} width={NODE_W - 2} height={2}
+        fill={color} opacity={0.5} pointerEvents="none"
+      />
+      {/* Type label (matches stage colour) */}
+      <foreignObject x={10} y={3} width={NODE_W - 20} height={headerH} pointerEvents="none">
+        <div style={{ fontSize: 10, lineHeight: "16px", letterSpacing: 0.6, textTransform: "uppercase", color, fontWeight: 700 }}>
           {NODE_KIND_LABEL[node.type] || node.type}
-          {node.alertRelevant && " · alerting"}
+          {node.alertRelevant && " · ALERTING"}
         </div>
       </foreignObject>
+
       {/* Icon */}
-      <foreignObject x={10} y={24} width={28} height={28} pointerEvents="none">
+      <foreignObject x={10} y={headerH + 8} width={28} height={28} pointerEvents="none">
         <div style={{ background: color, borderRadius: 6, padding: 5, display: "flex", alignItems: "center", justifyContent: "center" }}>
           <Icon style={{ width: 16, height: 16, color: "#fff" }} />
         </div>
       </foreignObject>
-      {/* Label */}
-      <text x={44} y={38} fontSize={11} fontWeight={600} fill="hsl(var(--foreground))" pointerEvents="none">
-        {node.label.length > 20 ? node.label.slice(0, 19) + "…" : node.label}
+      {/* Name */}
+      <text x={44} y={headerH + 22} fontSize={14} fontWeight={500} fill="hsl(var(--foreground))" pointerEvents="none">
+        {node.label.length > 18 ? node.label.slice(0, 17) + "…" : node.label}
       </text>
-      <text x={44} y={51} fontSize={9} fill="hsl(var(--muted-foreground))" pointerEvents="none">
+      <text x={44} y={headerH + 36} fontSize={10} fill="hsl(var(--muted-foreground))" pointerEvents="none">
         {subLabel.length > 22 ? subLabel.slice(0, 21) + "…" : subLabel}
       </text>
-      {/* I/O counts */}
-      <text x={10} y={NODE_H - 8} fontSize={8} fill="hsl(var(--muted-foreground))" pointerEvents="none">
-        ▸ {inputs.length} in · {outputs.length} out
-      </text>
+
       {isCritical && (
-        <text x={NODE_W - 10} y={NODE_H - 8} fontSize={8} fontWeight={700} fill="hsl(0, 72%, 51%)" textAnchor="end" pointerEvents="none">
+        <text x={NODE_W - 8} y={NODE_H - 6} fontSize={9} fontWeight={700} fill={ERROR_RED} textAnchor="end" pointerEvents="none">
           CRITICAL
         </text>
       )}
+
       {/* Alert badge */}
       {alertCount > 0 && (
         <>
-          <circle cx={NODE_W - 12} cy={12} r={9} fill="hsl(0, 72%, 51%)" pointerEvents="none" />
+          <circle cx={NODE_W - 12} cy={12} r={9} fill={ERROR_RED} pointerEvents="none" />
           <text x={NODE_W - 12} y={16} fontSize={9} fontWeight={700} fill="#fff" textAnchor="middle" pointerEvents="none">{alertCount}</text>
         </>
       )}
-      {/* Input ports (left) — one per declared input, default 1 */}
+
+      {/* Input port dots — left edge, filled in stage colour */}
       {Array.from({ length: inputCount }).map((_, i) => {
         const cy = ((i + 1) * NODE_H) / (inputCount + 1);
+        const dataType = inputs[i] || "input";
         return (
           <g
             key={`in-${i}`}
             onClick={(e) => { e.stopPropagation(); onCompleteConnect(); }}
             onMouseDown={(e) => e.stopPropagation()}
             style={{ cursor: "crosshair" }}
+            className="group/port"
           >
-            <circle cx={0} cy={cy} r={9} fill="transparent" />
+            <circle cx={0} cy={cy} r={10} fill="transparent" />
             <circle cx={0} cy={cy} r={5}
-              fill="hsl(var(--background))"
-              stroke="hsl(var(--primary))"
-              strokeWidth={1.5}
-              className="hover:fill-[hsl(var(--primary))] transition-colors"
+              fill={color}
+              stroke="hsl(var(--card))"
+              strokeWidth={2}
+              className="transition-transform group-hover/port:scale-150"
             />
+            {/* hover label */}
+            <foreignObject x={-90} y={cy - 10} width={80} height={20}
+              style={{ pointerEvents: "none", opacity: 0 }}
+              className="group-hover/port:opacity-100 transition-opacity">
+              <div style={{ fontSize: 9, padding: "2px 5px", background: "hsl(var(--popover))", color: "hsl(var(--popover-foreground))", border: "1px solid hsl(var(--border))", borderRadius: 4, textAlign: "right", fontFamily: "monospace" }}>
+                {dataType}
+              </div>
+            </foreignObject>
           </g>
         );
       })}
-      {/* Output ports (right) */}
+      {/* Output port dots — right edge */}
       {Array.from({ length: outputCount }).map((_, i) => {
         const cy = ((i + 1) * NODE_H) / (outputCount + 1);
+        const dataType = outputs[i] || (stage === "output" ? "alert" : stage === "analysis" ? "insight" : "timeseries");
         return (
           <g
             key={`out-${i}`}
             onClick={(e) => { e.stopPropagation(); onStartConnect(); }}
             onMouseDown={(e) => e.stopPropagation()}
             style={{ cursor: "crosshair" }}
+            className="group/port"
           >
-            <circle cx={NODE_W} cy={cy} r={9} fill="transparent" />
+            <circle cx={NODE_W} cy={cy} r={10} fill="transparent" />
             <circle cx={NODE_W} cy={cy} r={5}
-              fill={isConnectSource ? "hsl(var(--primary))" : "hsl(var(--background))"}
-              stroke="hsl(var(--primary))"
-              strokeWidth={1.5}
-              className="hover:fill-[hsl(var(--primary))] transition-colors"
+              fill={isConnectSource ? SELECT_BLUE : color}
+              stroke="hsl(var(--card))"
+              strokeWidth={2}
+              className="transition-transform group-hover/port:scale-150"
             />
+            <foreignObject x={NODE_W + 10} y={cy - 10} width={80} height={20}
+              style={{ pointerEvents: "none", opacity: 0 }}
+              className="group-hover/port:opacity-100 transition-opacity">
+              <div style={{ fontSize: 9, padding: "2px 5px", background: "hsl(var(--popover))", color: "hsl(var(--popover-foreground))", border: "1px solid hsl(var(--border))", borderRadius: 4, fontFamily: "monospace" }}>
+                {dataType}
+              </div>
+            </foreignObject>
           </g>
         );
       })}
+
+      {/* Misconfigured / disconnected error overlay — red dashed border */}
+      {isMisconfigured && (
+        <rect
+          x={-1} y={-1} width={NODE_W + 2} height={NODE_H + 2} rx={9}
+          fill="none" stroke={ERROR_RED} strokeWidth={1} strokeDasharray="4 3"
+          pointerEvents="none"
+        />
+      )}
     </g>
   );
 }
@@ -820,64 +907,75 @@ export default function RebuildPage() {
 
   return (
     <div className="h-[calc(100vh-64px)] flex flex-col animate-fade-in">
-      {/* ── Top bar ── */}
+      {/* ── Top action bar ── */}
       <div className="flex items-center gap-2 px-4 py-2 border-b bg-card shrink-0">
-        <Settings2 className="h-4 w-4 text-primary" />
-        <span className="text-sm font-semibold">Metadata Constructor → Rebuild</span>
-        <Badge variant="outline" className="text-[9px] ml-1">PROTOTYPE</Badge>
-        <InfoTooltip content="Configure operating conditions and simulate system behavior. ML features use heuristic methods on historical data." />
-        <Separator orientation="vertical" className="h-5 mx-2" />
+        <Button asChild variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1 text-muted-foreground hover:text-foreground">
+          <Link to="/metadata/constructor"><ArrowLeft className="h-3.5 w-3.5" /> Back</Link>
+        </Button>
+        <Separator orientation="vertical" className="h-5" />
         <Input
-          className="h-7 w-48 text-xs"
+          aria-label="Pipeline name"
+          className="h-7 w-56 text-sm font-medium border-transparent hover:border-border focus:border-input bg-transparent px-2"
           value={pipeline.name}
           onChange={(e) => setPipeline((p) => ({ ...p, name: e.target.value }))}
         />
-        <div className="ml-auto flex items-center gap-1.5">
-          <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={handleSave}>
-            <Save className="h-3 w-3" /> Save
+        <InfoTooltip content="Configure operating conditions and simulate system behavior. ML features use heuristic methods on historical data." />
+
+        <div className="ml-auto flex items-center gap-2">
+          <Badge variant="outline" className="text-[10px] uppercase tracking-wide">Prototype</Badge>
+          <Separator orientation="vertical" className="h-5" />
+
+          {/* Save — solid secondary */}
+          <Button size="sm" className="h-8 text-xs gap-1.5 bg-foreground text-background hover:bg-foreground/90" onClick={handleSave}>
+            <Save className="h-3.5 w-3.5" /> Save
           </Button>
-          <Separator orientation="vertical" className="h-5 mx-1" />
+
+          {/* Start Simulation — PRIMARY */}
           {(simStatus === "idle" || simStatus === "stopped" || simStatus === "done") && (
-            <Button size="sm" className="h-7 text-xs gap-1" onClick={handleStartSimulation}>
-              <Play className="h-3 w-3" /> {simStatus === "done" || simStatus === "stopped" ? "Run again" : "Start"}
+            <Button size="sm" className="h-8 text-xs gap-1.5" onClick={handleStartSimulation}>
+              <Play className="h-3.5 w-3.5" /> {simStatus === "done" || simStatus === "stopped" ? "Run again" : "Start Simulation"}
             </Button>
           )}
           {simStatus === "running" && (
             <>
-              <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={handlePauseSimulation}>
-                <Pause className="h-3 w-3" /> Pause
+              <Button size="sm" variant="outline" className="h-8 text-xs gap-1.5" onClick={handlePauseSimulation}>
+                <Pause className="h-3.5 w-3.5" /> Pause
               </Button>
-              <Button size="sm" variant="destructive" className="h-7 text-xs gap-1" onClick={handleStopSimulation}>
-                <Square className="h-3 w-3" /> Stop
+              <Button size="sm" variant="destructive" className="h-8 text-xs gap-1.5" onClick={handleStopSimulation}>
+                <Square className="h-3.5 w-3.5" /> Stop
               </Button>
             </>
           )}
           {simStatus === "paused" && (
             <>
-              <Button size="sm" className="h-7 text-xs gap-1" onClick={handleResumeSimulation}>
-                <Play className="h-3 w-3" /> Resume
+              <Button size="sm" className="h-8 text-xs gap-1.5" onClick={handleResumeSimulation}>
+                <Play className="h-3.5 w-3.5" /> Resume
               </Button>
-              <Button size="sm" variant="destructive" className="h-7 text-xs gap-1" onClick={handleStopSimulation}>
-                <Square className="h-3 w-3" /> Stop
+              <Button size="sm" variant="destructive" className="h-8 text-xs gap-1.5" onClick={handleStopSimulation}>
+                <Square className="h-3.5 w-3.5" /> Stop
               </Button>
             </>
           )}
           {(simStatus === "done" || simStatus === "stopped" || simStatus === "paused") && (
-            <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={handleRestartSimulation}>
-              <RotateCcw className="h-3 w-3" /> Restart
+            <Button size="sm" variant="ghost" className="h-8 text-xs gap-1.5" onClick={handleRestartSimulation}>
+              <RotateCcw className="h-3.5 w-3.5" /> Restart
             </Button>
           )}
-          <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={handleRebuildPipeline} title="Reset simulation state and prepare to rebuild">
-            <Hammer className="h-3 w-3" /> Rebuild
+
+          {/* Rebuild — ghost / outlined (de-emphasised) */}
+          <Button size="sm" variant="ghost" className="h-8 text-xs gap-1.5 text-muted-foreground hover:text-foreground" onClick={handleRebuildPipeline} title="Reset simulation state and prepare to rebuild">
+            <Hammer className="h-3.5 w-3.5" /> Rebuild
           </Button>
-          <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => {
+
+          {/* Configure — tertiary link-style */}
+          <Button size="sm" variant="link" className="h-8 text-xs gap-1 px-1 text-muted-foreground hover:text-foreground" onClick={() => {
             setSimConfig((c) => ({
               ...c,
               selected_interface_ids: deviceNodesInPipeline.map((n) => n.interface_id!),
             }));
             setShowSimModal(true);
           }} title="Advanced simulation configuration">
-            <Settings2 className="h-3 w-3" /> Configure…
+            <Settings2 className="h-3.5 w-3.5" /> Configure…
           </Button>
         </div>
       </div>
@@ -896,7 +994,7 @@ export default function RebuildPage() {
               <div className="p-2 space-y-3">
                 <div className="relative">
                   <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
-                  <Input className="h-7 text-xs pl-7" placeholder="Search…" value={paletteSearch} onChange={(e) => setPaletteSearch(e.target.value)} />
+                  <Input className="h-7 text-xs pl-7" placeholder="Search equipment…" value={paletteSearch} onChange={(e) => setPaletteSearch(e.target.value)} />
                 </div>
 
                 {/* Quick add — author from scratch */}
@@ -924,31 +1022,60 @@ export default function RebuildPage() {
 
                 <Separator />
 
-                {/* Equipment catalog */}
-                <div>
-                  <p className="text-[10px] font-semibold text-muted-foreground uppercase mb-1.5 flex items-center gap-1">
-                    <Boxes className="h-3 w-3" /> Equipment catalog
-                  </p>
-                  <div className="space-y-1">
-                    {filteredEquipment.map((eq) => (
-                      <button
-                        key={eq.equipmentId}
-                        className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-xs hover:bg-accent/50 transition-colors text-left"
-                        onClick={() => addEquipmentNode(eq.equipmentId)}
-                        title={`${eq.equipmentName} · ${eq.equipmentCategory}`}
-                      >
-                        <span className="h-2 w-2 rounded-full shrink-0" style={{ background: NODE_COLORS.equipment }} />
-                        <div className="min-w-0">
-                          <p className="truncate font-medium">{eq.equipmentName}</p>
-                          <p className="text-[9px] text-muted-foreground font-mono">{eq.equipmentId} · {eq.equipmentCategory}</p>
+                {/* Equipment catalog — grouped by category */}
+                <TooltipProvider delayDuration={200}>
+                  {(["upstream", "downstream", "analytical"] as const).map((cat) => {
+                    const itemsInCat = filteredEquipment.filter((e) => e.equipmentCategory === cat);
+                    const totalInCat = EQUIPMENT.filter((e) => e.equipmentCategory === cat).length;
+                    if (totalInCat === 0) return null;
+                    const catLabel = cat[0].toUpperCase() + cat.slice(1);
+                    return (
+                      <div key={cat}>
+                        <p className="text-[10px] font-semibold text-muted-foreground uppercase mb-1.5 flex items-center gap-1">
+                          <Boxes className="h-3 w-3" /> {catLabel}
+                          <span className="text-muted-foreground/70 normal-case font-normal">({totalInCat})</span>
+                        </p>
+                        <div className="space-y-1">
+                          {itemsInCat.length === 0 ? (
+                            <p className="text-[9px] text-muted-foreground italic px-2">No matches in {catLabel.toLowerCase()}.</p>
+                          ) : itemsInCat.map((eq) => {
+                            const statusColor =
+                              eq.status === "active" ? "bg-emerald-500"
+                              : eq.status === "error" ? "bg-destructive"
+                              : "bg-muted-foreground/40";
+                            const statusLabel =
+                              eq.status === "active" ? "Active / connected"
+                              : eq.status === "error" ? "Error"
+                              : "Idle";
+                            return (
+                              <button
+                                key={eq.equipmentId}
+                                className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-xs hover:bg-accent/50 transition-colors text-left"
+                                onClick={() => addEquipmentNode(eq.equipmentId)}
+                                title={`${eq.equipmentName} · ${eq.equipmentCategory}`}
+                              >
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span className={`h-2 w-2 rounded-full shrink-0 ${statusColor}`} />
+                                  </TooltipTrigger>
+                                  <TooltipContent side="right" className="text-[10px]">
+                                    <p className="font-medium">{statusLabel}</p>
+                                    <p className="text-muted-foreground">Green = active · Grey = idle · Red = broken</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                                <div className="min-w-0">
+                                  <p className="truncate font-medium">{eq.equipmentName}</p>
+                                  <p className="text-[9px] text-muted-foreground font-mono">{eq.equipmentId}</p>
+                                </div>
+                              </button>
+                            );
+                          })}
                         </div>
-                      </button>
-                    ))}
-                    {filteredEquipment.length === 0 && (
-                      <p className="text-[9px] text-muted-foreground italic px-2">No matching equipment.</p>
-                    )}
-                  </div>
-                </div>
+                        <Separator className="mt-2" />
+                      </div>
+                    );
+                  })}
+                </TooltipProvider>
 
                 <Separator />
 
@@ -1031,22 +1158,27 @@ export default function RebuildPage() {
 
         {/* ══════════ CENTER CANVAS ══════════ */}
         <div className="flex-1 min-w-0 relative overflow-hidden bg-muted/30">
-          {/* Canvas info bar */}
-          <div className="absolute top-2 left-2 z-10 flex items-center gap-2">
-            <Badge variant="secondary" className="text-[9px]">{pipeline.nodes.length} nodes</Badge>
-            <Badge variant="secondary" className="text-[9px]">{pipeline.edges.length} edges</Badge>
-            <Badge variant="outline" className="text-[9px]">Zoom: {(zoom * 100).toFixed(0)}%</Badge>
-            {!connectingFrom && pipeline.nodes.length >= 2 && (
-              <Badge variant="outline" className="text-[9px] text-muted-foreground">
-                Tip: click a node's right port → then a left port to connect
-              </Badge>
-            )}
-            {connectingFrom && (
-              <Badge variant="default" className="text-[9px] gap-1 animate-pulse">
-                Connecting… click the target node's left port
-                <button onClick={() => setConnectingFrom(null)} className="ml-1"><X className="h-2.5 w-2.5" /></button>
-              </Badge>
-            )}
+          {/* Canvas top overlay: stage colour legend (left) + run state (right) */}
+          <div className="absolute top-2 left-2 right-2 z-10 flex items-start justify-between gap-2 pointer-events-none">
+            <div className="flex items-center gap-3 px-3 py-1.5 rounded-md bg-card/90 backdrop-blur border shadow-sm pointer-events-auto">
+              {(["input","processing","analysis","output"] as const).map((s) => (
+                <div key={s} className="flex items-center gap-1.5">
+                  <span className={`h-2.5 w-2.5 rounded-sm ${STAGE_META[s].dotClass}`} />
+                  <span className="text-[11px] text-muted-foreground">{STAGE_META[s].label}</span>
+                </div>
+              ))}
+            </div>
+            <div className="flex items-center gap-2 pointer-events-auto">
+              <Badge variant="secondary" className="text-[10px]">{pipeline.nodes.length} nodes</Badge>
+              <Badge variant="secondary" className="text-[10px]">{pipeline.edges.length} edges</Badge>
+              <Badge variant="outline" className="text-[10px]">{(zoom * 100).toFixed(0)}%</Badge>
+              {connectingFrom && (
+                <Badge variant="default" className="text-[10px] gap-1 animate-pulse">
+                  Connecting… click target left port
+                  <button onClick={() => setConnectingFrom(null)} className="ml-1"><X className="h-2.5 w-2.5" /></button>
+                </Badge>
+              )}
+            </div>
           </div>
 
           <svg
@@ -1175,7 +1307,31 @@ export default function RebuildPage() {
                     />
                   </div>
 
-                  {/* ─── Linked references ─── */}
+                  {/* How does this node work? — collapsible help */}
+                  <details className="rounded-md border bg-muted/30 group">
+                    <summary className="flex items-center gap-1.5 px-2 py-1.5 text-[11px] font-medium cursor-pointer select-none list-none">
+                      <HelpCircle className="h-3 w-3 text-primary" />
+                      <span>How does this node work?</span>
+                      <ChevronRight className="h-3 w-3 ml-auto transition-transform group-open:rotate-90" />
+                    </summary>
+                    <div className="px-2 pb-2 text-[11px] leading-relaxed text-muted-foreground">
+                      <p className="mb-1"><span className={`inline-block h-2 w-2 rounded-sm align-middle mr-1 ${STAGE_META[stageOf(selectedNode.type)].dotClass}`} /> Stage: <span className="font-medium text-foreground">{STAGE_META[stageOf(selectedNode.type)].label}</span></p>
+                      <p>
+                        {selectedNode.type === "device" && "An input node: streams timeseries from the selected device interface and the runs you associate with it. Downstream processing nodes consume these signals."}
+                        {selectedNode.type === "equipment" && "An input node representing a piece of physical lab equipment. It feeds material or sample streams into downstream processing steps."}
+                        {selectedNode.type === "method" && "A processing node describing an analytical or preparative method applied to the input stream."}
+                        {selectedNode.type === "range_check" && "A processing node that validates incoming parameter values against the configured min/max range and emits out-of-range episodes."}
+                        {selectedNode.type === "unit_consistency" && "A processing node that verifies the unit declared on each timeseries matches the parameter catalog. Mismatches raise a warning."}
+                        {selectedNode.type === "event_overlay" && "A processing node that aligns process events (feeds, base additions) onto the parameter timeline for downstream analysis."}
+                        {selectedNode.type === "merge" && "A processing node that combines multiple incoming streams into a single output."}
+                        {selectedNode.type === "decision" && "A processing node that routes flow based on a configured rule."}
+                        {selectedNode.type === "data_op" && "A processing node performing a custom data transformation on the stream."}
+                        {selectedNode.type === "ml_insight" && "An analysis node that scores anomalies and forecasts using heuristic ML on incoming signals. Threshold and horizon are configurable."}
+                        {selectedNode.type === "alert_generator" && "An output node that consolidates range violations, unit mismatches and forecast risks into operator alerts."}
+                      </p>
+                    </div>
+                  </details>
+
                   {(selectedNode.type === "equipment" || selectedNode.type === "method") && (
                     <div className="rounded-md border bg-muted/20 p-2 space-y-2">
                       <p className="text-[10px] uppercase text-muted-foreground font-semibold">Linked references</p>
@@ -1449,9 +1605,49 @@ export default function RebuildPage() {
                   )}
                 </div>
               ) : (
-                <div className="p-4 text-center text-muted-foreground text-xs mt-8">
-                  <Settings2 className="h-8 w-8 mx-auto mb-2 opacity-30" />
-                  Select a node to configure
+                <div className="p-3">
+                  <div className="rounded-md border bg-card p-3 space-y-2.5">
+                    <div className="flex items-center gap-2">
+                      <WorkflowIcon className="h-4 w-4 text-primary" />
+                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Pipeline summary</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold leading-tight">{pipeline.name}</p>
+                      <p className="text-[10px] text-muted-foreground font-mono mt-0.5">{pipeline.pipeline_id}</p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 pt-1">
+                      <div className="rounded border bg-muted/30 px-2 py-1.5">
+                        <p className="text-[9px] uppercase text-muted-foreground">Nodes</p>
+                        <p className="text-base font-semibold tabular-nums">{pipeline.nodes.length}</p>
+                      </div>
+                      <div className="rounded border bg-muted/30 px-2 py-1.5">
+                        <p className="text-[9px] uppercase text-muted-foreground">Connections</p>
+                        <p className="text-base font-semibold tabular-nums">{pipeline.edges.length}</p>
+                      </div>
+                    </div>
+                    <div className="space-y-1 pt-1 border-t">
+                      <div className="flex items-center justify-between text-[10px]">
+                        <span className="text-muted-foreground">Last saved</span>
+                        <span className="font-mono">{pipeline.updated_at ? format(new Date(pipeline.updated_at), "MMM d, HH:mm") : "—"}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-[10px]">
+                        <span className="text-muted-foreground">Last simulation</span>
+                        {simResults ? (
+                          <span className="flex items-center gap-1.5">
+                            <Badge variant={simResults.overall_status === "pass" ? "secondary" : simResults.overall_status === "warning" ? "outline" : "destructive"} className="text-[9px] h-4 px-1.5">
+                              {simResults.overall_status.toUpperCase()}
+                            </Badge>
+                            <span className="font-mono">{format(new Date(simResults.created_at), "MMM d, HH:mm")}</span>
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground italic">Not run yet</span>
+                        )}
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-muted-foreground italic pt-1 border-t">
+                      Select a node on the canvas to inspect or configure it.
+                    </p>
+                  </div>
                 </div>
               )}
 
@@ -1470,43 +1666,10 @@ export default function RebuildPage() {
                   } className="text-[9px] uppercase">{simStatus}</Badge>
                 </div>
 
-                {/* Lifecycle controls */}
-                <div className="grid grid-cols-3 gap-1">
-                  {(simStatus === "idle" || simStatus === "stopped" || simStatus === "done") && (
-                    <Button size="sm" className="h-7 text-[10px] gap-1 col-span-3" onClick={handleStartSimulation}>
-                      <Play className="h-3 w-3" /> {simStatus === "done" ? "Run again" : "Start simulation"}
-                    </Button>
-                  )}
-                  {simStatus === "running" && (
-                    <>
-                      <Button size="sm" variant="outline" className="h-7 text-[10px] gap-1" onClick={handlePauseSimulation}>
-                        <Pause className="h-3 w-3" /> Pause
-                      </Button>
-                      <Button size="sm" variant="destructive" className="h-7 text-[10px] gap-1" onClick={handleStopSimulation}>
-                        <Square className="h-3 w-3" /> Stop
-                      </Button>
-                      <Button size="sm" variant="outline" className="h-7 text-[10px] gap-1" onClick={handleRestartSimulation}>
-                        <RotateCcw className="h-3 w-3" /> Restart
-                      </Button>
-                    </>
-                  )}
-                  {simStatus === "paused" && (
-                    <>
-                      <Button size="sm" className="h-7 text-[10px] gap-1" onClick={handleResumeSimulation}>
-                        <Play className="h-3 w-3" /> Resume
-                      </Button>
-                      <Button size="sm" variant="destructive" className="h-7 text-[10px] gap-1" onClick={handleStopSimulation}>
-                        <Square className="h-3 w-3" /> Stop
-                      </Button>
-                      <Button size="sm" variant="outline" className="h-7 text-[10px] gap-1" onClick={handleRestartSimulation}>
-                        <RotateCcw className="h-3 w-3" /> Restart
-                      </Button>
-                    </>
-                  )}
-                  <Button size="sm" variant="outline" className="h-7 text-[10px] gap-1 col-span-3" onClick={handleRebuildPipeline}>
-                    <Hammer className="h-3 w-3" /> Rebuild pipeline
-                  </Button>
-                </div>
+                {/* Run controls live in the top toolbar — only status + log shown here */}
+                <p className="text-[10px] text-muted-foreground italic">
+                  Use <span className="font-medium text-foreground">Start Simulation</span> in the top toolbar to run.
+                </p>
 
                 {/* Progress */}
                 {(simStatus === "running" || simStatus === "paused" || simStatus === "done") && (
