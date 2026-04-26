@@ -2,15 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* Data Vest — Enterprise lab software design system.
+   ALCOA-aligned. Precise, dense, professional.
+   No decorative gradients. Limited weight scale (max 500).
+   All colors MUST be HSL. */
 
 @layer base {
   :root {
-    /* Light theme - Power BI inspired with biotech blue/teal */
+    /* Surfaces — light grey enterprise palette */
     --background: 210 17% 98%;
     --foreground: 215 25% 27%;
+    --text-secondary: 215 16% 47%;
+    --text-tertiary:  215 14% 60%;
+    --border-tertiary: 214 18% 90%;
 
     --card: 0 0% 100%;
     --card-foreground: 215 25% 27%;
@@ -147,6 +151,61 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "cv11", "ss01";
+    /* Enterprise default: never bold beyond medium */
+    font-weight: 400;
   }
+
+  /* Typography hierarchy — enforced platform-wide.
+     Page title 20/500 · Section heading 16/500 · Label 13/400 muted · KPI 24/500 */
+  h1 { @apply text-[20px] font-medium leading-tight tracking-tight text-foreground; }
+  h2 { @apply text-[16px] font-medium leading-snug text-foreground; }
+  h3 { @apply text-[14px] font-medium leading-snug text-foreground; }
+  h4, h5, h6 { @apply text-[13px] font-medium text-foreground; }
+
+  /* Strip overweight — never above 500 in this product */
+  .font-bold, .font-semibold, .font-extrabold, .font-black {
+    font-weight: 500 !important;
+  }
+
+  table { @apply text-[13px]; }
+  table tbody td { @apply font-normal; }
+}
+
+@layer components {
+  /* ── Status pill system — exactly 4 variants, used everywhere ── */
+  .pill {
+    @apply inline-flex items-center gap-1.5 h-[22px] px-2 rounded-[20px]
+           text-[11px] font-medium uppercase tracking-wide whitespace-nowrap;
+  }
+  .pill-success { background: hsl(var(--pill-success-bg)); color: hsl(var(--pill-success-fg)); }
+  .pill-warning { background: hsl(var(--pill-warning-bg)); color: hsl(var(--pill-warning-fg)); }
+  .pill-danger  { background: hsl(var(--pill-danger-bg));  color: hsl(var(--pill-danger-fg)); }
+  .pill-neutral { background: hsl(var(--pill-neutral-bg)); color: hsl(var(--pill-neutral-fg)); }
+  .pill-dot::before {
+    content: ""; width: 6px; height: 6px; border-radius: 9999px;
+    background: currentColor; display: inline-block;
+  }
+
+  /* ── Card anatomy — exactly 3 types ── */
+  .card-summary {
+    @apply rounded-lg p-4;
+    background: hsl(var(--secondary));
+    border: none;
+  }
+  .card-operational {
+    @apply rounded-xl p-4 bg-card;
+    border: 0.5px solid hsl(var(--border-tertiary));
+  }
+  .card-data {
+    @apply rounded-lg bg-card;
+    border: 0.5px solid hsl(var(--border-tertiary));
+  }
+
+  /* Section spacing helpers — apply consistent rhythm */
+  .stack-micro    { @apply space-y-2; }   /* 8px  — within a component */
+  .stack-section  { @apply space-y-3; }   /* 12px — within a card */
+  .stack-card     { @apply space-y-5; }   /* 20px — between card sections */
+  .stack-page     { @apply space-y-8; }   /* 32px — between major page sections */
 }
