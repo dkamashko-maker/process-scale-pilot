@@ -186,7 +186,7 @@ export default function ReportsPage() {
       <div className="p-6 max-w-[1400px] mx-auto stack-page">
         <OverviewHeader
           title="Reports"
-          description="Document-centric view: review the latest signed/unsigned report and generate new content. For observational analytics, see Insights."
+          description="Document-centric view: review the latest signed/unsigned report and generate new content. For observational analytics, see GenAI."
         />
 
         {/* ─────────── 1. REPORT SELECTOR HEADER — visually dominant ─────────── */}

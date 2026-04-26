@@ -38,7 +38,7 @@ const SUB_ACTIVE =
 const navItems = [
   { title: "Data Storage", url: "/data-storage", icon: Database },
   { title: "Reports", url: "/reports", icon: FileText },
-  { title: "Insights", url: "/ai", icon: Brain },
+  { title: "GenAI", url: "/ai", icon: Brain },
 ];
 
 export function AppSidebar() {
