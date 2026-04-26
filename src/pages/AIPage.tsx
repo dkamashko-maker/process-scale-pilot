@@ -47,19 +47,7 @@ const CATEGORY_ICONS: Record<string, typeof Shield> = {
 
 const READONLY_DISMISS_KEY = "insights-readonly-banner-dismissed";
 
-const SEVERITY_CONFIG: Record<InsightSeverity, { icon: typeof AlertTriangle; cls: string; label: string }> = {
-  critical: { icon: AlertTriangle, cls: "bg-destructive/15 text-destructive", label: "Critical" },
-  warning: { icon: AlertTriangle, cls: "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300", label: "Warning" },
-  info: { icon: Info, cls: "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300", label: "Info" },
-  success: { icon: CheckCircle2, cls: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300", label: "OK" },
-};
-
-const CATEGORY_ICONS: Record<string, typeof Shield> = {
-  quality: Shield,
-  completeness: Tag,
-  trend: TrendingUp,
-  anomaly: Zap,
-};
+// (deduplicated — config defined above)
 
 const QUICK_PROMPTS = [
   "What is the current process status?",
