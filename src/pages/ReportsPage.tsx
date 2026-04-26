@@ -378,6 +378,7 @@ export default function ReportsPage() {
             )}
           </CardContent>
         </Card>
+        </div>
 
         {/* ─────────── 4. REPORT GENERATOR — visually lighter, collapsed by default ─────────── */}
         <Collapsible open={generatorOpen} onOpenChange={setGeneratorOpen}>
