@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { RunMetadataPanel } from "@/components/cho/RunMetadataPanel";
 import { PhaseTimeline } from "@/components/cho/PhaseTimeline";
+import { MonitoringCharts } from "@/components/cho/MonitoringCharts";
 
 type InstrumentSpec = {
   id: string;
