@@ -290,6 +290,7 @@ function CanvasNode({
               fill={color}
               stroke="hsl(var(--card))"
               strokeWidth={2}
+              style={{ transformBox: "fill-box", transformOrigin: "center" }}
               className="transition-transform group-hover/port:scale-150"
             />
             {/* hover label */}
@@ -320,6 +321,7 @@ function CanvasNode({
               fill={isConnectSource ? SELECT_BLUE : color}
               stroke="hsl(var(--card))"
               strokeWidth={2}
+              style={{ transformBox: "fill-box", transformOrigin: "center" }}
               className="transition-transform group-hover/port:scale-150"
             />
             <foreignObject x={NODE_W + 10} y={cy - 10} width={80} height={20}
