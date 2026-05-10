@@ -21,6 +21,7 @@ import AIPage from "./pages/AIPage";
 import RebuildPage from "./pages/RebuildPage";
 import MetadataConfiguratorPage from "./pages/MetadataConfiguratorPage";
 import ReportsPage from "./pages/ReportsPage";
+import AlertsPage from "./pages/AlertsPage";
 import LoginPage from "./pages/LoginPage";
 import SensorMapPage from "./pages/SensorMapPage";
 import MaterialFlowPage from "./pages/MaterialFlowPage";
