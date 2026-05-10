@@ -207,11 +207,11 @@ export function AppSidebar() {
                       onClick={() => navigate("/cho-production-line/bioreactor")}
                     >
                       <FlaskConical className="h-3.5 w-3.5 flex-shrink-0" />
-                      <span className="flex-1">Bioreactor BR-003-p</span>
-                      <span className="ml-auto inline-flex items-center justify-center min-w-4 h-4 px-1 rounded text-[9px] font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
+                      <span className="flex-1 truncate min-w-0">Bioreactor BR-003-p</span>
+                      <span className="flex-shrink-0 inline-flex items-center justify-center min-w-4 h-4 px-1 rounded text-[9px] font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
                         1
                       </span>
-                      <span className="inline-flex items-center justify-center min-w-4 h-4 px-1 rounded text-[9px] font-medium bg-destructive/15 text-destructive">
+                      <span className="flex-shrink-0 inline-flex items-center justify-center min-w-4 h-4 px-1 rounded text-[9px] font-medium bg-destructive/15 text-destructive">
                         OOS
                       </span>
                     </SidebarMenuButton>
