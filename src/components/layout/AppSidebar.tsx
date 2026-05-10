@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import {
   Database, Construction, Brain, Activity, FileText,
   Map, ChevronDown, ChevronRight, Workflow, Boxes, GitBranch, ClipboardList,
-  Factory, FlaskConical, Filter as FilterIcon, Droplets,
+  Factory, FlaskConical, Filter as FilterIcon, Droplets, Bell,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { RUNS } from "@/data/runData";
@@ -38,6 +38,7 @@ const SUB_ACTIVE =
 
 const navItems = [
   { title: "Data Storage", url: "/data-storage", icon: Database },
+  { title: "Alerts", url: "/alerts", icon: Bell },
   { title: "Reports", url: "/reports", icon: FileText },
   { title: "GenAI", url: "/ai", icon: Brain },
 ];
