@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { RunMetadataPanel } from "@/components/cho/RunMetadataPanel";
 import { PhaseTimeline } from "@/components/cho/PhaseTimeline";
 import { MonitoringCharts } from "@/components/cho/MonitoringCharts";
+import { OfflineMeasurements } from "@/components/cho/OfflineMeasurements";
 
 type InstrumentSpec = {
   id: string;
@@ -66,6 +67,7 @@ export default function CHOInstrumentPage({ spec }: Props) {
             </div>
           </Card>
           {spec.id === "BR-003-p" && <MonitoringCharts />}
+          {spec.id === "BR-003-p" && <OfflineMeasurements />}
         </div>
         {spec.id === "BR-003-p" && <RunMetadataPanel />}
       </div>
