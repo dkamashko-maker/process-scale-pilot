@@ -200,6 +200,8 @@ export default function MetadataConstructorPage() {
         <SummaryTile label="Templates"      value={templateCount}    Icon={Tag} />
       </div>
 
+      <ProcessTemplatesPanel />
+
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "templates" | "labeling")}>
         <TabsList className="h-auto bg-transparent p-0 gap-2">
           <PillTab value="templates"  label="Label Templates" count={templateCount} />
