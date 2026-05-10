@@ -214,6 +214,8 @@ export default function DataStoragePage() {
           </div>
         </div>
 
+        <CampaignLedgerPanel />
+
         <Tabs defaultValue="records" className="stack-page">
           <TabsList>
             <TabsTrigger value="records">Records</TabsTrigger>
