@@ -49,8 +49,10 @@ export function AppSidebar() {
   const navigate = useNavigate();
   const isEquipment = location.pathname.startsWith("/equipment");
   const isMetadata = location.pathname.startsWith("/metadata");
+  const isCho = location.pathname.startsWith("/cho-production-line");
   const [equipmentOpen, setEquipmentOpen] = useState(isEquipment);
   const [metadataOpen, setMetadataOpen] = useState(isMetadata);
+  const [choOpen, setChoOpen] = useState(isCho);
 
   const isActive = (path: string) => location.pathname === path;
 
