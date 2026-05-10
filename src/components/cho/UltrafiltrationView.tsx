@@ -534,8 +534,10 @@ function OfflineQCPanel() {
    Public view
    ========================================================================= */
 
-export function UltrafiltrationView() {
+export function UltrafiltrationView({ tab = "all" }: { tab?: "monitoring" | "offline" | "all" } = {}) {
   const [mode, setMode] = useState<Mode>("concentration");
+  const showMonitoring = tab === "monitoring" || tab === "all";
+  const showOffline = tab === "offline" || tab === "all";
 
   const charts: ChartSpec[] = useMemo(() => [
     { title: "Feed Flow Rate", unit: "L/min", dataKey: "feed", yDomain: [0.5, 4], yTicks: [1, 1.8, 2.5, 3.5], band: [1.0, 3.5] },
@@ -558,65 +560,70 @@ export function UltrafiltrationView() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 items-start">
       <div className="space-y-6 min-w-0">
-        <ModeToggle mode={mode} onChange={setMode} />
+        {showMonitoring && (
+          <>
+            <ModeToggle mode={mode} onChange={setMode} />
 
-        <div>
-          <div className="flex items-baseline justify-between mb-2">
-            <h3 className="text-section text-foreground">Calculated Parameters</h3>
-            <span className="text-[11px] text-text-secondary uppercase tracking-wide">
-              Read-only · Computed
-            </span>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <StatCard
-              label="TMP"
-              value="0.9"
-              unit="bar"
-              formula="Feed pressure − Retentate pressure"
-            />
-            <StatCard
-              label="Concentration Factor"
-              value="6×"
-              unit=""
-              primary={mode === "concentration"}
-              formula="Initial volume / Current retentate volume"
-            />
-            <StatCard
-              label="Diafiltration Volume"
-              value="5"
-              unit="DV"
-              primary={mode === "diafiltration"}
-              formula="Permeate volume / Retentate volume"
-            />
-          </div>
-        </div>
+            <div>
+              <div className="flex items-baseline justify-between mb-2">
+                <h3 className="text-section text-foreground">Calculated Parameters</h3>
+                <span className="text-[11px] text-text-secondary uppercase tracking-wide">
+                  Read-only · Computed
+                </span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <StatCard
+                  label="TMP"
+                  value="0.9"
+                  unit="bar"
+                  formula="Feed pressure − Retentate pressure"
+                />
+                <StatCard
+                  label="Concentration Factor"
+                  value="6×"
+                  unit=""
+                  primary={mode === "concentration"}
+                  formula="Initial volume / Current retentate volume"
+                />
+                <StatCard
+                  label="Diafiltration Volume"
+                  value="5"
+                  unit="DV"
+                  primary={mode === "diafiltration"}
+                  formula="Permeate volume / Retentate volume"
+                />
+              </div>
+            </div>
 
-        <div>
-          <div className="flex items-baseline justify-between mb-2">
-            <h3 className="text-section text-foreground">Process Parameters</h3>
-            <span className="text-[11px] text-text-secondary uppercase tracking-wide">
-              Live signals · Phase divider at t = {PHASE_SWITCH} min
-            </span>
-          </div>
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-            {charts.map((spec) => {
-              const isPrimaryCond = mode === "diafiltration" && spec.dataKey === "cond";
-              return (
-                <div
-                  key={spec.title}
-                  className={cn(isPrimaryCond && "ring-1 ring-primary/40 rounded-md")}
-                >
-                  <ParamChart spec={spec} />
-                </div>
-              );
-            })}
-          </div>
-        </div>
+            <div>
+              <div className="flex items-baseline justify-between mb-2">
+                <h3 className="text-section text-foreground">Process Parameters</h3>
+                <span className="text-[11px] text-text-secondary uppercase tracking-wide">
+                  Live signals · Phase divider at t = {PHASE_SWITCH} min
+                </span>
+              </div>
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                {charts.map((spec) => {
+                  const isPrimaryCond = mode === "diafiltration" && spec.dataKey === "cond";
+                  return (
+                    <div
+                      key={spec.title}
+                      className={cn(isPrimaryCond && "ring-1 ring-primary/40 rounded-md")}
+                    >
+                      <ParamChart spec={spec} />
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </>
+        )}
 
-        <OfflineQCPanel />
+        {showOffline && <OfflineQCPanel />}
       </div>
 
       <UFMetadataPanel />
     </div>
   );
 }
+

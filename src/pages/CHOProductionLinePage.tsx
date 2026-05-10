@@ -12,6 +12,8 @@ type Stage = {
   status: "Active" | "Complete";
   route: string;
   icon: typeof FlaskConical;
+  openAlerts: number;
+  oos?: boolean;
 };
 
 const STAGES: Stage[] = [
@@ -23,6 +25,8 @@ const STAGES: Stage[] = [
     status: "Active",
     route: "/cho-production-line/bioreactor",
     icon: FlaskConical,
+    openAlerts: 1,
+    oos: true,
   },
   {
     id: "CFG-003",
@@ -32,6 +36,7 @@ const STAGES: Stage[] = [
     status: "Complete",
     route: "/cho-production-line/centrifuge",
     icon: Filter,
+    openAlerts: 0,
   },
   {
     id: "UF-03",
@@ -41,6 +46,7 @@ const STAGES: Stage[] = [
     status: "Complete",
     route: "/cho-production-line/ultrafiltration",
     icon: Droplets,
+    openAlerts: 0,
   },
 ];
 
@@ -87,9 +93,15 @@ export default function CHOProductionLinePage() {
                     <div className="h-9 w-9 rounded-md bg-[hsl(var(--nav-active-bg))] text-primary flex items-center justify-center">
                       <Icon className="h-4.5 w-4.5" strokeWidth={1.75} />
                     </div>
-                    <Badge variant={stage.status === "Active" ? "success" : "neutral"}>
-                      {stage.status}
-                    </Badge>
+                    <div className="flex flex-col items-end gap-1">
+                      <Badge variant={stage.status === "Active" ? "success" : "neutral"}>
+                        {stage.status}
+                      </Badge>
+                      {stage.oos && <Badge variant="danger">OOS</Badge>}
+                      {stage.openAlerts > 0 && (
+                        <Badge variant="warning">{stage.openAlerts} open alert</Badge>
+                      )}
+                    </div>
                   </div>
                   <div>
                     <div className="text-[11px] uppercase tracking-wide text-text-secondary font-medium">
