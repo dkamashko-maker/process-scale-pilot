@@ -19,6 +19,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { OverviewHeader } from "@/components/shared/PageHeader";
+import { CampaignReportPanel } from "@/components/cho/CampaignReportPanel";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { RUNS } from "@/data/runData";
@@ -188,6 +189,8 @@ export default function ReportsPage() {
           title="Reports"
           description="Document-centric view: review the latest signed/unsigned report and generate new content. For observational analytics, see GenAI."
         />
+
+        <CampaignReportPanel />
 
         {/* ─────────── 1. REPORT SELECTOR HEADER — visually dominant ─────────── */}
         <div
