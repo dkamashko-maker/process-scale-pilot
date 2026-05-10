@@ -27,6 +27,7 @@ import SensorMapPage from "./pages/SensorMapPage";
 import MaterialFlowPage from "./pages/MaterialFlowPage";
 import CHOProductionLinePage from "./pages/CHOProductionLinePage";
 import CHOInstrumentPage, { BIOREACTOR_SPEC, CENTRIFUGE_SPEC, UF_SPEC } from "./pages/CHOInstrumentPage";
+import CHOCampaignAnalyticsPage from "./pages/CHOCampaignAnalyticsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -82,6 +83,7 @@ const App = () => {
                   <Route path="/cho-production-line/bioreactor" element={<CHOInstrumentPage spec={BIOREACTOR_SPEC} />} />
                   <Route path="/cho-production-line/centrifuge" element={<CHOInstrumentPage spec={CENTRIFUGE_SPEC} />} />
                   <Route path="/cho-production-line/ultrafiltration" element={<CHOInstrumentPage spec={UF_SPEC} />} />
+                  <Route path="/cho-production-line/campaign-analytics" element={<CHOCampaignAnalyticsPage />} />
                   <Route path="/admin" element={<AdminPage />} />
                 </Route>
                 <Route path="*" element={<NotFound />} />

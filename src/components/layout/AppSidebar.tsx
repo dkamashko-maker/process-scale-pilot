@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import {
   Database, Construction, Brain, Activity, FileText,
   Map, ChevronDown, ChevronRight, Workflow, Boxes, GitBranch, ClipboardList,
-  Factory, FlaskConical, Filter as FilterIcon, Droplets, Bell,
+  Factory, FlaskConical, Filter as FilterIcon, Droplets, Bell, BarChart3,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { RUNS } from "@/data/runData";
@@ -217,6 +217,15 @@ export function AppSidebar() {
                     >
                       <Droplets className="h-3.5 w-3.5 flex-shrink-0" />
                       <span>UF Skid UF-03</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      className={`${SUB_BASE} cursor-pointer ${isActive("/cho-production-line/campaign-analytics") ? SUB_ACTIVE : ""}`}
+                      onClick={() => navigate("/cho-production-line/campaign-analytics")}
+                    >
+                      <BarChart3 className="h-3.5 w-3.5 flex-shrink-0" />
+                      <span>Campaign Analytics</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 </>
