@@ -30,6 +30,7 @@ import {
   type ChatMessage, type SparklineDataset,
 } from "@/data/aiAssistant";
 import { INTERFACES, RUNS } from "@/data/runData";
+import { SimulatedInsightsPanel } from "@/components/cho/SimulatedInsightsPanel";
 
 const SEVERITY_CONFIG: Record<InsightSeverity, { icon: typeof AlertTriangle; cls: string; label: string }> = {
   critical: { icon: AlertTriangle, cls: "bg-destructive/15 text-destructive", label: "Critical" },
@@ -237,7 +238,8 @@ export default function AIPage() {
           </TabsContent>
 
           {/* ─── Insights Feed ─── */}
-          <TabsContent value="insights" className="space-y-3">
+          <TabsContent value="insights" className="space-y-6">
+            <SimulatedInsightsPanel />
             {insights.length === 0 ? (
               <Card>
                 <CardContent className="p-8 text-center text-muted-foreground">
