@@ -38,6 +38,7 @@ const SUB_ACTIVE =
 
 const navItems = [
   { title: "Data Storage", url: "/data-storage", icon: Database },
+  { title: "Alerts", url: "/alerts", icon: Bell },
   { title: "Reports", url: "/reports", icon: FileText },
   { title: "GenAI", url: "/ai", icon: Brain },
 ];
