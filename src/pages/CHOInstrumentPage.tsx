@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { RunMetadataPanel } from "@/components/cho/RunMetadataPanel";
 import { PhaseTimeline } from "@/components/cho/PhaseTimeline";
+import { MonitoringCharts } from "@/components/cho/MonitoringCharts";
 
 type InstrumentSpec = {
   id: string;
@@ -52,17 +53,20 @@ export default function CHOInstrumentPage({ spec }: Props) {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 items-start">
-        <Card kind="operational" className="p-6">
-          <div className="text-[11px] uppercase tracking-wide text-text-secondary font-medium">
-            Process Stage
-          </div>
-          <div className="text-[15px] text-foreground mt-1">{spec.stage}</div>
-          <div className="mt-4 text-[13px] text-text-secondary">
-            Detailed monitoring, metadata, and ledger views for {spec.equipmentClass.toLowerCase()}{" "}
-            <span className="text-foreground">{spec.id}</span> will appear here once data
-            ingestion is connected.
-          </div>
-        </Card>
+        <div className="space-y-6 min-w-0">
+          <Card kind="operational" className="p-6">
+            <div className="text-[11px] uppercase tracking-wide text-text-secondary font-medium">
+              Process Stage
+            </div>
+            <div className="text-[15px] text-foreground mt-1">{spec.stage}</div>
+            <div className="mt-4 text-[13px] text-text-secondary">
+              Detailed monitoring, metadata, and ledger views for {spec.equipmentClass.toLowerCase()}{" "}
+              <span className="text-foreground">{spec.id}</span> will appear here once data
+              ingestion is connected.
+            </div>
+          </Card>
+          {spec.id === "BR-003-p" && <MonitoringCharts />}
+        </div>
         {spec.id === "BR-003-p" && <RunMetadataPanel />}
       </div>
     </div>
