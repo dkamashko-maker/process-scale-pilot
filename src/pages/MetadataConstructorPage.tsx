@@ -17,6 +17,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { OverviewHeader } from "@/components/shared/PageHeader";
+import { ProcessTemplatesPanel } from "@/components/cho/ProcessTemplatesPanel";
 import { useToast } from "@/hooks/use-toast";
 import { getDataRecords } from "@/data/dataRecords";
 import { INTERFACES, RUNS } from "@/data/runData";
@@ -198,6 +199,8 @@ export default function MetadataConstructorPage() {
         />
         <SummaryTile label="Templates"      value={templateCount}    Icon={Tag} />
       </div>
+
+      <ProcessTemplatesPanel />
 
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "templates" | "labeling")}>
         <TabsList className="h-auto bg-transparent p-0 gap-2">
