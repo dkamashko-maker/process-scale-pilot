@@ -194,11 +194,26 @@ export function AppSidebar() {
                 <>
                   <SidebarMenuItem>
                     <SidebarMenuButton
+                      className={`${SUB_BASE} cursor-pointer ${isActive("/cho-production-line") ? SUB_ACTIVE : ""}`}
+                      onClick={() => navigate("/cho-production-line")}
+                    >
+                      <Factory className="h-3.5 w-3.5 flex-shrink-0" />
+                      <span className="flex-1">Campaign Overview</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
                       className={`${SUB_BASE} cursor-pointer ${isActive("/cho-production-line/bioreactor") ? SUB_ACTIVE : ""}`}
                       onClick={() => navigate("/cho-production-line/bioreactor")}
                     >
                       <FlaskConical className="h-3.5 w-3.5 flex-shrink-0" />
-                      <span>Bioreactor BR-003-p</span>
+                      <span className="flex-1">Bioreactor BR-003-p</span>
+                      <span className="ml-auto inline-flex items-center justify-center min-w-4 h-4 px-1 rounded text-[9px] font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
+                        1
+                      </span>
+                      <span className="inline-flex items-center justify-center min-w-4 h-4 px-1 rounded text-[9px] font-medium bg-destructive/15 text-destructive">
+                        OOS
+                      </span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                   <SidebarMenuItem>
@@ -207,7 +222,10 @@ export function AppSidebar() {
                       onClick={() => navigate("/cho-production-line/centrifuge")}
                     >
                       <FilterIcon className="h-3.5 w-3.5 flex-shrink-0" />
-                      <span>Centrifuge CFG-003</span>
+                      <span className="flex-1">Centrifuge CFG-003</span>
+                      <span className="ml-auto inline-flex items-center justify-center min-w-4 h-4 px-1 rounded text-[9px] font-medium bg-secondary text-text-secondary">
+                        0
+                      </span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                   <SidebarMenuItem>
@@ -216,7 +234,10 @@ export function AppSidebar() {
                       onClick={() => navigate("/cho-production-line/ultrafiltration")}
                     >
                       <Droplets className="h-3.5 w-3.5 flex-shrink-0" />
-                      <span>UF Skid UF-03</span>
+                      <span className="flex-1">UF Skid UF-03</span>
+                      <span className="ml-auto inline-flex items-center justify-center min-w-4 h-4 px-1 rounded text-[9px] font-medium bg-secondary text-text-secondary">
+                        0
+                      </span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                   <SidebarMenuItem>
@@ -226,6 +247,15 @@ export function AppSidebar() {
                     >
                       <BarChart3 className="h-3.5 w-3.5 flex-shrink-0" />
                       <span>Campaign Analytics</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      className={`${SUB_BASE} cursor-pointer ${location.pathname === "/reports" ? SUB_ACTIVE : ""}`}
+                      onClick={() => navigate("/reports")}
+                    >
+                      <FileText className="h-3.5 w-3.5 flex-shrink-0" />
+                      <span>Campaign Report</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 </>
