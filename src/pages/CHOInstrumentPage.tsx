@@ -11,6 +11,7 @@ import { OfflineMeasurements } from "@/components/cho/OfflineMeasurements";
 import { QCReport } from "@/components/cho/QCReport";
 import { CentrifugeView } from "@/components/cho/CentrifugeView";
 import { UltrafiltrationView } from "@/components/cho/UltrafiltrationView";
+import { CampaignBreadcrumb } from "@/components/cho/CampaignBreadcrumb";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 type InstrumentSpec = {
@@ -20,6 +21,9 @@ type InstrumentSpec = {
   stage: string;
   status: "Active" | "Complete";
   meta: { label: string; value: string }[];
+  /** Persistent campaign-banner refs */
+  refs: { primary: string; secondary?: string }[];
+  oos?: boolean;
 };
 
 interface Props {
@@ -41,12 +45,21 @@ export default function CHOInstrumentPage({ spec }: Props) {
         CHO Production Line
       </Button>
 
+      <CampaignBreadcrumb
+        instrument={spec.id}
+        refs={spec.refs}
+        status={spec.status === "Active" ? "in-progress" : "complete"}
+      />
+
       <DetailHeader
         name={spec.name}
         status={
-          <Badge variant={spec.status === "Active" ? "success" : "neutral"}>
-            {spec.status}
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Badge variant={spec.status === "Active" ? "success" : "neutral"}>
+              {spec.status}
+            </Badge>
+            {spec.oos && <Badge variant="danger">OOS</Badge>}
+          </div>
         }
         meta={spec.meta}
       />
@@ -55,6 +68,7 @@ export default function CHOInstrumentPage({ spec }: Props) {
         <Tabs defaultValue="monitoring" className="w-full">
           <TabsList className="mb-6">
             <TabsTrigger value="monitoring">Monitoring</TabsTrigger>
+            <TabsTrigger value="offline">Offline Measurements</TabsTrigger>
             <TabsTrigger value="qc">QC Report</TabsTrigger>
           </TabsList>
 
@@ -65,6 +79,14 @@ export default function CHOInstrumentPage({ spec }: Props) {
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 items-start">
               <div className="space-y-6 min-w-0">
                 <MonitoringCharts />
+              </div>
+              <RunMetadataPanel />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="offline" className="mt-0">
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 items-start">
+              <div className="min-w-0">
                 <OfflineMeasurements />
               </div>
               <RunMetadataPanel />
@@ -76,9 +98,31 @@ export default function CHOInstrumentPage({ spec }: Props) {
           </TabsContent>
         </Tabs>
       ) : spec.id === "CFG-003" ? (
-        <CentrifugeView />
+        <Tabs defaultValue="monitoring" className="w-full">
+          <TabsList className="mb-6">
+            <TabsTrigger value="monitoring">Monitoring</TabsTrigger>
+            <TabsTrigger value="quality">Quality Metrics</TabsTrigger>
+          </TabsList>
+          <TabsContent value="monitoring" className="mt-0">
+            <CentrifugeView tab="monitoring" />
+          </TabsContent>
+          <TabsContent value="quality" className="mt-0">
+            <CentrifugeView tab="quality" />
+          </TabsContent>
+        </Tabs>
       ) : spec.id === "UF-03" ? (
-        <UltrafiltrationView />
+        <Tabs defaultValue="monitoring" className="w-full">
+          <TabsList className="mb-6">
+            <TabsTrigger value="monitoring">Monitoring</TabsTrigger>
+            <TabsTrigger value="offline">Offline QC Results</TabsTrigger>
+          </TabsList>
+          <TabsContent value="monitoring" className="mt-0">
+            <UltrafiltrationView tab="monitoring" />
+          </TabsContent>
+          <TabsContent value="offline" className="mt-0">
+            <UltrafiltrationView tab="offline" />
+          </TabsContent>
+        </Tabs>
       ) : (
         <Card kind="operational" className="p-6">
           <div className="text-[11px] uppercase tracking-wide text-text-secondary font-medium">
@@ -102,6 +146,8 @@ export const BIOREACTOR_SPEC: InstrumentSpec = {
   equipmentClass: "Stirred-Tank Bioreactor",
   stage: "Upstream — Fed-Batch Cultivation",
   status: "Active",
+  oos: true,
+  refs: [{ primary: "CHO-r-hFSG-456-250308-2", secondary: "Run R-456" }],
   meta: [
     { label: "Equipment Class", value: "Stirred-Tank Bioreactor" },
     { label: "Stage", value: "Upstream" },
@@ -117,6 +163,7 @@ export const CENTRIFUGE_SPEC: InstrumentSpec = {
   equipmentClass: "Disc-Stack Centrifuge",
   stage: "Downstream — Cell Removal",
   status: "Complete",
+  refs: [{ primary: "FSH-B042-24", secondary: "Run FSH-B042-24-C1" }],
   meta: [
     { label: "Equipment Class", value: "Disc-Stack Centrifuge" },
     { label: "Stage", value: "Downstream" },
@@ -132,6 +179,7 @@ export const UF_SPEC: InstrumentSpec = {
   equipmentClass: "Tangential Flow Filtration Skid",
   stage: "Downstream — Concentration / Diafiltration",
   status: "Complete",
+  refs: [{ primary: "FSH-2025-042" }],
   meta: [
     { label: "Equipment Class", value: "TFF Skid" },
     { label: "Stage", value: "Downstream" },
