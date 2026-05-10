@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import {
   Database, Construction, Brain, Activity, FileText,
   Map, ChevronDown, ChevronRight, Workflow, Boxes, GitBranch, ClipboardList,
+  Factory, FlaskConical, Filter as FilterIcon, Droplets,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { RUNS } from "@/data/runData";
