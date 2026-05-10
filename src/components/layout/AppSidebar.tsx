@@ -166,7 +166,62 @@ export function AppSidebar() {
                 </>
               )}
 
-              {/* Top-level destinations */}
+              {/* CHO Production Line — collapsible parent */}
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <div
+                    className={`${NAV_BASE} cursor-pointer ${isCho && location.pathname === "/cho-production-line" ? NAV_ACTIVE : ""}`}
+                    onClick={() => {
+                      if (location.pathname !== "/cho-production-line") navigate("/cho-production-line");
+                      setChoOpen((o) => !o);
+                    }}
+                  >
+                    <Factory className="h-4 w-4 flex-shrink-0" />
+                    {!collapsed && (
+                      <>
+                        <span className="flex-1">CHO Production Line</span>
+                        {choOpen
+                          ? <ChevronDown className="h-3.5 w-3.5 text-text-secondary" />
+                          : <ChevronRight className="h-3.5 w-3.5 text-text-secondary opacity-0 group-hover:opacity-100" />}
+                      </>
+                    )}
+                  </div>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              {!collapsed && choOpen && (
+                <>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      className={`${SUB_BASE} cursor-pointer ${isActive("/cho-production-line/bioreactor") ? SUB_ACTIVE : ""}`}
+                      onClick={() => navigate("/cho-production-line/bioreactor")}
+                    >
+                      <FlaskConical className="h-3.5 w-3.5 flex-shrink-0" />
+                      <span>Bioreactor BR-003-p</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      className={`${SUB_BASE} cursor-pointer ${isActive("/cho-production-line/centrifuge") ? SUB_ACTIVE : ""}`}
+                      onClick={() => navigate("/cho-production-line/centrifuge")}
+                    >
+                      <FilterIcon className="h-3.5 w-3.5 flex-shrink-0" />
+                      <span>Centrifuge CFG-003</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      className={`${SUB_BASE} cursor-pointer ${isActive("/cho-production-line/ultrafiltration") ? SUB_ACTIVE : ""}`}
+                      onClick={() => navigate("/cho-production-line/ultrafiltration")}
+                    >
+                      <Droplets className="h-3.5 w-3.5 flex-shrink-0" />
+                      <span>UF Skid UF-03</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </>
+              )}
+
+
               {navItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
