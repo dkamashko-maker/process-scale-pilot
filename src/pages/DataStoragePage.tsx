@@ -16,6 +16,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { OverviewHeader } from "@/components/shared/PageHeader";
+import { CampaignLedgerPanel } from "@/components/cho/CampaignLedgerPanel";
 import { useAuth } from "@/contexts/AuthContext";
 import { getDataRecords, createCorrectionRecord, getCorrectionsFor } from "@/data/dataRecords";
 import { INTERFACES, RUNS } from "@/data/runData";
@@ -212,6 +213,8 @@ export default function DataStoragePage() {
             <p className="text-kpi tabular-nums text-foreground leading-none mt-2">{allRecords.length.toLocaleString()}</p>
           </div>
         </div>
+
+        <CampaignLedgerPanel />
 
         <Tabs defaultValue="records" className="stack-page">
           <TabsList>
