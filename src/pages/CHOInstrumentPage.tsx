@@ -9,6 +9,7 @@ import { PhaseTimeline } from "@/components/cho/PhaseTimeline";
 import { MonitoringCharts } from "@/components/cho/MonitoringCharts";
 import { OfflineMeasurements } from "@/components/cho/OfflineMeasurements";
 import { QCReport } from "@/components/cho/QCReport";
+import { CentrifugeView } from "@/components/cho/CentrifugeView";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 type InstrumentSpec = {
