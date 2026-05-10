@@ -5,7 +5,8 @@ import {
 } from "recharts";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ExternalLink, Lock, CheckCircle2, ChevronDown, ChevronRight, Info } from "lucide-react";
+import { ExternalLink, Lock, CheckCircle2, ChevronDown, ChevronRight, Info, ArrowLeft, ArrowRight, ArrowUpRight } from "lucide-react";
+import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 /* =========================================================================
    Synthetic time-series — minutes since cycle start
