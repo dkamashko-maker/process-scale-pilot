@@ -612,6 +612,8 @@ export function UltrafiltrationView() {
             })}
           </div>
         </div>
+
+        <OfflineQCPanel />
       </div>
 
       <UFMetadataPanel />
