@@ -287,6 +287,250 @@ function StatCard({
 }
 
 /* =========================================================================
+   Offline QC Results
+   ========================================================================= */
+
+type SampleEvidence = {
+  sampleId: string;
+  parameter: string;
+  method: string;
+  processStep: string;
+  result: string;
+  collectedAt: string;
+  collectedBy: string;
+  location: string;
+};
+
+function SampleLink({
+  id, onOpen,
+}: { id: string; onOpen: (id: string) => void }) {
+  return (
+    <button
+      type="button"
+      onClick={() => onOpen(id)}
+      className="inline-flex items-center gap-1 font-mono text-[12px] text-primary underline underline-offset-2 hover:text-primary/80"
+    >
+      {id}
+      <ExternalLink className="h-3 w-3" />
+    </button>
+  );
+}
+
+function QCResultCard({
+  parameter, value, unit, method, processStep, sampleId, statusLabel,
+  children, onOpenSample,
+}: {
+  parameter: string; value: string; unit: string; method: string;
+  processStep: string; sampleId: string; statusLabel: string;
+  children?: React.ReactNode;
+  onOpenSample: (id: string) => void;
+}) {
+  return (
+    <Card kind="operational" className="p-4 flex flex-col gap-3">
+      <div>
+        <div className="text-[11px] uppercase tracking-wide text-text-secondary font-medium">
+          {parameter}
+        </div>
+        <div className="mt-1 flex items-baseline gap-1.5">
+          <span className="text-[24px] text-foreground tabular-nums">{value}</span>
+          <span className="text-[12px] text-text-secondary">{unit}</span>
+        </div>
+      </div>
+
+      {children}
+
+      <dl className="grid grid-cols-[110px_1fr] gap-y-1 text-[12px]">
+        <dt className="text-text-secondary">Method</dt>
+        <dd className="text-foreground">{method}</dd>
+        <dt className="text-text-secondary">Process Step</dt>
+        <dd className="text-foreground">{processStep}</dd>
+        <dt className="text-text-secondary">Sample ID</dt>
+        <dd><SampleLink id={sampleId} onOpen={onOpenSample} /></dd>
+      </dl>
+
+      <Badge variant="success" className="self-start">{statusLabel}</Badge>
+    </Card>
+  );
+}
+
+function AggregateGauge({ value, limit, max = 3 }: { value: number; limit: number; max?: number }) {
+  const valuePct = Math.min(100, (value / max) * 100);
+  const limitPct = Math.min(100, (limit / max) * 100);
+  return (
+    <div>
+      <div className="flex items-center justify-between text-[11px] text-text-secondary mb-1">
+        <span>0%</span>
+        <span>Limit {limit}%</span>
+        <span>{max}%</span>
+      </div>
+      <div className="relative h-2 rounded-full bg-accent/40 overflow-visible">
+        <div
+          className="absolute inset-y-0 left-0 rounded-full bg-emerald-500"
+          style={{ width: `${valuePct}%` }}
+        />
+        <div
+          className="absolute -top-1 -bottom-1 w-[2px] bg-destructive"
+          style={{ left: `${limitPct}%` }}
+          aria-label={`Limit ${limit}%`}
+        />
+      </div>
+      <div className="mt-1 text-[11px] text-text-secondary">
+        Result <span className="text-foreground tabular-nums">{value}%</span> · Limit{" "}
+        <span className="text-destructive tabular-nums">&lt;{limit}%</span>
+      </div>
+    </div>
+  );
+}
+
+function ConsistencyCheck({ offline, online, delta }: { offline: number; online: number; delta: number }) {
+  return (
+    <div className="rounded-md border border-border-tertiary bg-background px-3 py-2 text-[12px]">
+      <div className="grid grid-cols-3 gap-2 text-center">
+        <div>
+          <div className="text-[10px] uppercase tracking-wide text-text-secondary">Offline</div>
+          <div className="tabular-nums text-foreground">{offline.toFixed(2)}</div>
+        </div>
+        <div>
+          <div className="text-[10px] uppercase tracking-wide text-text-secondary">Online (last)</div>
+          <div className="tabular-nums text-foreground">{online.toFixed(2)}</div>
+        </div>
+        <div>
+          <div className="text-[10px] uppercase tracking-wide text-text-secondary">Δ</div>
+          <div className="tabular-nums text-foreground">{delta.toFixed(2)}</div>
+        </div>
+      </div>
+      <div className="mt-2 flex items-center gap-1.5 text-emerald-600">
+        <CheckCircle2 className="h-3.5 w-3.5" />
+        <span>Consistent with online reading</span>
+      </div>
+    </div>
+  );
+}
+
+const SAMPLE_EVIDENCE: Record<string, SampleEvidence> = {
+  "S-042-UF-ret-1": {
+    sampleId: "S-042-UF-ret-1",
+    parameter: "Retentate sample",
+    method: "Manual aliquot, sterile vial",
+    processStep: "Concentration / Diafiltration",
+    result: "See linked QC result",
+    collectedAt: "2025-05-04 12:30 UTC",
+    collectedBy: "J. Smith",
+    location: "UF-03 retentate port",
+  },
+  "S-042-UF-perm-1": {
+    sampleId: "S-042-UF-perm-1",
+    parameter: "Permeate sample",
+    method: "Manual aliquot, sterile vial",
+    processStep: "Diafiltration",
+    result: "See linked QC result",
+    collectedAt: "2025-05-04 12:35 UTC",
+    collectedBy: "J. Smith",
+    location: "UF-03 permeate line",
+  },
+};
+
+function EvidenceDrawer({
+  sampleId, onOpenChange,
+}: { sampleId: string | null; onOpenChange: (open: boolean) => void }) {
+  const ev = sampleId ? SAMPLE_EVIDENCE[sampleId] : null;
+  return (
+    <Sheet open={!!sampleId} onOpenChange={onOpenChange}>
+      <SheetContent side="right" className="w-[380px] sm:max-w-[380px]">
+        <SheetHeader>
+          <div className="flex items-center gap-2">
+            <FlaskConical className="h-4 w-4 text-primary" />
+            <SheetTitle className="text-[15px]">Sample Evidence</SheetTitle>
+          </div>
+          <SheetDescription className="text-[12px]">
+            Placeholder evidence pane for the linked QC sample.
+          </SheetDescription>
+        </SheetHeader>
+        {ev && (
+          <dl className="mt-5 divide-y divide-border-tertiary border-y border-border-tertiary">
+            {[
+              ["Sample ID", ev.sampleId],
+              ["Sample Type", ev.parameter],
+              ["Process Step", ev.processStep],
+              ["Collection Method", ev.method],
+              ["Sampling Location", ev.location],
+              ["Collected At", ev.collectedAt],
+              ["Collected By", ev.collectedBy],
+              ["Linked Result", ev.result],
+            ].map(([label, value]) => (
+              <div key={label} className="px-1 py-2.5 grid grid-cols-[130px_1fr] gap-3">
+                <dt className="text-[11px] uppercase tracking-wide text-text-secondary font-medium">
+                  {label}
+                </dt>
+                <dd className="text-[13px] text-foreground">{value}</dd>
+              </div>
+            ))}
+          </dl>
+        )}
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+function OfflineQCPanel() {
+  const [openSample, setOpenSample] = useState<string | null>(null);
+  return (
+    <div>
+      <div className="flex items-baseline justify-between mb-2">
+        <h3 className="text-section text-foreground">Offline Analytical Results</h3>
+        <span className="text-[11px] text-text-secondary uppercase tracking-wide">
+          Source: Quality metrics sheet
+        </span>
+      </div>
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-3">
+        <QCResultCard
+          parameter="Protein Concentration (FSH)"
+          value="1.9"
+          unit="mg/mL"
+          method="UV280 (offline)"
+          processStep="Concentration"
+          sampleId="S-042-UF-ret-1"
+          statusLabel="Within expected range"
+          onOpenSample={setOpenSample}
+        />
+        <QCResultCard
+          parameter="Aggregate Content (SEC-HPLC)"
+          value="1.4"
+          unit="%"
+          method="SEC-HPLC"
+          processStep="Concentration / Diafiltration"
+          sampleId="S-042-UF-ret-1"
+          statusLabel="Below 2% limit"
+          onOpenSample={setOpenSample}
+        >
+          <AggregateGauge value={1.4} limit={2} />
+        </QCResultCard>
+        <QCResultCard
+          parameter="Buffer Conductivity (Final Retentate)"
+          value="0.3"
+          unit="mS/cm"
+          method="Conductivity meter (offline)"
+          processStep="Diafiltration"
+          sampleId="S-042-UF-perm-1"
+          statusLabel="Consistent with online"
+          onOpenSample={setOpenSample}
+        >
+          <ConsistencyCheck offline={0.3} online={0.31} delta={0.01} />
+        </QCResultCard>
+      </div>
+      <div className="mt-2 flex items-start gap-1.5 text-[11px] text-text-secondary">
+        <Info className="h-3 w-3 mt-0.5 shrink-0" />
+        <span>
+          Offline results are linked to online run via Sample ID. Results must be entered manually
+          or imported from analytical instruments.
+        </span>
+      </div>
+      <EvidenceDrawer sampleId={openSample} onOpenChange={(o) => !o && setOpenSample(null)} />
+    </div>
+  );
+}
+
+/* =========================================================================
    Public view
    ========================================================================= */
 
