@@ -9,6 +9,7 @@ import { PhaseTimeline } from "@/components/cho/PhaseTimeline";
 import { MonitoringCharts } from "@/components/cho/MonitoringCharts";
 import { OfflineMeasurements } from "@/components/cho/OfflineMeasurements";
 import { QCReport } from "@/components/cho/QCReport";
+import { CentrifugeView } from "@/components/cho/CentrifugeView";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 type InstrumentSpec = {
@@ -73,6 +74,8 @@ export default function CHOInstrumentPage({ spec }: Props) {
             <QCReport />
           </TabsContent>
         </Tabs>
+      ) : spec.id === "CFG-003" ? (
+        <CentrifugeView />
       ) : (
         <Card kind="operational" className="p-6">
           <div className="text-[11px] uppercase tracking-wide text-text-secondary font-medium">
