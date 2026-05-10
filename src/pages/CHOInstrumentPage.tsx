@@ -67,6 +67,7 @@ export default function CHOInstrumentPage({ spec }: Props) {
             </div>
           </Card>
           {spec.id === "BR-003-p" && <MonitoringCharts />}
+          {spec.id === "BR-003-p" && <OfflineMeasurements />}
         </div>
         {spec.id === "BR-003-p" && <RunMetadataPanel />}
       </div>
