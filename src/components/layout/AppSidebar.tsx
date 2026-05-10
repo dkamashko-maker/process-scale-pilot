@@ -219,6 +219,15 @@ export function AppSidebar() {
                       <span>UF Skid UF-03</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      className={`${SUB_BASE} cursor-pointer ${isActive("/cho-production-line/campaign-analytics") ? SUB_ACTIVE : ""}`}
+                      onClick={() => navigate("/cho-production-line/campaign-analytics")}
+                    >
+                      <BarChart3 className="h-3.5 w-3.5 flex-shrink-0" />
+                      <span>Campaign Analytics</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
                 </>
               )}
 
