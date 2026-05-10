@@ -533,30 +533,40 @@ function TraceabilityPanel() {
    Public view
    ========================================================================= */
 
-export function CentrifugeView() {
+export function CentrifugeView({ tab = "all" }: { tab?: "monitoring" | "quality" | "all" } = {}) {
+  const showMonitoring = tab === "monitoring" || tab === "all";
+  const showQuality = tab === "quality" || tab === "all";
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 items-start">
       <div className="space-y-6 min-w-0">
-        <SafetyBanner />
+        {showMonitoring && (
+          <>
+            <SafetyBanner />
+            <div>
+              <div className="flex items-baseline justify-between mb-2">
+                <h3 className="text-section text-foreground">Process Parameters</h3>
+                <span className="text-[11px] text-text-secondary uppercase tracking-wide">Live signals</span>
+              </div>
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                <RotationSpeedChart />
+                <TemperatureChart />
+              </div>
+            </div>
+            <CalculatedPanel />
+            <EquipmentHealthPanel />
+          </>
+        )}
 
-        <div>
-          <div className="flex items-baseline justify-between mb-2">
-            <h3 className="text-section text-foreground">Process Parameters</h3>
-            <span className="text-[11px] text-text-secondary uppercase tracking-wide">Live signals</span>
-          </div>
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-            <RotationSpeedChart />
-            <TemperatureChart />
-          </div>
-        </div>
-
-        <CalculatedPanel />
-        <QualityMetricsPanel />
-        <TraceabilityPanel />
-        <EquipmentHealthPanel />
+        {showQuality && (
+          <>
+            <QualityMetricsPanel />
+            <TraceabilityPanel />
+          </>
+        )}
       </div>
 
       <CentrifugeMetadataPanel />
     </div>
   );
 }
+
