@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { RunMetadataPanel } from "@/components/cho/RunMetadataPanel";
+import { PhaseTimeline } from "@/components/cho/PhaseTimeline";
 
 type InstrumentSpec = {
   id: string;
@@ -43,6 +44,12 @@ export default function CHOInstrumentPage({ spec }: Props) {
         }
         meta={spec.meta}
       />
+
+      {spec.id === "BR-003-p" && (
+        <div className="mb-6">
+          <PhaseTimeline />
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 items-start">
         <Card kind="operational" className="p-6">
