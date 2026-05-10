@@ -49,30 +49,43 @@ export default function CHOInstrumentPage({ spec }: Props) {
         meta={spec.meta}
       />
 
-      {spec.id === "BR-003-p" && (
-        <div className="mb-6">
-          <PhaseTimeline />
-        </div>
-      )}
+      {spec.id === "BR-003-p" ? (
+        <Tabs defaultValue="monitoring" className="w-full">
+          <TabsList className="mb-6">
+            <TabsTrigger value="monitoring">Monitoring</TabsTrigger>
+            <TabsTrigger value="qc">QC Report</TabsTrigger>
+          </TabsList>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 items-start">
-        <div className="space-y-6 min-w-0">
-          <Card kind="operational" className="p-6">
-            <div className="text-[11px] uppercase tracking-wide text-text-secondary font-medium">
-              Process Stage
+          <TabsContent value="monitoring" className="mt-0">
+            <div className="mb-6">
+              <PhaseTimeline />
             </div>
-            <div className="text-[15px] text-foreground mt-1">{spec.stage}</div>
-            <div className="mt-4 text-[13px] text-text-secondary">
-              Detailed monitoring, metadata, and ledger views for {spec.equipmentClass.toLowerCase()}{" "}
-              <span className="text-foreground">{spec.id}</span> will appear here once data
-              ingestion is connected.
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 items-start">
+              <div className="space-y-6 min-w-0">
+                <MonitoringCharts />
+                <OfflineMeasurements />
+              </div>
+              <RunMetadataPanel />
             </div>
-          </Card>
-          {spec.id === "BR-003-p" && <MonitoringCharts />}
-          {spec.id === "BR-003-p" && <OfflineMeasurements />}
-        </div>
-        {spec.id === "BR-003-p" && <RunMetadataPanel />}
-      </div>
+          </TabsContent>
+
+          <TabsContent value="qc" className="mt-0">
+            <QCReport />
+          </TabsContent>
+        </Tabs>
+      ) : (
+        <Card kind="operational" className="p-6">
+          <div className="text-[11px] uppercase tracking-wide text-text-secondary font-medium">
+            Process Stage
+          </div>
+          <div className="text-[15px] text-foreground mt-1">{spec.stage}</div>
+          <div className="mt-4 text-[13px] text-text-secondary">
+            Detailed monitoring, metadata, and ledger views for {spec.equipmentClass.toLowerCase()}{" "}
+            <span className="text-foreground">{spec.id}</span> will appear here once data
+            ingestion is connected.
+          </div>
+        </Card>
+      )}
     </div>
   );
 }
