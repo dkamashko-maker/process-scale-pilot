@@ -418,6 +418,118 @@ function EquipmentHealthPanel() {
 }
 
 /* =========================================================================
+   Quality metrics & traceability
+   ========================================================================= */
+
+function QualityMetric({
+  label, value, unit, formula, statusLabel,
+}: { label: string; value: string; unit: string; formula: string; statusLabel: string }) {
+  return (
+    <div className="flex-1 min-w-0 px-4 py-3 rounded-md border border-border-tertiary bg-background">
+      <div className="flex items-center gap-1.5">
+        <span className="text-[11px] uppercase tracking-wide text-text-secondary font-medium">{label}</span>
+        <TooltipProvider delayDuration={150}>
+          <UITooltip>
+            <TooltipTrigger asChild>
+              <button type="button" className="text-text-secondary hover:text-foreground">
+                <Info className="h-3 w-3" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="max-w-[260px] text-[11px]">
+              <span className="font-medium">Formula</span>
+              <div className="mt-0.5 font-mono text-[11px]">{formula}</div>
+            </TooltipContent>
+          </UITooltip>
+        </TooltipProvider>
+      </div>
+      <div className="mt-1.5 flex items-baseline gap-1.5">
+        <span className="text-[24px] text-foreground tabular-nums">{value}</span>
+        <span className="text-[12px] text-text-secondary">{unit}</span>
+      </div>
+      <div className="mt-1.5">
+        <Badge variant="success">{statusLabel}</Badge>
+      </div>
+    </div>
+  );
+}
+
+function QualityMetricsPanel() {
+  return (
+    <Card kind="operational" className="p-4">
+      <div className="flex items-baseline justify-between mb-3">
+        <div>
+          <h3 className="text-section text-foreground">Run Quality Summary</h3>
+          <p className="text-[12px] text-text-secondary">Calculated · Source: Quality metrics sheet</p>
+        </div>
+        <span className="text-[11px] text-text-secondary uppercase tracking-wide">Computed</span>
+      </div>
+      <div className="flex flex-col sm:flex-row gap-3">
+        <QualityMetric
+          label="Yield Recovery"
+          value="94.2"
+          unit="%"
+          formula="(Total protein in centrate) / (Total protein in feed) × 100"
+          statusLabel="On target (>90%)"
+        />
+        <QualityMetric
+          label="Centrate Volume"
+          value="1.16"
+          unit="L"
+          formula="Total feed volume − estimated solids volume"
+          statusLabel="Within expected range"
+        />
+      </div>
+    </Card>
+  );
+}
+
+function TraceabilityRow({
+  direction, label, primary, secondary,
+}: { direction: "upstream" | "downstream"; label: string; primary: string; secondary: string }) {
+  const Icon = direction === "upstream" ? ArrowLeft : ArrowRight;
+  return (
+    <div className="flex items-start gap-3 px-4 py-3">
+      <div className="h-7 w-7 rounded-md bg-accent/40 text-text-secondary flex items-center justify-center shrink-0">
+        <Icon className="h-3.5 w-3.5" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="text-[11px] uppercase tracking-wide text-text-secondary font-medium">{label}</div>
+        <div className="mt-0.5 text-[13px] text-foreground inline-flex items-center gap-1">
+          <span className="underline underline-offset-2 decoration-border-secondary cursor-default">{primary}</span>
+          <ArrowUpRight className="h-3 w-3 text-text-secondary" />
+        </div>
+        <div className="text-[12px] text-text-secondary">{secondary}</div>
+      </div>
+    </div>
+  );
+}
+
+function TraceabilityPanel() {
+  return (
+    <Card kind="operational" className="p-0">
+      <div className="p-4 border-b border-border-tertiary">
+        <h3 className="text-section text-foreground">Batch Traceability</h3>
+        <p className="text-[12px] text-text-secondary">Upstream / downstream linkage</p>
+      </div>
+      <div className="divide-y divide-border-tertiary">
+        <TraceabilityRow
+          direction="upstream"
+          label="Upstream"
+          primary="Bioreactor Run R-456 on BR-003-p"
+          secondary="Harvest volume: 1.225 L"
+        />
+        <TraceabilityRow
+          direction="downstream"
+          label="Downstream"
+          primary="UF/DF Run pending on UF-03"
+          secondary="Input volume: 1.16 L"
+        />
+      </div>
+    </Card>
+  );
+}
+
+/* =========================================================================
    Public view
    ========================================================================= */
 
@@ -439,6 +551,8 @@ export function CentrifugeView() {
         </div>
 
         <CalculatedPanel />
+        <QualityMetricsPanel />
+        <TraceabilityPanel />
         <EquipmentHealthPanel />
       </div>
 
