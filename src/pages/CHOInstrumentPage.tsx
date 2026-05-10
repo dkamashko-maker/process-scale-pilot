@@ -45,6 +45,12 @@ export default function CHOInstrumentPage({ spec }: Props) {
         meta={spec.meta}
       />
 
+      {spec.id === "BR-003-p" && (
+        <div className="mb-6">
+          <PhaseTimeline />
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 items-start">
         <Card kind="operational" className="p-6">
           <div className="text-[11px] uppercase tracking-wide text-text-secondary font-medium">
