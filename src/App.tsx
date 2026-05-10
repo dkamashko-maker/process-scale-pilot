@@ -76,6 +76,7 @@ const App = () => {
                   <Route path="/metadata/rebuild" element={<RebuildPage />} />
                   <Route path="/metadata/configurator" element={<MetadataConfiguratorPage />} />
                   <Route path="/reports" element={<ReportsPage />} />
+                  <Route path="/alerts" element={<AlertsPage />} />
                   <Route path="/ai" element={<AIPage />} />
                   <Route path="/cho-production-line" element={<CHOProductionLinePage />} />
                   <Route path="/cho-production-line/bioreactor" element={<CHOInstrumentPage spec={BIOREACTOR_SPEC} />} />
