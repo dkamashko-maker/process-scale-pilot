@@ -76,6 +76,10 @@ const App = () => {
                   <Route path="/metadata/configurator" element={<MetadataConfiguratorPage />} />
                   <Route path="/reports" element={<ReportsPage />} />
                   <Route path="/ai" element={<AIPage />} />
+                  <Route path="/cho-production-line" element={<CHOProductionLinePage />} />
+                  <Route path="/cho-production-line/bioreactor" element={<CHOInstrumentPage spec={BIOREACTOR_SPEC} />} />
+                  <Route path="/cho-production-line/centrifuge" element={<CHOInstrumentPage spec={CENTRIFUGE_SPEC} />} />
+                  <Route path="/cho-production-line/ultrafiltration" element={<CHOInstrumentPage spec={UF_SPEC} />} />
                   <Route path="/admin" element={<AdminPage />} />
                 </Route>
                 <Route path="*" element={<NotFound />} />
