@@ -12,6 +12,8 @@ type Stage = {
   status: "Active" | "Complete";
   route: string;
   icon: typeof FlaskConical;
+  openAlerts: number;
+  oos?: boolean;
 };
 
 const STAGES: Stage[] = [
@@ -23,6 +25,8 @@ const STAGES: Stage[] = [
     status: "Active",
     route: "/cho-production-line/bioreactor",
     icon: FlaskConical,
+    openAlerts: 1,
+    oos: true,
   },
   {
     id: "CFG-003",
@@ -32,6 +36,7 @@ const STAGES: Stage[] = [
     status: "Complete",
     route: "/cho-production-line/centrifuge",
     icon: Filter,
+    openAlerts: 0,
   },
   {
     id: "UF-03",
@@ -41,6 +46,7 @@ const STAGES: Stage[] = [
     status: "Complete",
     route: "/cho-production-line/ultrafiltration",
     icon: Droplets,
+    openAlerts: 0,
   },
 ];
 
