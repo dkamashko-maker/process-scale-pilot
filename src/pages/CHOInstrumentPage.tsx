@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { RunMetadataPanel } from "@/components/cho/RunMetadataPanel";
 import { PhaseTimeline } from "@/components/cho/PhaseTimeline";
 import { MonitoringCharts } from "@/components/cho/MonitoringCharts";
+import { OfflineMeasurements } from "@/components/cho/OfflineMeasurements";
 
 type InstrumentSpec = {
   id: string;
