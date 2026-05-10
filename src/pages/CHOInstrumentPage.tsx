@@ -74,6 +74,8 @@ export default function CHOInstrumentPage({ spec }: Props) {
             <QCReport />
           </TabsContent>
         </Tabs>
+      ) : spec.id === "CFG-003" ? (
+        <CentrifugeView />
       ) : (
         <Card kind="operational" className="p-6">
           <div className="text-[11px] uppercase tracking-wide text-text-secondary font-medium">
