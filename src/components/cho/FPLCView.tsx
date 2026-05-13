@@ -5,7 +5,11 @@ import {
 } from "recharts";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ExternalLink, AlertTriangle } from "lucide-react";
+import { ExternalLink, AlertTriangle, Info } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import {
+  Tooltip as UITooltip, TooltipContent, TooltipTrigger, TooltipProvider,
+} from "@/components/ui/tooltip";
 
 /* =========================================================================
    Source data — Sensors Params sheet (CHO_ds_FPLC.xlsx)
@@ -422,17 +426,209 @@ function SetpointsPanel() {
 }
 
 /* =========================================================================
+   Quality Results — sourced from "Quality metrics" sheet
+   ========================================================================= */
+
+type QC = {
+  metric: string;
+  result: string;
+  spec: string;
+  method: string;
+  formula?: string;
+};
+
+const QC_RESULTS: QC[] = [
+  { metric: "Peak Resolution (FSH vs impurity)", result: "1.7",   spec: "≥ 1.5",         method: "Calculated from UV trace" },
+  { metric: "Purity by RP-HPLC",                 result: "96.8 %", spec: "≥ 95.0 %",     method: "Analytical HPLC" },
+  { metric: "FSH Concentration in pool",         result: "940 IU/mL", spec: "500 – 1500 IU/mL", method: "ELISA (FSH-specific)" },
+  { metric: "Total Protein in pool",             result: "38.5 mg",   spec: "25 – 60 mg", method: "Bradford assay" },
+  { metric: "Recovery Yield",                    result: "85.6 %",    spec: "≥ 75 %",
+    method: "Calculated",
+    formula: "Total activity in pool / Total activity loaded × 100\n= (940 IU/mL × ~41 mL pool) / (5200 IU/mL × 120 mL loaded) × 100\n= 85.6 %" },
+  { metric: "Host Cell Protein (HCP) residual",  result: "12 ng/mg FSH", spec: "≤ 50 ng/mg", method: "HCP ELISA" },
+  { metric: "Endotoxin level",                   result: "0.8 EU/mg",    spec: "≤ 5.0 EU/mg", method: "LAL test" },
+];
+
+function QCResultsTable() {
+  return (
+    <Card kind="operational" className="p-0 overflow-hidden">
+      <div className="p-4 border-b border-border-tertiary flex items-baseline justify-between">
+        <div>
+          <h3 className="text-[14px] font-medium text-foreground">QC Results</h3>
+          <p className="text-[12px] text-text-secondary">Source: Quality metrics sheet · 7 of 7 within specification</p>
+        </div>
+        <Badge variant="success">All PASS</Badge>
+      </div>
+      <table className="w-full text-[13px]">
+        <thead>
+          <tr className="text-[11px] uppercase tracking-wide text-text-secondary border-b border-border-tertiary">
+            <th className="text-left font-medium px-4 py-2">Quality Metric</th>
+            <th className="text-left font-medium px-4 py-2">Result</th>
+            <th className="text-left font-medium px-4 py-2">Specification</th>
+            <th className="text-left font-medium px-4 py-2">Status</th>
+            <th className="text-left font-medium px-4 py-2">Method</th>
+          </tr>
+        </thead>
+        <tbody>
+          {QC_RESULTS.map((q) => (
+            <tr key={q.metric} className="border-b border-border-tertiary last:border-b-0">
+              <td className="px-4 py-2.5 text-foreground">
+                <span className="inline-flex items-center gap-1.5">
+                  {q.metric}
+                  {q.formula && (
+                    <UITooltip>
+                      <TooltipTrigger asChild>
+                        <button type="button" className="text-text-secondary hover:text-foreground">
+                          <Info className="h-3 w-3" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="max-w-[340px] text-[11px]">
+                        <span className="font-medium">Calculation</span>
+                        <div className="mt-0.5 font-mono whitespace-pre-line">{q.formula}</div>
+                      </TooltipContent>
+                    </UITooltip>
+                  )}
+                </span>
+              </td>
+              <td className="px-4 py-2.5 tabular-nums text-foreground">{q.result}</td>
+              <td className="px-4 py-2.5 text-text-secondary">{q.spec}</td>
+              <td className="px-4 py-2.5"><Badge variant="success">PASS</Badge></td>
+              <td className="px-4 py-2.5 text-text-secondary">{q.method}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </Card>
+  );
+}
+
+/* =========================================================================
+   Column History panel
+   ========================================================================= */
+
+const RESOLUTION_TREND = [1.9, 1.85, 1.82, 1.78, 1.75, 1.71, 1.7];
+const RESOLUTION_LIMIT = 1.5;
+
+function ResolutionSparkline() {
+  const W = 200, H = 56, PAD = 4;
+  const min = 1.4, max = 2.0;
+  const xs = RESOLUTION_TREND.map((_, i) =>
+    PAD + (i / (RESOLUTION_TREND.length - 1)) * (W - PAD * 2),
+  );
+  const ys = RESOLUTION_TREND.map((v) =>
+    H - PAD - ((v - min) / (max - min)) * (H - PAD * 2),
+  );
+  const path = xs.map((x, i) => `${i === 0 ? "M" : "L"}${x.toFixed(1)},${ys[i].toFixed(1)}`).join(" ");
+  const limitY = H - PAD - ((RESOLUTION_LIMIT - min) / (max - min)) * (H - PAD * 2);
+  return (
+    <svg width={W} height={H} className="overflow-visible">
+      <line
+        x1={PAD} x2={W - PAD} y1={limitY} y2={limitY}
+        stroke="hsl(var(--destructive))" strokeWidth={1} strokeDasharray="3 3"
+      />
+      <path d={path} fill="none" stroke="hsl(217 91% 60%)" strokeWidth={1.5} />
+      {xs.map((x, i) => (
+        <circle
+          key={i} cx={x} cy={ys[i]} r={2}
+          fill={i === xs.length - 1 ? "hsl(217 91% 60%)" : "hsl(var(--card))"}
+          stroke="hsl(217 91% 60%)" strokeWidth={1.25}
+        />
+      ))}
+      <text
+        x={W - PAD} y={limitY - 3} textAnchor="end"
+        fontSize={9} fill="hsl(var(--destructive))"
+      >
+        Limit 1.5
+      </text>
+    </svg>
+  );
+}
+
+function ColumnHistoryPanel() {
+  return (
+    <Card kind="operational" className="p-4">
+      <div className="flex items-baseline justify-between mb-3">
+        <div>
+          <h3 className="text-[14px] font-medium text-foreground">Column History</h3>
+          <p className="text-[12px] text-text-secondary">Reusable consumable tracking</p>
+        </div>
+        <Badge variant="success">Active — Qualified</Badge>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_240px] gap-5">
+        <dl className="grid grid-cols-[160px_1fr] gap-y-2 text-[12px]">
+          <dt className="text-text-secondary">Column ID</dt>
+          <dd className="text-foreground">Capto Q ImpRes, 5 mL, serial 8912</dd>
+          <dt className="text-text-secondary">Column Type</dt>
+          <dd className="text-foreground">Anion Exchange (Capto Q ImpRes)</dd>
+          <dt className="text-text-secondary">Resin Volume</dt>
+          <dd className="text-foreground tabular-nums">5 mL</dd>
+          <dt className="text-text-secondary">Serial Number</dt>
+          <dd className="text-foreground font-mono">8912</dd>
+          <dt className="text-text-secondary">Current Run Count</dt>
+          <dd className="text-foreground tabular-nums">7 <span className="text-text-secondary">(this run is run 7)</span></dd>
+          <dt className="text-text-secondary">Total Volume Processed</dt>
+          <dd className="text-foreground tabular-nums">840 mL <span className="text-text-secondary">(cumulative across 7 runs)</span></dd>
+          <dt className="text-text-secondary">Qualification Status</dt>
+          <dd><Badge variant="success">Qualified</Badge></dd>
+          <dt className="text-text-secondary">Next Qualification Due</dt>
+          <dd className="text-foreground">After run 10 or 1200 mL total volume</dd>
+        </dl>
+
+        <div className="rounded-md border border-border-tertiary bg-background p-3">
+          <div className="text-[11px] uppercase tracking-wide text-text-secondary font-medium mb-1">
+            Performance Trend — Peak Resolution
+          </div>
+          <ResolutionSparkline />
+          <div className="mt-2 text-[11px] text-text-secondary tabular-nums">
+            Runs 1 → 7 · current 1.70
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-4 flex items-start gap-2 rounded-md border border-amber-300/60 bg-amber-50 dark:bg-amber-900/20 px-3 py-2 text-[12px]">
+        <Info className="h-3.5 w-3.5 mt-0.5 text-amber-600 dark:text-amber-300 shrink-0" />
+        <span className="text-foreground">
+          Column performance trending downward over successive runs.
+          Estimated <span className="font-medium">3 runs remaining</span> before re-qualification required.
+        </span>
+      </div>
+    </Card>
+  );
+}
+
+/* =========================================================================
    Public view
    ========================================================================= */
 
+
 export function FPLCView() {
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 items-start">
-      <div className="space-y-6 min-w-0">
-        <Chromatogram />
-        <SetpointsPanel />
-      </div>
-      <FPLCMetadataPanel />
-    </div>
+    <TooltipProvider delayDuration={150}>
+      <Tabs defaultValue="monitoring" className="w-full">
+        <TabsList className="mb-6">
+          <TabsTrigger value="monitoring">Monitoring</TabsTrigger>
+          <TabsTrigger value="quality">Quality Results</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="monitoring" className="mt-0">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 items-start">
+            <div className="space-y-6 min-w-0">
+              <Chromatogram />
+              <SetpointsPanel />
+            </div>
+            <FPLCMetadataPanel />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="quality" className="mt-0">
+          <div className="space-y-6">
+            <QCResultsTable />
+            <ColumnHistoryPanel />
+          </div>
+        </TabsContent>
+      </Tabs>
+    </TooltipProvider>
   );
 }
+
