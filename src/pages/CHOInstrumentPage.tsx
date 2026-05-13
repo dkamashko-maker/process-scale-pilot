@@ -13,6 +13,7 @@ import { CentrifugeView } from "@/components/cho/CentrifugeView";
 import { UltrafiltrationView } from "@/components/cho/UltrafiltrationView";
 import { FPLCView } from "@/components/cho/FPLCView";
 import { DepyrogenationView } from "@/components/cho/DepyrogenationView";
+import { VialWasherView } from "@/components/cho/VialWasherView";
 import { CampaignBreadcrumb } from "@/components/cho/CampaignBreadcrumb";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
