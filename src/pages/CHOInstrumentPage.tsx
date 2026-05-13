@@ -14,6 +14,7 @@ import { UltrafiltrationView } from "@/components/cho/UltrafiltrationView";
 import { FPLCView } from "@/components/cho/FPLCView";
 import { DepyrogenationView } from "@/components/cho/DepyrogenationView";
 import { VialWasherView } from "@/components/cho/VialWasherView";
+import { FillingPumpView } from "@/components/cho/FillingPumpView";
 import { CampaignBreadcrumb } from "@/components/cho/CampaignBreadcrumb";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
@@ -132,6 +133,8 @@ export default function CHOInstrumentPage({ spec }: Props) {
         <DepyrogenationView />
       ) : spec.id === "VW-03" ? (
         <VialWasherView />
+      ) : spec.id === "FP-02" ? (
+        <FillingPumpView />
       ) : (
         <Card kind="operational" className="p-6">
           <div className="text-[11px] uppercase tracking-wide text-text-secondary font-medium">
