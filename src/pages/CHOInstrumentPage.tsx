@@ -133,6 +133,8 @@ export default function CHOInstrumentPage({ spec }: Props) {
         <DepyrogenationView />
       ) : spec.id === "VW-03" ? (
         <VialWasherView />
+      ) : spec.id === "FP-02" ? (
+        <FillingPumpView />
       ) : (
         <Card kind="operational" className="p-6">
           <div className="text-[11px] uppercase tracking-wide text-text-secondary font-medium">
