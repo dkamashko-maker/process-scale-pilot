@@ -188,3 +188,99 @@ export const UF_SPEC: InstrumentSpec = {
     { label: "Product", value: "rhFSH" },
   ],
 };
+
+export const FPLC_SPEC: InstrumentSpec = {
+  id: "FPLC-01",
+  name: "Chromatography FPLC-01",
+  equipmentClass: "FPLC — Anion Exchange Chromatography",
+  stage: "Downstream — Anion Exchange Purification",
+  status: "Complete",
+  refs: [{ primary: "FSH-2025-042-FPLC" }],
+  meta: [
+    { label: "Equipment Class", value: "FPLC System" },
+    { label: "Stage", value: "Downstream" },
+    { label: "Operation", value: "Anion Exchange Purification" },
+    { label: "Feed Source", value: "UF-03" },
+    { label: "Product", value: "rhFSH" },
+  ],
+};
+
+export const VW_SPEC: InstrumentSpec = {
+  id: "VW-03",
+  name: "Vial Washer VW-03",
+  equipmentClass: "Automated Vial Washer",
+  stage: "Container Preparation — Vial Washing",
+  status: "Complete",
+  refs: [{ primary: "FSH-2025-042-VW" }],
+  meta: [
+    { label: "Equipment Class", value: "Vial Washer" },
+    { label: "Stage", value: "Container Preparation" },
+    { label: "Operation", value: "WFI Rinse / Cleaning" },
+    { label: "Feed Source", value: "Empty Vials" },
+    { label: "Product", value: "Cleaned Vials" },
+  ],
+};
+
+export const DPY_SPEC: InstrumentSpec = {
+  id: "DPY-01",
+  name: "Depyrogenation Oven DPY-01",
+  equipmentClass: "Tunnel Depyrogenation Oven",
+  stage: "Container Preparation — Depyrogenation",
+  status: "Complete",
+  refs: [{ primary: "FSH-2025-042-DPY" }],
+  meta: [
+    { label: "Equipment Class", value: "Depyrogenation Oven" },
+    { label: "Stage", value: "Container Preparation" },
+    { label: "Operation", value: "Dry-Heat Sterilization" },
+    { label: "Feed Source", value: "VW-03" },
+    { label: "Product", value: "Sterile Vials" },
+  ],
+};
+
+export const FP_SPEC: InstrumentSpec = {
+  id: "FP-02",
+  name: "Filling Pump FP-02",
+  equipmentClass: "Aseptic Filling Pump",
+  stage: "Fill-Finish — Aseptic Filling",
+  status: "Complete",
+  refs: [{ primary: "FSH-2025-042-FILL" }],
+  meta: [
+    { label: "Equipment Class", value: "Filling Pump" },
+    { label: "Stage", value: "Fill-Finish" },
+    { label: "Operation", value: "Aseptic Filling" },
+    { label: "Feed Source", value: "FPLC-01 + DPY-01" },
+    { label: "Product", value: "Filled Vials" },
+  ],
+};
+
+export const LPZ_SPEC: InstrumentSpec = {
+  id: "LPZ-03",
+  name: "Lyophilizer LPZ-03",
+  equipmentClass: "Freeze Dryer",
+  stage: "Fill-Finish — Lyophilization",
+  status: "Complete",
+  refs: [{ primary: "FSH-2025-042-LYO" }],
+  meta: [
+    { label: "Equipment Class", value: "Lyophilizer" },
+    { label: "Stage", value: "Fill-Finish" },
+    { label: "Operation", value: "Freeze Drying" },
+    { label: "Feed Source", value: "FP-02" },
+    { label: "Product", value: "Lyophilized Vials" },
+  ],
+};
+
+export const CAP_SPEC: InstrumentSpec = {
+  id: "CAP-01",
+  name: "Capping & Labelling CAP-01",
+  equipmentClass: "Capping & Labelling Line",
+  stage: "Fill-Finish — Capping & Labelling",
+  status: "Complete",
+  refs: [{ primary: "FSH-2025-042-CAP" }],
+  meta: [
+    { label: "Equipment Class", value: "Capping & Labelling Line" },
+    { label: "Stage", value: "Fill-Finish" },
+    { label: "Operation", value: "Sealing & Labelling" },
+    { label: "Feed Source", value: "LPZ-03" },
+    { label: "Product", value: "Final Drug Product" },
+  ],
+};
