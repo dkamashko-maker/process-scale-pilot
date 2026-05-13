@@ -127,6 +127,8 @@ export default function CHOInstrumentPage({ spec }: Props) {
         </Tabs>
       ) : spec.id === "FPLC-01" ? (
         <FPLCView />
+      ) : spec.id === "DPY-01" ? (
+        <DepyrogenationView />
       ) : (
         <Card kind="operational" className="p-6">
           <div className="text-[11px] uppercase tracking-wide text-text-secondary font-medium">
