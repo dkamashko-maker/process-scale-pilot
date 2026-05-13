@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, Link2, Wrench, Check } from "lucide-react";
+import { AlertTriangle, Link2, Wrench, Check, ShieldCheck } from "lucide-react";
 import {
   Tooltip as UITooltip, TooltipContent, TooltipTrigger, TooltipProvider,
 } from "@/components/ui/tooltip";
@@ -36,15 +36,15 @@ function FPMetadataPanel() {
             <TooltipTrigger asChild>
               <button
                 type="button"
-                className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 bg-primary/10 text-primary font-mono text-[12px] hover:bg-primary/15"
+                className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 bg-amber-500/10 text-amber-700 dark:text-amber-400 font-mono text-[12px] hover:bg-amber-500/15 border border-amber-500/30"
               >
-                <Link2 className="h-3 w-3" />
+                <ShieldCheck className="h-3 w-3" />
                 TUBE_241014_03
               </button>
             </TooltipTrigger>
-            <TooltipContent side="left" className="max-w-[260px] text-[11px]">
-              <span className="font-medium">Sterilisation record</span>
-              <div className="mt-0.5">Autoclave cycle 2024-10-14 · 121 °C / 30 min</div>
+            <TooltipContent side="left" className="max-w-[280px] text-[11px]">
+              <span className="font-medium">GxP prerequisite record — sterilisation must be confirmed before batch processing begins.</span>
+              <div className="mt-1 text-text-secondary">Autoclave 2024-10-14 · 121 °C / 30 min</div>
               <div className="text-text-secondary">BI: PASS · Cycle qualified</div>
             </TooltipContent>
           </UITooltip>

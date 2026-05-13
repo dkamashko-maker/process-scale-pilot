@@ -168,17 +168,16 @@ function LPZMetadataPanel() {
             <TooltipTrigger asChild>
               <button
                 type="button"
-                className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-mono text-[12px] hover:bg-emerald-500/15"
+                className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 bg-amber-500/10 text-amber-700 dark:text-amber-400 font-mono text-[12px] hover:bg-amber-500/15 border border-amber-500/30"
               >
                 <ShieldCheck className="h-3 w-3" />
                 SIP_241015_02
               </button>
             </TooltipTrigger>
-            <TooltipContent side="left" className="max-w-[260px] text-[11px]">
-              <span className="font-medium">Sterilisation record</span>
-              <div className="mt-1">Steam-in-Place · 2024-10-15</div>
-              <div>121 °C · 30 min hold · F₀ ≥ 15</div>
-              <div className="mt-1 text-text-secondary">Chamber qualified prior to load.</div>
+            <TooltipContent side="left" className="max-w-[280px] text-[11px]">
+              <span className="font-medium">GxP prerequisite record — sterilisation must be confirmed before batch processing begins.</span>
+              <div className="mt-1 text-text-secondary">Steam-in-Place · 2024-10-15</div>
+              <div className="text-text-secondary">121 °C · 30 min hold · F₀ ≥ 15</div>
             </TooltipContent>
           </UITooltip>
         </MetadataField>
