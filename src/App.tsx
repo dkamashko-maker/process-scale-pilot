@@ -83,6 +83,12 @@ const App = () => {
                   <Route path="/cho-production-line/bioreactor" element={<CHOInstrumentPage spec={BIOREACTOR_SPEC} />} />
                   <Route path="/cho-production-line/centrifuge" element={<CHOInstrumentPage spec={CENTRIFUGE_SPEC} />} />
                   <Route path="/cho-production-line/ultrafiltration" element={<CHOInstrumentPage spec={UF_SPEC} />} />
+                  <Route path="/cho-production-line/fplc" element={<CHOInstrumentPage spec={FPLC_SPEC} />} />
+                  <Route path="/cho-production-line/vial-washer" element={<CHOInstrumentPage spec={VW_SPEC} />} />
+                  <Route path="/cho-production-line/depyrogenation" element={<CHOInstrumentPage spec={DPY_SPEC} />} />
+                  <Route path="/cho-production-line/filling-pump" element={<CHOInstrumentPage spec={FP_SPEC} />} />
+                  <Route path="/cho-production-line/lyophilizer" element={<CHOInstrumentPage spec={LPZ_SPEC} />} />
+                  <Route path="/cho-production-line/capping" element={<CHOInstrumentPage spec={CAP_SPEC} />} />
                   <Route path="/cho-production-line/campaign-analytics" element={<CHOCampaignAnalyticsPage />} />
                   <Route path="/admin" element={<AdminPage />} />
                 </Route>
