@@ -5,7 +5,11 @@ import {
 } from "recharts";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ExternalLink, AlertTriangle } from "lucide-react";
+import { ExternalLink, AlertTriangle, Info } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import {
+  Tooltip as UITooltip, TooltipContent, TooltipTrigger, TooltipProvider,
+} from "@/components/ui/tooltip";
 
 /* =========================================================================
    Source data — Sensors Params sheet (CHO_ds_FPLC.xlsx)
