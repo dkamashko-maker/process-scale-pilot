@@ -120,6 +120,28 @@ const FEED: FeedAlert[] = [
     evidenceLabel: "Bioreactor chart timestamp marker",
     evidenceIcon: "chart",
   },
+  {
+    id: "ALR-FP02-MATBAL",
+    instrument: "FP-02",
+    parameter: "Material Balance",
+    observed: "Vials filled (12,500) vs washed (12,000) = +4.2 %",
+    threshold: "> 2 % (cross-instrument)",
+    severity: "HIGH",
+    occurredAt: "2024-10-15 · 07:46",
+    evidenceLabel: "FP-02 vials counter — open investigation",
+    evidenceIcon: "chart",
+  },
+  {
+    id: "ALR-DPY01-EQID",
+    instrument: "DPY-01",
+    parameter: "Equipment ID",
+    observed: "Source shows \"VW-03\", expected unique DPY-01",
+    threshold: "ID ∈ other_instrument_ids",
+    severity: "MEDIUM",
+    occurredAt: "Detected at ingestion · corrected to DPY-01",
+    evidenceLabel: "DPY-01 metadata — source-corrected field",
+    evidenceIcon: "sample",
+  },
 ];
 
 function severityBadge(s: Severity) {
@@ -140,7 +162,12 @@ function severityRowTint(s: Severity) {
 
 function RulesTable() {
   const [query, setQuery] = useState("");
-  const [instrument, setInstrument] = useState<"ALL" | "BR-003-p" | "CFG-003" | "UF-03">("ALL");
+  const [instrument, setInstrument] = useState<string>("ALL");
+
+  const instruments = useMemo(
+    () => Array.from(new Set(RULES.map((r) => r.instrument))),
+    [],
+  );
 
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -150,7 +177,8 @@ function RulesTable() {
       return (
         r.parameter.toLowerCase().includes(q) ||
         r.condition.toLowerCase().includes(q) ||
-        r.threshold.toLowerCase().includes(q)
+        r.threshold.toLowerCase().includes(q) ||
+        r.instrument.toLowerCase().includes(q)
       );
     });
   }, [query, instrument]);
@@ -161,6 +189,8 @@ function RulesTable() {
     high: RULES.filter((r) => r.severity === "HIGH").length,
     medium: RULES.filter((r) => r.severity === "MEDIUM").length,
   }), []);
+
+  const filterOpts = ["ALL", ...instruments];
 
   return (
     <div className="space-y-4">
@@ -175,21 +205,21 @@ function RulesTable() {
             <Badge variant="warning">{counts.high} high</Badge>
             <Badge variant="neutral">{counts.medium} medium</Badge>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="inline-flex rounded-md border border-border-tertiary overflow-hidden">
-              {(["ALL", "BR-003-p", "CFG-003", "UF-03"] as const).map((opt) => (
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="inline-flex flex-wrap rounded-md border border-border-tertiary overflow-hidden">
+              {filterOpts.map((opt) => (
                 <button
                   key={opt}
                   type="button"
                   onClick={() => setInstrument(opt)}
                   className={
-                    "px-2.5 py-1.5 text-[12px] transition-colors " +
+                    "px-2.5 py-1.5 text-[12px] transition-colors border-r border-border-tertiary last:border-r-0 " +
                     (instrument === opt
                       ? "bg-primary/10 text-primary"
                       : "text-text-secondary hover:text-foreground")
                   }
                 >
-                  {opt === "ALL" ? "All instruments" : opt}
+                  {opt === "ALL" ? "All" : opt}
                 </button>
               ))}
             </div>
