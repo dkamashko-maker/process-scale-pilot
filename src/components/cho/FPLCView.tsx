@@ -601,9 +601,6 @@ function ColumnHistoryPanel() {
    Public view
    ========================================================================= */
 
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Tooltip as UITooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
-import { Info } from "lucide-react";
 
 export function FPLCView() {
   return (
