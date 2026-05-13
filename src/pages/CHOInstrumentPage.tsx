@@ -16,6 +16,7 @@ import { DepyrogenationView } from "@/components/cho/DepyrogenationView";
 import { VialWasherView } from "@/components/cho/VialWasherView";
 import { FillingPumpView } from "@/components/cho/FillingPumpView";
 import { LyophilizerView } from "@/components/cho/LyophilizerView";
+import { CappingLabelingView } from "@/components/cho/CappingLabelingView";
 import { CampaignBreadcrumb } from "@/components/cho/CampaignBreadcrumb";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
@@ -138,6 +139,8 @@ export default function CHOInstrumentPage({ spec }: Props) {
         <FillingPumpView />
       ) : spec.id === "LPZ-03" ? (
         <LyophilizerView />
+      ) : spec.id === "CAP-01" ? (
+        <CappingLabelingView />
       ) : (
         <Card kind="operational" className="p-6">
           <div className="text-[11px] uppercase tracking-wide text-text-secondary font-medium">
