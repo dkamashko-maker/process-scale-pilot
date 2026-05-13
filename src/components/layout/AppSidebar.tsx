@@ -235,10 +235,61 @@ export function AppSidebar() {
                       onClick={() => navigate("/cho-production-line/ultrafiltration")}
                     >
                       <Droplets className="h-3.5 w-3.5 flex-shrink-0" />
-                      <span className="flex-1">UF Skid UF-03</span>
-                      <span className="ml-auto inline-flex items-center justify-center min-w-4 h-4 px-1 rounded text-[9px] font-medium bg-secondary text-text-secondary">
-                        0
-                      </span>
+                      <span className="flex-1 truncate min-w-0">UF Skid UF-03</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      className={`${SUB_BASE} cursor-pointer ${isActive("/cho-production-line/fplc") ? SUB_ACTIVE : ""}`}
+                      onClick={() => navigate("/cho-production-line/fplc")}
+                    >
+                      <Beaker className="h-3.5 w-3.5 flex-shrink-0" />
+                      <span className="flex-1 truncate min-w-0">FPLC-01 Chromatography</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      className={`${SUB_BASE} cursor-pointer ${isActive("/cho-production-line/vial-washer") ? SUB_ACTIVE : ""}`}
+                      onClick={() => navigate("/cho-production-line/vial-washer")}
+                    >
+                      <Sparkles className="h-3.5 w-3.5 flex-shrink-0" />
+                      <span className="flex-1 truncate min-w-0">Vial Washer VW-03</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      className={`${SUB_BASE} cursor-pointer ${isActive("/cho-production-line/depyrogenation") ? SUB_ACTIVE : ""}`}
+                      onClick={() => navigate("/cho-production-line/depyrogenation")}
+                    >
+                      <Flame className="h-3.5 w-3.5 flex-shrink-0" />
+                      <span className="flex-1 truncate min-w-0">Depyrogenation DPY-01</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      className={`${SUB_BASE} cursor-pointer ${isActive("/cho-production-line/filling-pump") ? SUB_ACTIVE : ""}`}
+                      onClick={() => navigate("/cho-production-line/filling-pump")}
+                    >
+                      <Syringe className="h-3.5 w-3.5 flex-shrink-0" />
+                      <span className="flex-1 truncate min-w-0">Filling Pump FP-02</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      className={`${SUB_BASE} cursor-pointer ${isActive("/cho-production-line/lyophilizer") ? SUB_ACTIVE : ""}`}
+                      onClick={() => navigate("/cho-production-line/lyophilizer")}
+                    >
+                      <Snowflake className="h-3.5 w-3.5 flex-shrink-0" />
+                      <span className="flex-1 truncate min-w-0">Lyophilizer LPZ-03</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      className={`${SUB_BASE} cursor-pointer ${isActive("/cho-production-line/capping") ? SUB_ACTIVE : ""}`}
+                      onClick={() => navigate("/cho-production-line/capping")}
+                    >
+                      <Tag className="h-3.5 w-3.5 flex-shrink-0" />
+                      <span className="flex-1 truncate min-w-0">Capping CAP-01</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                   <SidebarMenuItem>
