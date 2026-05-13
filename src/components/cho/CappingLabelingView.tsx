@@ -4,6 +4,7 @@ import { AlertTriangle, Info, Link2, Tag } from "lucide-react";
 import {
   Tooltip as UITooltip, TooltipContent, TooltipTrigger, TooltipProvider,
 } from "@/components/ui/tooltip";
+import { QualitativeResultCard } from "./QualitativeResultCard";
 
 /* =========================================================================
    Metadata panel
@@ -278,23 +279,16 @@ function InspectionSignals() {
    Quality results
    ========================================================================= */
 function QualityResults() {
-  const items = [
+  const qualitative = [
     {
       name: "Crimp Seal Integrity",
       result: "No visible gaps, cap rotates < 90° under finger torque",
       method: "Visual + torque tester (every 100 vials)",
-      qualitative: true,
     },
     {
       name: "Label Adhesion",
       result: "No lifting or wrinkling after 1 hour at room temperature",
       method: "Peel test / visual inspection",
-      qualitative: true,
-    },
-    {
-      name: "Barcode Readability",
-      result: "100% readable",
-      method: "Automated in-line verifier",
     },
   ];
   return (
@@ -307,23 +301,23 @@ function QualityResults() {
         <Badge variant="success">PASS</Badge>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-border-tertiary">
-        {items.map((it) => (
-          <div key={it.name} className="p-4">
-            <div className="flex items-center gap-1.5">
-              <span className="text-[11px] uppercase tracking-wide text-text-secondary font-medium">
-                {it.name}
-              </span>
-              {it.qualitative && <Badge variant="neutral" className="ml-1">Qualitative</Badge>}
-            </div>
-            <div className="mt-1.5 text-[13px] text-foreground">{it.result}</div>
-            <dl className="mt-3 grid grid-cols-[90px_1fr] gap-y-1 text-[12px]">
-              <dt className="text-text-secondary">Method</dt>
-              <dd className="text-foreground">{it.method}</dd>
-              <dt className="text-text-secondary">Status</dt>
-              <dd><Badge variant="success">PASS</Badge></dd>
-            </dl>
-          </div>
+        {qualitative.map((it) => (
+          <QualitativeResultCard key={it.name} name={it.name} result={it.result} method={it.method} />
         ))}
+        {/* Numeric — barcode readability */}
+        <div className="p-4">
+          <div className="text-[11px] uppercase tracking-wide text-text-secondary font-medium">
+            Barcode Readability
+          </div>
+          <div className="mt-1 flex items-baseline gap-1.5">
+            <span className="text-[26px] text-foreground tabular-nums">100</span>
+            <span className="text-[12px] text-text-secondary">% readable</span>
+          </div>
+          <dl className="mt-3 grid grid-cols-[90px_1fr] gap-y-1 text-[12px]">
+            <dt className="text-text-secondary">Method</dt><dd className="text-foreground">Automated in-line verifier</dd>
+            <dt className="text-text-secondary">Status</dt><dd><Badge variant="success">PASS</Badge></dd>
+          </dl>
+        </div>
       </div>
     </Card>
   );
