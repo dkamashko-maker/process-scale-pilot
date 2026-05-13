@@ -8,6 +8,7 @@ import { Info, Link2, ShieldCheck } from "lucide-react";
 import {
   Tooltip as UITooltip, TooltipContent, TooltipTrigger, TooltipProvider,
 } from "@/components/ui/tooltip";
+import { QualitativeResultCard } from "./QualitativeResultCard";
 
 /* =========================================================================
    Cycle: ~10.25 h (615 min)
@@ -168,17 +169,16 @@ function LPZMetadataPanel() {
             <TooltipTrigger asChild>
               <button
                 type="button"
-                className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-mono text-[12px] hover:bg-emerald-500/15"
+                className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 bg-amber-500/10 text-amber-700 dark:text-amber-400 font-mono text-[12px] hover:bg-amber-500/15 border border-amber-500/30"
               >
                 <ShieldCheck className="h-3 w-3" />
                 SIP_241015_02
               </button>
             </TooltipTrigger>
-            <TooltipContent side="left" className="max-w-[260px] text-[11px]">
-              <span className="font-medium">Sterilisation record</span>
-              <div className="mt-1">Steam-in-Place · 2024-10-15</div>
-              <div>121 °C · 30 min hold · F₀ ≥ 15</div>
-              <div className="mt-1 text-text-secondary">Chamber qualified prior to load.</div>
+            <TooltipContent side="left" className="max-w-[280px] text-[11px]">
+              <span className="font-medium">GxP prerequisite record — sterilisation must be confirmed before batch processing begins.</span>
+              <div className="mt-1 text-text-secondary">Steam-in-Place · 2024-10-15</div>
+              <div className="text-text-secondary">121 °C · 30 min hold · F₀ ≥ 15</div>
             </TooltipContent>
           </UITooltip>
         </MetadataField>
@@ -467,19 +467,12 @@ function ConvergencePanel() {
    Quality results
    ========================================================================= */
 function QualityResults() {
-  const items = [
+  const qualitative = [
     {
       name: "Cake Appearance",
       result: "White to off-white, uniform, intact, no collapse or shrinkage",
       spec: "Uniform cake, no collapse / shrinkage",
       method: "Visual inspection",
-      qualitative: true,
-    },
-    {
-      name: "Residual Moisture",
-      result: "≤ 1.0 %",
-      spec: "≤ 1.0 %",
-      method: "Karl Fischer titration",
     },
     {
       name: "Reconstitution Time",
@@ -498,31 +491,36 @@ function QualityResults() {
         <Badge variant="success">PASS</Badge>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-border-tertiary">
-        {items.map((it) => (
-          <div key={it.name} className="p-4">
-            <div className="flex items-center gap-1.5">
-              <span className="text-[11px] uppercase tracking-wide text-text-secondary font-medium">
-                {it.name}
-              </span>
-              {it.qualitative && <Badge variant="neutral" className="ml-1">Qualitative</Badge>}
-            </div>
-            <div className="mt-1.5 text-[13px] text-foreground">{it.result}</div>
-            <dl className="mt-3 grid grid-cols-[90px_1fr] gap-y-1 text-[12px]">
-              <dt className="text-text-secondary">Spec</dt>
-              <dd className="text-foreground">{it.spec}</dd>
-              <dt className="text-text-secondary">Method</dt>
-              <dd className="text-foreground">{it.method}</dd>
-              <dt className="text-text-secondary">Status</dt>
-              <dd><Badge variant="success">PASS</Badge></dd>
-            </dl>
-          </div>
+        {qualitative.map((it) => (
+          <QualitativeResultCard
+            key={it.name}
+            name={it.name}
+            result={it.result}
+            spec={it.spec}
+            method={it.method}
+          />
         ))}
+        {/* Numeric result */}
+        <div className="p-4">
+          <div className="text-[11px] uppercase tracking-wide text-text-secondary font-medium">
+            Residual Moisture
+          </div>
+          <div className="mt-1 flex items-baseline gap-1.5">
+            <span className="text-[26px] text-foreground tabular-nums">≤ 1.0</span>
+            <span className="text-[12px] text-text-secondary">%</span>
+          </div>
+          <dl className="mt-3 grid grid-cols-[90px_1fr] gap-y-1 text-[12px]">
+            <dt className="text-text-secondary">Spec</dt><dd className="text-foreground">≤ 1.0 %</dd>
+            <dt className="text-text-secondary">Method</dt><dd className="text-foreground">Karl Fischer titration</dd>
+            <dt className="text-text-secondary">Status</dt><dd><Badge variant="success">PASS</Badge></dd>
+          </dl>
+        </div>
       </div>
       <div className="px-4 py-2.5 border-t border-border-tertiary flex items-start gap-2 bg-muted/30">
         <Info className="h-3.5 w-3.5 mt-0.5 text-text-secondary shrink-0" />
         <p className="text-[11px] text-text-secondary">
-          Cake Appearance is a qualitative text-based outcome — recorded as a structured
-          attribute rather than a numeric measurement.
+          Qualitative results (quoted) are recorded as structured text attributes,
+          distinct from numeric pass/fail measurements.
         </p>
       </div>
     </Card>

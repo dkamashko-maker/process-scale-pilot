@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { LogOut } from "lucide-react";
+import { GlobalCampaignBanner } from "./GlobalCampaignBanner";
 
 function SidebarAutoCollapse() {
   const location = useLocation();
@@ -59,6 +60,7 @@ export function AppLayout({ children }: AppLayoutProps) {
             </div>
           </header>
           <main className="flex-1 overflow-auto bg-muted/30">
+            <GlobalCampaignBanner />
             {children}
           </main>
         </div>

@@ -202,13 +202,18 @@ export function AppSidebar() {
                       <span className="flex-1">Campaign Overview</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
+
+                  {/* Drug Substance stream */}
+                  <div className="px-3 mt-2 mb-1 text-[10px] uppercase tracking-wide text-text-secondary font-medium">
+                    Drug Substance
+                  </div>
                   <SidebarMenuItem>
                     <SidebarMenuButton
                       className={`${SUB_BASE} cursor-pointer ${isActive("/cho-production-line/bioreactor") ? SUB_ACTIVE : ""}`}
                       onClick={() => navigate("/cho-production-line/bioreactor")}
                     >
                       <FlaskConical className="h-3.5 w-3.5 flex-shrink-0" />
-                      <span className="flex-1 truncate min-w-0">Bioreactor BR-003-p</span>
+                      <span className="flex-1 truncate min-w-0">BR-003-p Bioreactor</span>
                       <span className="flex-shrink-0 inline-flex items-center justify-center min-w-4 h-4 px-1 rounded text-[9px] font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
                         1
                       </span>
@@ -223,10 +228,7 @@ export function AppSidebar() {
                       onClick={() => navigate("/cho-production-line/centrifuge")}
                     >
                       <FilterIcon className="h-3.5 w-3.5 flex-shrink-0" />
-                      <span className="flex-1">Centrifuge CFG-003</span>
-                      <span className="ml-auto inline-flex items-center justify-center min-w-4 h-4 px-1 rounded text-[9px] font-medium bg-secondary text-text-secondary">
-                        0
-                      </span>
+                      <span className="flex-1">CFG-003 Centrifuge</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                   <SidebarMenuItem>
@@ -235,7 +237,7 @@ export function AppSidebar() {
                       onClick={() => navigate("/cho-production-line/ultrafiltration")}
                     >
                       <Droplets className="h-3.5 w-3.5 flex-shrink-0" />
-                      <span className="flex-1 truncate min-w-0">UF Skid UF-03</span>
+                      <span className="flex-1 truncate min-w-0">UF-03 Ultrafiltration</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                   <SidebarMenuItem>
@@ -249,11 +251,25 @@ export function AppSidebar() {
                   </SidebarMenuItem>
                   <SidebarMenuItem>
                     <SidebarMenuButton
+                      className={`${SUB_BASE} cursor-pointer pl-9 ${location.pathname === "/cho-production-line/fplc" && location.search.includes("tab=column") ? SUB_ACTIVE : ""}`}
+                      onClick={() => navigate("/cho-production-line/fplc?tab=column")}
+                    >
+                      <ClipboardList className="h-3 w-3 flex-shrink-0" />
+                      <span className="flex-1 truncate min-w-0 text-[12px]">Column History</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+
+                  {/* Container Preparation stream */}
+                  <div className="px-3 mt-2 mb-1 text-[10px] uppercase tracking-wide text-text-secondary font-medium">
+                    Container Preparation
+                  </div>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
                       className={`${SUB_BASE} cursor-pointer ${isActive("/cho-production-line/vial-washer") ? SUB_ACTIVE : ""}`}
                       onClick={() => navigate("/cho-production-line/vial-washer")}
                     >
                       <Sparkles className="h-3.5 w-3.5 flex-shrink-0" />
-                      <span className="flex-1 truncate min-w-0">Vial Washer VW-03</span>
+                      <span className="flex-1 truncate min-w-0">VW-03 Vial Washer</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                   <SidebarMenuItem>
@@ -262,16 +278,24 @@ export function AppSidebar() {
                       onClick={() => navigate("/cho-production-line/depyrogenation")}
                     >
                       <Flame className="h-3.5 w-3.5 flex-shrink-0" />
-                      <span className="flex-1 truncate min-w-0">Depyrogenation DPY-01</span>
+                      <span className="flex-1 truncate min-w-0">DPY-01 Depyrogenation</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
+
+                  {/* Fill-Finish stream */}
+                  <div className="px-3 mt-2 mb-1 text-[10px] uppercase tracking-wide text-text-secondary font-medium">
+                    Fill-Finish
+                  </div>
                   <SidebarMenuItem>
                     <SidebarMenuButton
                       className={`${SUB_BASE} cursor-pointer ${isActive("/cho-production-line/filling-pump") ? SUB_ACTIVE : ""}`}
                       onClick={() => navigate("/cho-production-line/filling-pump")}
                     >
                       <Syringe className="h-3.5 w-3.5 flex-shrink-0" />
-                      <span className="flex-1 truncate min-w-0">Filling Pump FP-02</span>
+                      <span className="flex-1 truncate min-w-0">FP-02 Filling Pump</span>
+                      <span className="flex-shrink-0 inline-flex items-center justify-center min-w-4 h-4 px-1 rounded text-[9px] font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
+                        1
+                      </span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                   <SidebarMenuItem>
@@ -280,7 +304,7 @@ export function AppSidebar() {
                       onClick={() => navigate("/cho-production-line/lyophilizer")}
                     >
                       <Snowflake className="h-3.5 w-3.5 flex-shrink-0" />
-                      <span className="flex-1 truncate min-w-0">Lyophilizer LPZ-03</span>
+                      <span className="flex-1 truncate min-w-0">LPZ-03 Lyophilizer</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                   <SidebarMenuItem>
@@ -289,9 +313,14 @@ export function AppSidebar() {
                       onClick={() => navigate("/cho-production-line/capping")}
                     >
                       <Tag className="h-3.5 w-3.5 flex-shrink-0" />
-                      <span className="flex-1 truncate min-w-0">Capping CAP-01</span>
+                      <span className="flex-1 truncate min-w-0">CAP-01 Capping &amp; Labelling</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
+
+                  {/* Cross-cutting */}
+                  <div className="px-3 mt-2 mb-1 text-[10px] uppercase tracking-wide text-text-secondary font-medium">
+                    Cross-cutting
+                  </div>
                   <SidebarMenuItem>
                     <SidebarMenuButton
                       className={`${SUB_BASE} cursor-pointer ${isActive("/cho-production-line/campaign-analytics") ? SUB_ACTIVE : ""}`}

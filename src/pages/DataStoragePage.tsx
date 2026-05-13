@@ -17,6 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { OverviewHeader } from "@/components/shared/PageHeader";
 import { CampaignLedgerPanel } from "@/components/cho/CampaignLedgerPanel";
+import { DataQualityLog } from "@/components/cho/DataQualityLog";
 import { useAuth } from "@/contexts/AuthContext";
 import { getDataRecords, createCorrectionRecord, getCorrectionsFor } from "@/data/dataRecords";
 import { INTERFACES, RUNS } from "@/data/runData";
@@ -171,6 +172,8 @@ export default function DataStoragePage() {
             </span>
           }
         />
+
+        <DataQualityLog />
 
         {/* KPI strip — Summary card style */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
