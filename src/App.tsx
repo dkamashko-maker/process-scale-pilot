@@ -26,7 +26,7 @@ import LoginPage from "./pages/LoginPage";
 import SensorMapPage from "./pages/SensorMapPage";
 import MaterialFlowPage from "./pages/MaterialFlowPage";
 import CHOProductionLinePage from "./pages/CHOProductionLinePage";
-import CHOInstrumentPage, { BIOREACTOR_SPEC, CENTRIFUGE_SPEC, UF_SPEC } from "./pages/CHOInstrumentPage";
+import CHOInstrumentPage, { BIOREACTOR_SPEC, CENTRIFUGE_SPEC, UF_SPEC, FPLC_SPEC, VW_SPEC, DPY_SPEC, FP_SPEC, LPZ_SPEC, CAP_SPEC } from "./pages/CHOInstrumentPage";
 import CHOCampaignAnalyticsPage from "./pages/CHOCampaignAnalyticsPage";
 import NotFound from "./pages/NotFound";
 
