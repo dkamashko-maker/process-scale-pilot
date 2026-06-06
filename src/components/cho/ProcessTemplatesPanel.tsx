@@ -181,27 +181,8 @@ export function ProcessTemplatesPanel() {
 
       {/* Active template */}
       <div className="rounded-md border border-border-tertiary">
-        <div className="px-4 py-3 border-b border-border-tertiary flex items-center gap-3 flex-wrap">
-          <div className="flex items-center gap-2">
-            <active.Icon className="h-4 w-4 text-primary" />
-            <span className="text-[14px] font-medium text-foreground">{active.label}</span>
-            <Badge variant="neutral" className="font-mono">{active.short}</Badge>
-          </div>
-          <div className="text-[11px] text-text-secondary">
-            Source: <span className="font-mono">{active.source}</span>
-          </div>
-          <div className="ml-auto flex items-center gap-3">
-            <span className="text-[11px] text-text-secondary">
-              {requiredCount} required · {optionalCount} optional
-            </span>
-            <CompletenessBar score={scores[active.id]} />
-            {scores[active.id] === 100 && (
-              <Badge variant="success">
-                <CheckCircle2 className="h-3 w-3 mr-1" />
-                Complete
-              </Badge>
-            )}
-          </div>
+        <div className="px-4 py-3 border-b border-border-tertiary">
+          <h4 className="text-[14px] font-medium text-foreground">Template Constructor</h4>
         </div>
 
         <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-3">
