@@ -31,6 +31,22 @@ const CLUSTER_ORDER: { id: ParameterDef["type_priority"]; label: string }[] = [
 
 const EVENT_TYPES = ["FEED", "BASE_ADDITION", "ANTIFOAM", "INDUCER", "ADDITIVE", "HARVEST", "SAMPLE", "NOTE"];
 
+/** Build a contextual deep-link into the existing AI/Insights flow for a run. */
+function buildAiAnalysisUrl(run: (typeof RUNS)[number], prompt?: string): string {
+  // Derive equipment identity from the bioreactor run label (e.g. "#002").
+  const equipmentId = run.bioreactor_run.includes("#001") ? "UP-001" : "UP-002";
+  const equipmentName = run.bioreactor_run.split("—")[0].trim();
+  const params = new URLSearchParams({
+    source: "monitoring",
+    equipmentId,
+    equipmentName,
+    runId: run.run_id,
+    batchId: run.batch_id,
+  });
+  if (prompt) params.set("prompt", prompt);
+  return `/ai?${params.toString()}`;
+}
+
 export default function RunMonitorPage() {
   const { runId } = useParams<{ runId: string }>();
   const navigate = useNavigate();
