@@ -88,7 +88,10 @@ export default function RunMonitorPage() {
   const run = RUNS.find((r) => r.run_id === runId);
   const timeseries = useMemo(() => (run ? getTimeseries(run.run_id) : []), [run]);
   const runEvents = useMemo(
-    () => events.filter((e) => e.run_id === runId).sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()),
+    () => events
+      .filter((e) => e.run_id === runId)
+      .filter((e) => !(e.event_type === "HARVEST" && e.notes?.toLowerCase().includes("end of run")))
+      .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()),
     [events, runId]
   );
 
