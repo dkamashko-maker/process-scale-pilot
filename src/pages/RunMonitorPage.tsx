@@ -386,6 +386,39 @@ export default function RunMonitorPage() {
         </div>
       </div>
 
+      {/* ── Recent Process Events ── */}
+      <Card className="p-3">
+        <div className="flex items-center gap-3 overflow-x-auto">
+          <span className="text-[11px] uppercase tracking-wide text-text-secondary font-medium shrink-0">
+            Recent process events
+          </span>
+          {eventMarkers.length === 0 ? (
+            <span className="text-[12px] text-text-tertiary">No recent events</span>
+          ) : (
+            eventMarkers.slice(-4).reverse().map((evt, i, arr) => (
+              <div key={evt.id} className="flex items-center gap-3">
+                <div className="flex items-center gap-1.5 text-[12px] text-foreground shrink-0">
+                  <span className="text-text-secondary">
+                    {evt.event_type.replace(/_/g, " ").toLowerCase().replace(/^\w/, (c) => c.toUpperCase())}
+                  </span>
+                  <span className="text-text-tertiary">—</span>
+                  <span className="tabular-nums">h{evt.elapsed_h.toFixed(1)}</span>
+                  {evt.amount != null && (
+                    <>
+                      <span className="text-text-tertiary">—</span>
+                      <span className="tabular-nums">{evt.amount} {evt.amount_unit}</span>
+                    </>
+                  )}
+                </div>
+                {i < arr.length - 1 && (
+                  <span className="h-3 w-px bg-[hsl(var(--border-tertiary))] shrink-0" />
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      </Card>
+
       {/* ── Event Log ── */}
       <ChartCard
         title="Event Log"
