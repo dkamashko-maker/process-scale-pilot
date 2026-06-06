@@ -71,7 +71,13 @@ export default function DataStoragePage() {
   // Filters
   const [interfaceFilter, setInterfaceFilter]       = useState<string>(searchParams.get("equipment") || searchParams.get("interface") || "all");
   const [typeFilter, setTypeFilter]                 = useState<string>("all");
-  const [runFilter, setRunFilter]                   = useState<string>(searchParams.get("runId") || "all");
+  const [runFilter, setRunFilter]                   = useState<string>(() => {
+    const rid = searchParams.get("runId");
+    // Only prefilter by run if records actually exist for it, so the page never
+    // lands on an empty view from stale context.
+    if (rid && getDataRecords().some((r) => r.linked_run_id === rid)) return rid;
+    return "all";
+  });
   const [sourceFilter, setSourceFilter]             = useState<string>("all");   // entry mode (renamed from "completeness")
   const [flagFilter, setFlagFilter]                 = useState<string>("all");
   const [severityFilter, setSeverityFilter]         = useState<"all" | AlertSeverity>("all");
