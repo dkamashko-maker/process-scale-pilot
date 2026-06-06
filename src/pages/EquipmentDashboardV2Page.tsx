@@ -11,7 +11,7 @@ import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
 } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
-import { OverviewHeader } from "@/components/shared/PageHeader";
+
 import { KpiCard } from "@/components/shared/KpiCard";
 import {
   EQUIPMENT, getFleetKpis, getRecentAlertsForEquipment,
