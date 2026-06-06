@@ -247,7 +247,7 @@ export default function AIPage() {
 
           {/* ─── AI Assistant ─── */}
           <TabsContent value="assistant" className="space-y-0">
-            <AiAssistantChat contextualPrompts={contextPrompts} />
+            <AiAssistantChat contextualPrompts={contextPrompts} seededPrompt={seededPrompt} />
           </TabsContent>
 
           {/* ─── Insights Feed ─── */}
