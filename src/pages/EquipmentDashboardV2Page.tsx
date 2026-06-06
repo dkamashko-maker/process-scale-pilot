@@ -484,22 +484,10 @@ export default function EquipmentDashboardV2Page() {
         </div>
       </div>
 
-      {/* KPI summary strip — Summary card style */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-        <SummaryTile
-          label="Connected"
-          value={kpis.connected}
-          Icon={Wifi}
-          tone="primary"
-          trend={connectedTrend}
-        />
-        <SummaryTile
-          label="Active"
-          value={kpis.active}
-          Icon={Activity}
-          tone="active"
-          trend={activeTrend}
-        />
+      {/* KPI summary strip — compact, aligned, reconciled with category tabs */}
+      <div className="-mt-2 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        <SummaryTile label="Total equipment" value={kpis.total} Icon={Layers} tone="primary" />
+        <SummaryTile label="Active" value={kpis.active} Icon={Activity} tone="active" trend={activeTrend} />
         <SummaryTile label="Idle" value={kpis.idle} Icon={CircleDot} tone="idle" />
         <SummaryTile
           label="With alerts"
@@ -510,10 +498,10 @@ export default function EquipmentDashboardV2Page() {
         />
         <SummaryTile
           label="Uploads today"
-          value={kpis.analyticalUploadsToday}
+          value={kpis.uploadsToday}
           Icon={UploadCloud}
           tone="primary"
-          demoted={kpis.analyticalUploadsToday === 0}
+          demoted={kpis.uploadsToday === 0}
         />
       </div>
 
