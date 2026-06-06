@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import { differenceInHours, format } from "date-fns";
 import {
@@ -98,6 +98,7 @@ function buildContextualPrompts(ctx: ReturnType<typeof getActiveRunContext>, ins
 
 export default function AIPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [, setTick] = useState(0);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [bannerDismissed, setBannerDismissed] = useState<boolean>(() => {
@@ -108,6 +109,18 @@ export default function AIPage() {
   const insights = useMemo(() => getInsights(), []);
   const activeCtx = useMemo(() => getActiveRunContext(), []);
   const contextPrompts = useMemo(() => buildContextualPrompts(activeCtx, insights), [activeCtx, insights]);
+
+  // Lightweight contextual navigation: when launched from the monitoring page,
+  // pre-seed the assistant with an initial prompt scoped to the current run.
+  const seededPrompt = useMemo(() => {
+    const explicit = searchParams.get("prompt");
+    if (explicit) return explicit;
+    if (searchParams.get("source") !== "monitoring") return undefined;
+    const equipmentName = searchParams.get("equipmentName");
+    const runLabel = searchParams.get("runLabel");
+    if (!equipmentName) return undefined;
+    return `Analyze current process status for ${equipmentName}${runLabel ? `, run ${runLabel}` : ""}`;
+  }, [searchParams]);
 
   const handleToggle = useCallback((id: string) => {
     toggleRecipe(id);
@@ -234,7 +247,7 @@ export default function AIPage() {
 
           {/* ─── AI Assistant ─── */}
           <TabsContent value="assistant" className="space-y-0">
-            <AiAssistantChat contextualPrompts={contextPrompts} />
+            <AiAssistantChat contextualPrompts={contextPrompts} seededPrompt={seededPrompt} />
           </TabsContent>
 
           {/* ─── Insights Feed ─── */}
@@ -290,9 +303,9 @@ function SummaryStat({ label, value }: { label: string; value: string }) {
 
 // ── AI Assistant Chat ──
 
-function AiAssistantChat({ contextualPrompts }: { contextualPrompts: string[] }) {
+function AiAssistantChat({ contextualPrompts, seededPrompt }: { contextualPrompts: string[]; seededPrompt?: string }) {
   const [messages, setMessages] = useState<ChatMessage[]>(() => getChatHistory());
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState(seededPrompt ?? "");
   const [isTyping, setIsTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
