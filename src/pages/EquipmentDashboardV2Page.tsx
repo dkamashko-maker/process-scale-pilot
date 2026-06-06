@@ -443,8 +443,7 @@ export default function EquipmentDashboardV2Page() {
       return true;
     });
 
-  // Trend stubs (no historical series in fixture data — render only when meaningful)
-  const connectedTrend: "up" | "down" | undefined = kpis.connected > 0 ? "up" : undefined;
+  // Trend stub (no historical series in fixture data — render only when meaningful)
   const activeTrend: "up" | "down" | undefined = kpis.active > 0 ? "up" : undefined;
 
   return (
