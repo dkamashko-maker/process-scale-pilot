@@ -56,6 +56,8 @@ export function ControlActionsPanel({
   onSelectEvent,
   canLogEvents,
   onLogEvent,
+  basalMedium,
+  feedMedium,
 }: ControlActionsPanelProps) {
   const runStart = new Date(runStartTime).getTime();
   const [filter, setFilter] = useState<string>("ALL");
