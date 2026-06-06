@@ -211,18 +211,8 @@ export default function MetadataConstructorPage() {
 
 
       {/* KPI strip — Summary card style */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <SummaryTile label="Total records"  value={stats.total}      Icon={Layers} />
-        <SummaryTile label="Complete"       value={stats.complete}   Icon={CheckCircle2} tone="active" />
-        <SummaryTile
-          label="Incomplete"
-          value={incompleteRecordCount}
-          Icon={AlertTriangle}
-          tone="warning"
-          highlight={incompleteRecordCount > 0}
-          onClick={jumpToBulkIncomplete}
-        />
-        <SummaryTile label="Templates"      value={templateCount}    Icon={Tag} />
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+        <SummaryTile label="Total metadata records" value={stats.total} Icon={Layers} />
       </div>
 
       <ProcessTemplatesPanel />
