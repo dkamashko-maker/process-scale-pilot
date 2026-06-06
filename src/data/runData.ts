@@ -148,6 +148,7 @@ export const RUNS: Run[] = [
     start_time: "2026-02-14T08:00:00", end_time: "2026-02-28T08:00:00",
     sampling_interval_sec: 60, timeline_version: "Timeline 2",
     timezone: "Europe/Zurich", seed: 457,
+    status: "active" as const,
   },
   {
     run_id: "CHO-r-hFSG-458-250308-2", batch_id: "B-250423-PD02",
@@ -160,6 +161,7 @@ export const RUNS: Run[] = [
     start_time: "2026-02-14T08:00:00", end_time: "2026-02-28T08:00:00",
     sampling_interval_sec: 60, timeline_version: "Timeline 2",
     timezone: "Europe/Zurich", seed: 458,
+    status: "active" as const,
   },
 ];
 
