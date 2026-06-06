@@ -71,10 +71,17 @@ export default function DataStoragePage() {
   // Filters
   const [interfaceFilter, setInterfaceFilter]       = useState<string>(searchParams.get("equipment") || searchParams.get("interface") || "all");
   const [typeFilter, setTypeFilter]                 = useState<string>("all");
-  const [runFilter, setRunFilter]                   = useState<string>("all");
+  const [runFilter, setRunFilter]                   = useState<string>(searchParams.get("runId") || "all");
   const [sourceFilter, setSourceFilter]             = useState<string>("all");   // entry mode (renamed from "completeness")
   const [flagFilter, setFlagFilter]                 = useState<string>("all");
   const [severityFilter, setSeverityFilter]         = useState<"all" | AlertSeverity>("all");
+
+  // Optional equipment context passed from the Equipment Dashboard drawer.
+  const fromEquipmentDashboard = searchParams.get("source") === "equipment-dashboard";
+  const contextEquipmentName = searchParams.get("equipmentName") || undefined;
+  const contextEquipmentId = searchParams.get("equipmentId") || undefined;
+  const contextBatch = searchParams.get("batch") || undefined;
+  const contextRunId = searchParams.get("runId") || undefined;
 
   // Pagination + drawer
   const [page, setPage] = useState(0);
