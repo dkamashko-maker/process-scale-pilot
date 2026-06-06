@@ -20,7 +20,7 @@ import {
 import { getRunForEquipmentId } from "@/data/runData";
 import {
   Activity, AlertTriangle, Search, Wifi, WifiOff, CircleDot,
-  FileText, BookOpen, LineChart, Bell, Database, ScrollText, UploadCloud, Cable,
+  BookOpen, LineChart, Bell, Database, ScrollText, UploadCloud, Cable,
   Hash, Layers, Clock, ArrowUpRight, ArrowDownRight, X,
 } from "lucide-react";
 import { format } from "date-fns";
