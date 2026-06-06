@@ -628,16 +628,16 @@ function SummaryTile({
     ? "bg-amber-50"
     : "bg-secondary";
   const valueCls = demoted
-    ? "text-[18px] text-text-secondary"
-    : "text-kpi text-foreground";
+    ? "text-[20px] text-text-secondary"
+    : "text-[26px] font-medium text-foreground";
 
   return (
-    <div className={`rounded-lg p-4 ${bg}`}>
-      <div className="flex items-start justify-between gap-3">
-        <p className="text-[13px] font-normal text-text-secondary">{label}</p>
-        <Icon className={`h-4 w-4 shrink-0 ${TONE_ICON[tone]}`} />
+    <div className={`rounded-lg px-4 py-3 ${bg}`}>
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-[12px] font-normal text-text-secondary">{label}</p>
+        <Icon className={`h-3.5 w-3.5 shrink-0 ${TONE_ICON[tone]}`} />
       </div>
-      <div className="mt-2 flex items-baseline gap-1.5">
+      <div className="mt-1 flex items-baseline gap-1.5">
         <p className={`tabular-nums leading-none ${valueCls}`}>{value}</p>
         {trend && !demoted && (
           trend === "up"
