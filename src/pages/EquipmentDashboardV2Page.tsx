@@ -167,6 +167,7 @@ function EquipmentCard({
   const isActive = eq.status === "active" || eq.status === "error";
   const isAnalytical = eq.equipmentCategory === "analytical";
   const isManual = eq.integrationMode === "manual";
+  const isDownstream = eq.equipmentCategory === "downstream";
   const cta = isActive ? "View run" : "Start run";
   const choRoute =
     eq.equipmentCategory === "downstream"
@@ -184,7 +185,9 @@ function EquipmentCard({
             onOpen();
           }
         }}
-        className={`group relative card-operational border-l-[3px] ${cat.border} cursor-pointer transition-colors hover:border-primary hover:border-l-[3px]`}
+        className={`group relative card-operational border-l-[3px] ${cat.border} cursor-pointer transition-colors hover:border-primary hover:border-l-[3px] ${
+          isDownstream ? "hover:bg-secondary/40" : ""
+        }`}
       >
         {/* Header row */}
         <div className="flex items-start justify-between gap-3 mb-3">
@@ -192,7 +195,13 @@ function EquipmentCard({
             <div className="text-[11px] uppercase tracking-wide text-text-secondary font-medium">
               {isAnalytical ? (isManual ? "Manual upload" : "Analytical") : cat.short}
             </div>
-            <div className="text-[14px] font-medium leading-tight truncate text-foreground">
+            <div
+              className={`text-[14px] font-medium leading-tight truncate text-foreground ${
+                isDownstream
+                  ? "group-hover:underline underline-offset-2 decoration-primary/70"
+                  : ""
+              }`}
+            >
               {eq.equipmentName}
             </div>
             <div className="text-[11px] text-text-secondary mt-0.5 font-mono">{eq.equipmentId}</div>
