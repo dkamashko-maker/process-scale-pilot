@@ -26,6 +26,8 @@ export interface Equipment {
   connectionHealth: ConnectionHealth;
   /** Active batch id, if any */
   currentBatch: string | null;
+  /** Most recent completed/associated batch id (shown on idle cards) */
+  lastBatch?: string | null;
   /** Free-form process phase label (e.g. "Production day 7", "Idle") */
   processPhase: string;
   /** Last time the equipment performed a meaningful operation */
