@@ -269,8 +269,10 @@ function EquipmentCard({
               </div>
               <div className="flex items-start justify-between gap-2 text-[12px]">
                 <div className="min-w-0">
-                  <div className="text-[11px] uppercase tracking-wide text-text-secondary mb-0.5">Batch</div>
-                  <BatchBadge batch={eq.currentBatch} />
+                  <div className="text-[11px] uppercase tracking-wide text-text-secondary mb-0.5">
+                    {eq.currentBatch ? "Batch" : "Last batch"}
+                  </div>
+                  <BatchBadge batch={eq.currentBatch ?? eq.lastBatch} />
                 </div>
                 <div className="min-w-0 text-right">
                   <div className="text-[11px] uppercase tracking-wide text-text-secondary">Last data</div>
