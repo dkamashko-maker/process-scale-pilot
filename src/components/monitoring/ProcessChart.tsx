@@ -49,6 +49,8 @@ interface ProcessChartProps {
   highlightedEventH: number | null;
   showRangeBands: boolean;
   chartAlerts?: ChartAlert[];
+  /** Invoked when an alert marker is clicked — navigates to the Alerts context. */
+  onAlertClick?: (alert: ChartAlert) => void;
 }
 
 function normalize(value: number, param: ParameterDef) {
