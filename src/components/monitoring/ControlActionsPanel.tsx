@@ -45,6 +45,8 @@ interface ControlActionsPanelProps {
   onSelectEvent: (eventId: string | null) => void;
   canLogEvents: boolean;
   onLogEvent: () => void;
+  basalMedium?: string;
+  feedMedium?: string;
 }
 
 export function ControlActionsPanel({
@@ -54,6 +56,8 @@ export function ControlActionsPanel({
   onSelectEvent,
   canLogEvents,
   onLogEvent,
+  basalMedium,
+  feedMedium,
 }: ControlActionsPanelProps) {
   const runStart = new Date(runStartTime).getTime();
   const [filter, setFilter] = useState<string>("ALL");
@@ -61,16 +65,12 @@ export function ControlActionsPanel({
   // ── Feed status summary ──
   const feedSummary = useMemo(() => {
     const feeds = events.filter((e) => e.event_type === "FEED");
-    const bases = events.filter((e) => e.event_type === "BASE_ADDITION");
-    const antifoams = events.filter((e) => e.event_type === "ANTIFOAM");
     const lastFeed = feeds.length > 0 ? feeds[feeds.length - 1] : null;
     const lastFeedH = lastFeed
       ? ((new Date(lastFeed.timestamp).getTime() - runStart) / 3600000).toFixed(1)
       : null;
     return {
       totalFeeds: feeds.length,
-      totalBases: bases.length,
-      totalAntifoams: antifoams.length,
       lastFeedLine: lastFeed
         ? `Last feed: h${lastFeedH} — ${lastFeed.amount ?? "—"} ${lastFeed.amount_unit ?? ""}`.trim()
         : "No feeds logged yet",
@@ -86,41 +86,45 @@ export function ControlActionsPanel({
 
   return (
     <div className="flex flex-col h-full">
-      {/* ── Feed Status ── */}
+      {/* ── Feed & Media Summary ── */}
       <div className="p-4 stack-section">
         <h4 className="text-[11px] uppercase tracking-wide text-text-secondary font-medium">
-          Feed Status
+          Feed & Media Summary
         </h4>
 
-        {/* Single horizontal row — Feeds is the primary metric */}
-        <div className="flex items-baseline gap-5">
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-[20px] font-medium tabular-nums text-foreground leading-none">
-              {feedSummary.totalFeeds}
-            </span>
-            <span className="text-[11px] uppercase tracking-wide text-text-secondary">
-              Feeds
-            </span>
-          </div>
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-[14px] tabular-nums text-foreground leading-none">
-              {feedSummary.totalBases}
-            </span>
-            <span className="text-[11px] uppercase tracking-wide text-text-secondary">
-              Base Adds
-            </span>
-          </div>
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-[14px] tabular-nums text-foreground leading-none">
-              {feedSummary.totalAntifoams}
-            </span>
-            <span className="text-[11px] uppercase tracking-wide text-text-secondary">
-              Antifoam
-            </span>
-          </div>
+        {/* Primary metric: total feeds */}
+        <div className="flex items-baseline gap-1.5">
+          <span className="text-[20px] font-medium tabular-nums text-foreground leading-none">
+            {feedSummary.totalFeeds}
+          </span>
+          <span className="text-[11px] uppercase tracking-wide text-text-secondary">
+            Total feeds
+          </span>
         </div>
 
         <p className="text-[12px] text-text-secondary">{feedSummary.lastFeedLine}</p>
+
+        {/* Media metadata */}
+        {(basalMedium || feedMedium) && (
+          <div className="space-y-1 pt-2 mt-1 border-t border-[hsl(var(--border-tertiary))]">
+            {basalMedium && (
+              <div className="flex items-center justify-between gap-2 text-[12px]">
+                <span className="text-text-secondary">Basal Growth Medium</span>
+                <span className="font-medium text-foreground truncate max-w-[160px]" title={basalMedium}>
+                  {basalMedium}
+                </span>
+              </div>
+            )}
+            {feedMedium && (
+              <div className="flex items-center justify-between gap-2 text-[12px]">
+                <span className="text-text-secondary">Feed Medium</span>
+                <span className="font-medium text-foreground truncate max-w-[160px]" title={feedMedium}>
+                  {feedMedium}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
 
         {canLogEvents && (
           <Button size="sm" className="w-full mt-1" onClick={onLogEvent}>
