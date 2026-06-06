@@ -186,6 +186,29 @@ export default function DataStoragePage() {
           }
         />
 
+        {/* Equipment context indicator — shown when arriving from the Equipment Dashboard drawer */}
+        {fromEquipmentDashboard && contextEquipmentName && interfaceFilter === contextEquipmentId && (
+          <div className="flex flex-wrap items-center gap-2 rounded-md border border-border-tertiary bg-secondary/60 px-3 py-2 text-[12px]">
+            <Filter className="h-3.5 w-3.5 text-primary shrink-0" />
+            <span className="text-text-secondary">Filtered by equipment:</span>
+            <span className="font-medium text-foreground">{contextEquipmentName}</span>
+            <Badge variant="neutral" className="font-mono">{contextEquipmentId}</Badge>
+            {contextBatch && (
+              <Badge variant="neutral">Batch {contextBatch}</Badge>
+            )}
+            {contextRunId && runFilter === contextRunId && (
+              <Badge variant="neutral" className="font-mono">Run {contextRunId}</Badge>
+            )}
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="ml-auto inline-flex items-center gap-1 text-text-secondary hover:text-foreground transition-colors"
+            >
+              <X className="h-3.5 w-3.5" /> Clear
+            </button>
+          </div>
+        )}
+
         <DataQualityLog />
 
         {/* KPI strip — Summary card style */}
