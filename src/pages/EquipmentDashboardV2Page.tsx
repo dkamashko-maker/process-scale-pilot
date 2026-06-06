@@ -459,7 +459,7 @@ function EquipmentDrawer({
 
           <Separator />
 
-          {/* Actions — monitoring first, then ledger, then metadata / reports */}
+          {/* Actions — monitoring primary, then data series, then metadata */}
           <div className="grid grid-cols-1 gap-2">
             {!isAnalytical && (
               <Button
@@ -478,9 +478,6 @@ function EquipmentDrawer({
             </Button>
             <Button variant="outline" size="sm" className="justify-start" onClick={() => navigate("/metadata")}>
               <BookOpen className="h-4 w-4 mr-2" /> Open metadata
-            </Button>
-            <Button variant="outline" size="sm" className="justify-start" onClick={() => navigate("/reports")}>
-              <FileText className="h-4 w-4 mr-2" /> View report evidence
             </Button>
           </div>
         </div>
