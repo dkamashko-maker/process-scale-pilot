@@ -30,6 +30,13 @@ export function colorFor(code: string): string {
   return PARAM_COLOR[code] ?? "#64748b";
 }
 
+/** Lightweight alert annotation rendered directly on the monitoring chart. */
+export interface ChartAlert {
+  elapsed_h: number;
+  label: string;
+  severity: "critical" | "warning";
+}
+
 interface ProcessChartProps {
   timeseries: TimeseriesPoint[];
   selectedParams: string[];
@@ -37,6 +44,7 @@ interface ProcessChartProps {
   eventMarkers: (ProcessEvent & { elapsed_h: number })[];
   highlightedEventH: number | null;
   showRangeBands: boolean;
+  chartAlerts?: ChartAlert[];
 }
 
 function normalize(value: number, param: ParameterDef) {
