@@ -136,7 +136,7 @@ function BatchBadge({ batch }: { batch: string | null | undefined }) {
   );
 }
 
-/** Severity breakdown chip — "1 critical · 1 warning" style */
+/** Simple alert count chip — uses one umbrella term: Alerts */
 function AlertBreakdown({ count, critical }: { count: number; critical: boolean }) {
   if (count === 0) {
     return (
@@ -145,11 +145,6 @@ function AlertBreakdown({ count, critical }: { count: number; critical: boolean 
       </span>
     );
   }
-  const criticals = critical ? 1 : 0;
-  const warnings = count - criticals;
-  const parts: string[] = [];
-  if (criticals) parts.push(`${criticals} critical`);
-  if (warnings)  parts.push(`${warnings} warning${warnings > 1 ? "s" : ""}`);
   return (
     <span
       className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium ${
@@ -158,7 +153,7 @@ function AlertBreakdown({ count, critical }: { count: number; critical: boolean 
       }`}
     >
       <AlertTriangle className="h-3 w-3" />
-      {parts.join(" · ")}
+      {count} alert{count > 1 ? "s" : ""}
     </span>
   );
 }
