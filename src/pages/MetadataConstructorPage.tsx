@@ -191,6 +191,25 @@ export default function MetadataConstructorPage() {
         description="Define label templates, apply metadata to records, and track completeness scores."
       />
 
+      {/* Equipment context indicator — shown when arriving from the Equipment Dashboard drawer */}
+      {fromEquipmentDashboard && contextEquipmentId && interfaceFilter === contextEquipmentId && (
+        <div className="flex flex-wrap items-center gap-2 rounded-md border border-border-tertiary bg-secondary/60 px-3 py-2 text-xs">
+          <Filter className="h-3.5 w-3.5 text-primary shrink-0" />
+          <span className="text-muted-foreground">Filtered by equipment:</span>
+          <span className="font-medium text-foreground">{contextEquipmentName ?? contextEquipmentId}</span>
+          <Badge variant="neutral" className="font-mono">{contextEquipmentId}</Badge>
+          <button
+            type="button"
+            onClick={() => { setInterfaceFilter("all"); setPage(0); setSelected(new Set()); }}
+            className="ml-auto inline-flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <X className="h-3.5 w-3.5" /> Clear
+          </button>
+        </div>
+      )}
+
+
+
       {/* KPI strip — Summary card style */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <SummaryTile label="Total records"  value={stats.total}      Icon={Layers} />
