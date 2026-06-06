@@ -257,7 +257,7 @@ export function AppSidebar() {
                       className={`${SUB_BASE} cursor-pointer pl-9 ${location.pathname === "/cho-production-line/fplc" && location.search.includes("tab=column") ? SUB_ACTIVE : ""}`}
                       onClick={() => navigate("/cho-production-line/fplc?tab=column")}
                     >
-                      <ClipboardList className="h-3 w-3 flex-shrink-0" />
+                      <History className="h-3 w-3 flex-shrink-0" />
                       <span className="flex-1 truncate min-w-0 text-[12px]">Column History</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
