@@ -404,7 +404,7 @@ export default function AlertsPage() {
         </TabsList>
 
         <TabsContent value="feed" className="mt-0">
-          <AlertsFeed equipmentId={equipmentId} />
+          <AlertsFeed equipmentId={equipmentId} focusAlertId={focusAlertId} />
         </TabsContent>
 
         <TabsContent value="rules" className="mt-0">
