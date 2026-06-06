@@ -333,15 +333,6 @@ export function AppSidebar() {
                       <span>Campaign Analytics</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton
-                      className={`${SUB_BASE} cursor-pointer ${location.pathname === "/reports" ? SUB_ACTIVE : ""}`}
-                      onClick={() => navigate("/reports")}
-                    >
-                      <FileText className="h-3.5 w-3.5 flex-shrink-0" />
-                      <span>Campaign Report</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
                 </>
               )}
 
