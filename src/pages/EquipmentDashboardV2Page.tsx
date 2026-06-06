@@ -346,6 +346,24 @@ function EquipmentDrawer({
   const isAnalytical = equipment.equipmentCategory === "analytical";
   const alerts = getRecentAlertsForEquipment(equipment.equipmentId);
 
+  // Build a lightweight, contextual query string so downstream destination pages
+  // can preserve equipment context instead of opening generic, unfiltered views.
+  const equipmentContextQuery = (): string => {
+    const run = getRunForEquipmentId(equipment.equipmentId);
+    const params = new URLSearchParams();
+    params.set("source", "equipment-dashboard");
+    params.set("equipmentId", equipment.equipmentId);
+    params.set("equipmentName", equipment.equipmentName);
+    params.set("equipmentCategory", equipment.equipmentCategory);
+    params.set("status", equipment.status);
+    // data-storage uses the equipment id as the interface/equipment filter
+    params.set("equipment", equipment.equipmentId);
+    const batch = equipment.currentBatch ?? equipment.lastBatch;
+    if (batch) params.set("batch", batch);
+    if (run?.run_id) params.set("runId", run.run_id);
+    return `?${params.toString()}`;
+  };
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-full sm:max-w-md overflow-y-auto">
@@ -447,10 +465,10 @@ function EquipmentDrawer({
                 <LineChart className="h-4 w-4 mr-2" /> Open monitoring view
               </Button>
             )}
-            <Button variant="outline" size="sm" className="justify-start" onClick={() => navigate("/data-storage")}>
+            <Button variant="outline" size="sm" className="justify-start" onClick={() => navigate(`/data-storage${equipmentContextQuery()}`)}>
               <Database className="h-4 w-4 mr-2" /> View equipment data series
             </Button>
-            <Button variant="outline" size="sm" className="justify-start" onClick={() => navigate("/metadata")}>
+            <Button variant="outline" size="sm" className="justify-start" onClick={() => navigate(`/metadata${equipmentContextQuery()}`)}>
               <BookOpen className="h-4 w-4 mr-2" /> Open metadata
             </Button>
           </div>
@@ -469,7 +487,7 @@ function EquipmentDrawer({
                 {alerts.map((a) => (
                   <li
                     key={a.id}
-                    onClick={() => navigate("/alerts")}
+                    onClick={() => navigate(`/alerts${equipmentContextQuery()}`)}
                     className="text-xs border-l-2 pl-2 cursor-pointer rounded-r-sm transition-colors hover:bg-secondary"
                     style={{ borderColor: a.severity === "critical" ? "hsl(var(--destructive))" : a.severity === "warning" ? "hsl(38 92% 50%)" : "hsl(var(--muted-foreground))" }}
                   >

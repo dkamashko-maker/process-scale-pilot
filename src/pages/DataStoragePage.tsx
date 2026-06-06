@@ -69,7 +69,7 @@ export default function DataStoragePage() {
   const [searchParams] = useSearchParams();
 
   // Filters
-  const [interfaceFilter, setInterfaceFilter]       = useState<string>(searchParams.get("interface") || "all");
+  const [interfaceFilter, setInterfaceFilter]       = useState<string>(searchParams.get("equipment") || searchParams.get("interface") || "all");
   const [typeFilter, setTypeFilter]                 = useState<string>("all");
   const [runFilter, setRunFilter]                   = useState<string>("all");
   const [sourceFilter, setSourceFilter]             = useState<string>("all");   // entry mode (renamed from "completeness")
