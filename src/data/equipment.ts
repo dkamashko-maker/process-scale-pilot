@@ -126,6 +126,7 @@ export const EQUIPMENT: Equipment[] = [
     status: "idle",
     connectionHealth: "connected",
     currentBatch: null,
+    lastBatch: "B-250422-DS03",
     processPhase: "Idle",
     lastOperationAt: "2026-04-22T16:10:00",
     lastDataReceivedAt: "2026-04-22T16:10:00",
