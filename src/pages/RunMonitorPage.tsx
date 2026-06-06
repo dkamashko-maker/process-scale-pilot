@@ -22,6 +22,11 @@ import { createReportFromRun } from "@/data/reportsStore";
 import { format } from "date-fns";
 import type { ParameterDef, ProcessEvent } from "@/data/runTypes";
 
+/** Local override: rename the VOLUME signal to avoid implying true working-volume changes. */
+const MONITORING_PARAMETERS = PARAMETERS.map((p) =>
+  p.parameter_code === "VOLUME" ? { ...p, display_name: "Cumulative feed volume" } : p
+);
+
 /** Cluster order matches the spec exactly so the visual rhythm is enforced. */
 const CLUSTER_ORDER: { id: ParameterDef["type_priority"]; label: string }[] = [
   { id: "Critical",  label: "Critical" },
@@ -64,7 +69,7 @@ export default function RunMonitorPage() {
   );
 
   const [selectedParams, setSelectedParams] = useState<string[]>(
-    PARAMETERS.filter((p) => p.is_critical).map((p) => p.parameter_code)
+    MONITORING_PARAMETERS.filter((p) => p.is_critical).map((p) => p.parameter_code)
   );
   const [showRangeBands, setShowRangeBands] = useState(true);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
@@ -92,7 +97,7 @@ export default function RunMonitorPage() {
 
   const paramGroups = useMemo(() => {
     const groups: Record<string, ParameterDef[]> = {};
-    PARAMETERS.forEach((p) => {
+    MONITORING_PARAMETERS.forEach((p) => {
       if (!groups[p.type_priority]) groups[p.type_priority] = [];
       groups[p.type_priority].push(p);
     });
@@ -179,7 +184,7 @@ export default function RunMonitorPage() {
 
   // Critical-only shortcut — keep just the parameters flagged is_critical.
   const handleCriticalOnly = () => {
-    setSelectedParams(PARAMETERS.filter((p) => p.is_critical).map((p) => p.parameter_code));
+    setSelectedParams(MONITORING_PARAMETERS.filter((p) => p.is_critical).map((p) => p.parameter_code));
   };
 
   return (
@@ -303,7 +308,7 @@ export default function RunMonitorPage() {
           <ProcessChart
             timeseries={timeseries}
             selectedParams={selectedParams}
-            parameters={PARAMETERS}
+            parameters={MONITORING_PARAMETERS}
             eventMarkers={eventMarkers}
             highlightedEventH={highlightedEventH}
             showRangeBands={showRangeBands}
