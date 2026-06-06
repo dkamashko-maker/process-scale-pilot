@@ -59,6 +59,7 @@ const CATEGORY: Record<
 const DOWNSTREAM_ROUTE_MAP: Record<string, string> = {
   "DS-101": "/cho-production-line/centrifuge",
   "DS-102": "/cho-production-line/centrifuge",
+  "DS-200": "/cho-production-line/ultrafiltration",
   "DS-201": "/cho-production-line/fplc",
   "DS-202": "/cho-production-line/ultrafiltration",
   "DS-301": "/cho-production-line/vial-washer",
@@ -66,6 +67,17 @@ const DOWNSTREAM_ROUTE_MAP: Record<string, string> = {
   "DS-401": "/cho-production-line/lyophilizer",
   "DS-402": "/cho-production-line/filling-pump",
   "DS-403": "/cho-production-line/capping",
+};
+
+/**
+ * Fixed batch → color mapping for the consultant downstream scenario.
+ * Batch identity color (NOT equipment state). Idle / no batch falls back to gray.
+ */
+const BATCH_COLOR_MAP: Record<string, { bg: string; fg: string; bar: string }> = {
+  "B-25-456-033": { bg: "hsl(214 90% 92%)", fg: "hsl(214 80% 32%)", bar: "hsl(214 85% 50%)" }, // blue
+  "B-25-456-032": { bg: "hsl(142 55% 90%)", fg: "hsl(142 60% 26%)", bar: "hsl(142 55% 40%)" }, // green
+  "B-25-456-030": { bg: "hsl(268 60% 92%)", fg: "hsl(268 55% 38%)", bar: "hsl(268 55% 52%)" }, // violet
+  "B-25-456-029": { bg: "hsl(38 92% 90%)",  fg: "hsl(30 80% 34%)",  bar: "hsl(36 90% 48%)"  }, // amber/orange
 };
 
 // ── Small visual helpers ────────────────────────────────────────────────
