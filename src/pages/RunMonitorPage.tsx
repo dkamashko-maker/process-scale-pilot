@@ -88,11 +88,14 @@ export default function RunMonitorPage() {
   const run = RUNS.find((r) => r.run_id === runId);
   const timeseries = useMemo(() => (run ? getTimeseries(run.run_id) : []), [run]);
   const runEvents = useMemo(
-    () => events
-      .filter((e) => e.run_id === runId)
-      .filter((e) => !(e.event_type === "HARVEST" && e.notes?.toLowerCase().includes("end of run")))
-      .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()),
-    [events, runId]
+    () => {
+      const base = events.filter((e) => e.run_id === runId);
+      const isCompleted = run?.status === "completed";
+      return base
+        .filter((e) => isCompleted || !(e.event_type === "HARVEST" && e.notes?.toLowerCase().includes("end of run")))
+        .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+    },
+    [events, runId, run]
   );
 
   const [selectedParams, setSelectedParams] = useState<string[]>(
