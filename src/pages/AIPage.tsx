@@ -303,9 +303,9 @@ function SummaryStat({ label, value }: { label: string; value: string }) {
 
 // ── AI Assistant Chat ──
 
-function AiAssistantChat({ contextualPrompts }: { contextualPrompts: string[] }) {
+function AiAssistantChat({ contextualPrompts, seededPrompt }: { contextualPrompts: string[]; seededPrompt?: string }) {
   const [messages, setMessages] = useState<ChatMessage[]>(() => getChatHistory());
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState(seededPrompt ?? "");
   const [isTyping, setIsTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
