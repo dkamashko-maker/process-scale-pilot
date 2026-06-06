@@ -1,7 +1,7 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, ReferenceLine, ReferenceArea,
+  ResponsiveContainer, ReferenceLine, ReferenceArea, ReferenceDot,
 } from "recharts";
 import type { ParameterDef, ProcessEvent, TimeseriesPoint } from "@/data/runTypes";
 
