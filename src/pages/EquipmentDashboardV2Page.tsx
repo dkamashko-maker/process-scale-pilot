@@ -249,31 +249,25 @@ function EquipmentCard({
                   <div className="truncate">{eq.methodName ?? "—"}</div>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-2 text-[12px]">
-                <div className="flex items-start gap-1.5">
-                  <Hash className="h-3 w-3 mt-0.5 text-text-secondary shrink-0" />
-                  <div className="min-w-0">
-                    <div className="text-[11px] uppercase tracking-wide text-text-secondary">Batch</div>
-                    <div className="font-mono truncate">{eq.currentBatch ?? "—"}</div>
-                  </div>
+              <div className="flex items-start justify-between gap-2 text-[12px]">
+                <div className="min-w-0">
+                  <div className="text-[11px] uppercase tracking-wide text-text-secondary mb-0.5">Batch</div>
+                  <BatchBadge batch={eq.currentBatch} />
                 </div>
-                <div className="flex items-start gap-1.5">
-                  <Clock className="h-3 w-3 mt-0.5 text-text-secondary shrink-0" />
-                  <div className="min-w-0">
-                    <div className="text-[11px] uppercase tracking-wide text-text-secondary">Last data</div>
-                    <div className="truncate">{format(new Date(eq.lastDataReceivedAt), "MMM d, HH:mm")}</div>
-                  </div>
+                <div className="min-w-0 text-right">
+                  <div className="text-[11px] uppercase tracking-wide text-text-secondary">Last data</div>
+                  <div className="truncate">{format(new Date(eq.lastDataReceivedAt), "MMM d, HH:mm")}</div>
                 </div>
               </div>
             </>
           ) : isActive ? (
             <>
-              <div className="grid grid-cols-2 gap-2 text-[12px]">
-                <div>
-                  <div className="text-[11px] uppercase tracking-wide text-text-secondary">Batch</div>
-                  <div className="font-mono truncate">{eq.currentBatch ?? "—"}</div>
+              <div className="flex items-start justify-between gap-2 text-[12px]">
+                <div className="min-w-0">
+                  <div className="text-[11px] uppercase tracking-wide text-text-secondary mb-0.5">Batch</div>
+                  <BatchBadge batch={eq.currentBatch} />
                 </div>
-                <div>
+                <div className="min-w-0 text-right">
                   <div className="text-[11px] uppercase tracking-wide text-text-secondary">Phase</div>
                   <div className="truncate">{eq.processPhase}</div>
                 </div>
@@ -288,9 +282,9 @@ function EquipmentCard({
             </>
           ) : (
             <div className="rounded-md bg-secondary px-2.5 py-2">
-              <div className="text-[11px] uppercase tracking-wide text-text-secondary">Last batch</div>
-              <div className="font-mono text-[12px] truncate">{eq.lastBatch ?? eq.currentBatch ?? "—"}</div>
-              <div className="text-[11px] text-text-secondary mt-0.5">{format(new Date(eq.lastOperationAt), "MMM d, HH:mm")}</div>
+              <div className="text-[11px] uppercase tracking-wide text-text-secondary mb-1">Last batch</div>
+              <BatchBadge batch={eq.lastBatch ?? eq.currentBatch} />
+              <div className="text-[11px] text-text-secondary mt-1.5">{format(new Date(eq.lastOperationAt), "MMM d, HH:mm")}</div>
             </div>
           )}
 
