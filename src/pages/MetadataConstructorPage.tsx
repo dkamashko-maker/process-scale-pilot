@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { format } from "date-fns";
 import {
-  Tag, CheckCircle2, AlertTriangle, Filter, X,
+  Tag, AlertTriangle, Filter, X,
   ChevronRight, FileText, Activity, ClipboardEdit, Layers, ArrowRight,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
