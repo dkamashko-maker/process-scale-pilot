@@ -39,6 +39,8 @@ export interface ChartAlert {
   parameter?: string;
   /** Optional concrete alert id, used to focus the Alerts destination. */
   alertId?: string;
+  /** Optional end hour — when present the alert is a sustained/duration condition. */
+  elapsed_h_end?: number;
 }
 
 interface ProcessChartProps {
