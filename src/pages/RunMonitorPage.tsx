@@ -325,11 +325,7 @@ export default function RunMonitorPage() {
                 <li key={prompt}>
                   <button
                     type="button"
-                    onClick={() =>
-                      navigate(
-                        `/ai?prompt=${encodeURIComponent(prompt)}&runId=${run.run_id}`
-                      )
-                    }
+                    onClick={() => navigate(buildAiAnalysisUrl(run, prompt))}
                     className="text-[12px] text-primary hover:underline text-left w-full truncate"
                   >
                     {prompt}
@@ -340,7 +336,7 @@ export default function RunMonitorPage() {
             <Button
               size="sm"
               className="w-full gap-1.5"
-              onClick={() => navigate(`/ai?runId=${run.run_id}`)}
+              onClick={() => navigate(buildAiAnalysisUrl(run))}
             >
               <Sparkles className="h-3.5 w-3.5" />
               Open AI analysis
