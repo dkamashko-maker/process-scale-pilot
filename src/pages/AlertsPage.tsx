@@ -277,9 +277,21 @@ function RulesTable({ initialInstrument = "ALL" }: { initialInstrument?: string 
   );
 }
 
-function AlertsFeed() {
+function AlertsFeed({ equipmentId }: { equipmentId?: string }) {
+  const items = equipmentId ? FEED.filter((a) => a.instrument === equipmentId) : FEED;
   return (
     <div className="space-y-3">
+      {equipmentId && (
+        <Card kind="operational" className="p-3">
+          <div className="flex flex-wrap items-center gap-2 text-[12px]">
+            <span className="text-text-secondary">Filtered to equipment</span>
+            <Badge variant="neutral" className="font-mono">{equipmentId}</Badge>
+            {items.length === 0 && (
+              <span className="text-text-secondary">— no triggered alerts for this equipment.</span>
+            )}
+          </div>
+        </Card>
+      )}
       <Card kind="operational" className="p-3">
         <div className="flex flex-wrap items-center gap-3">
           <span className="text-[11px] uppercase tracking-wide text-text-secondary font-medium">
