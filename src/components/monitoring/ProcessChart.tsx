@@ -268,6 +268,26 @@ export function ProcessChart({
             />
           )}
 
+          {/* Sustained-alert windows — subtle translucent band between start and end */}
+          {chartAlerts
+            .filter((a) => typeof a.elapsed_h_end === "number" && a.elapsed_h_end! > a.elapsed_h)
+            .map((a, i) => {
+              const color = a.severity === "critical" ? "#ef4444" : "#f59e0b";
+              return (
+                <ReferenceArea
+                  key={`alert-band-${i}`}
+                  x1={Math.max(0, a.elapsed_h)}
+                  x2={Math.min(maxH, a.elapsed_h_end!)}
+                  fill={color}
+                  fillOpacity={0.08}
+                  stroke={color}
+                  strokeOpacity={0.25}
+                  strokeDasharray="3 3"
+                  ifOverflow="extendDomain"
+                />
+              );
+            })}
+
           {/* Alert markers — thin solid line + hoverable pin */}
           {chartAlerts
             .filter((a) => a.elapsed_h >= 0 && a.elapsed_h <= maxH)
