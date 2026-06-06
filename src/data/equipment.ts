@@ -60,6 +60,8 @@ export interface Equipment {
   processDuration?: { currentMin: number | null; lastCompletedMin: number | null };
   /** Free-form operator-visible note */
   notes?: string;
+  /** Compact service/maintenance alert label (shown as an amber chip, not a broken state) */
+  serviceAlert?: string;
 }
 
 // ── Seed fleet ──────────────────────────────────────────────────────────
