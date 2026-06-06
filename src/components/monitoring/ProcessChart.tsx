@@ -1,7 +1,7 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, ReferenceLine, ReferenceArea,
+  ResponsiveContainer, ReferenceLine, ReferenceArea, ReferenceDot,
 } from "recharts";
 import type { ParameterDef, ProcessEvent, TimeseriesPoint } from "@/data/runTypes";
 
@@ -35,6 +35,8 @@ export interface ChartAlert {
   elapsed_h: number;
   label: string;
   severity: "critical" | "warning";
+  description?: string;
+  parameter?: string;
 }
 
 interface ProcessChartProps {
@@ -92,6 +94,58 @@ function ChartTooltip({ active, payload, label, parameters }: any) {
         })}
       </div>
     </div>
+  );
+}
+
+/** Hoverable alert marker shape with inline tooltip. */
+function AlertMarker(props: any) {
+  const { cx, cy, alert } = props;
+  const [hovered, setHovered] = useState(false);
+  if (cx == null || cy == null || !alert) return null;
+  const color = alert.severity === "critical" ? "#ef4444" : "#f59e0b";
+
+  return (
+    <g
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{ cursor: "pointer" }}
+    >
+      {/* Invisible wider hit area for easier hovering */}
+      <circle cx={cx} cy={cy} r={10} fill="transparent" />
+      {/* Visible triangle pin */}
+      <text x={cx} y={cy} textAnchor="middle" fill={color} fontSize={11} dy={3}>
+        ▲
+      </text>
+      {hovered && (
+        <foreignObject x={cx - 90} y={cy + 12} width="180" height="70">
+          <div
+            className="rounded-md border p-2 shadow-md text-[11px] leading-snug"
+            style={{
+              backgroundColor: "hsl(var(--background))",
+              borderColor: color,
+              color: "hsl(var(--foreground))",
+            }}
+          >
+            <div className="font-medium mb-0.5" style={{ color }}>
+              {alert.label}
+            </div>
+            <div className="tabular-nums text-text-secondary">
+              Hour {alert.elapsed_h.toFixed(1)}
+            </div>
+            {alert.parameter && (
+              <div className="text-text-secondary mt-0.5">
+                Parameter: {alert.parameter}
+              </div>
+            )}
+            {alert.description && (
+              <div className="text-text-secondary mt-0.5">
+                {alert.description}
+              </div>
+            )}
+          </div>
+        </foreignObject>
+      )}
+    </g>
   );
 }
 
@@ -197,25 +251,31 @@ export function ProcessChart({
             />
           )}
 
-          {/* Alert markers — thin solid line + pin, distinct from neutral event lines */}
+          {/* Alert markers — thin solid line + hoverable pin */}
           {chartAlerts
             .filter((a) => a.elapsed_h >= 0 && a.elapsed_h <= maxH)
             .map((a, i) => {
               const color = a.severity === "critical" ? "#ef4444" : "#f59e0b";
               return (
-                <ReferenceLine
-                  key={`alert-${i}`}
-                  x={a.elapsed_h}
-                  stroke={color}
-                  strokeWidth={1.5}
-                  ifOverflow="extendDomain"
-                  label={{
-                    value: "▲",
-                    position: "top",
-                    fill: color,
-                    fontSize: 11,
-                  }}
-                />
+                <>
+                  <ReferenceLine
+                    key={`alert-line-${i}`}
+                    x={a.elapsed_h}
+                    stroke={color}
+                    strokeWidth={1.5}
+                    ifOverflow="extendDomain"
+                  />
+                  <ReferenceDot
+                    key={`alert-dot-${i}`}
+                    x={a.elapsed_h}
+                    y={108}
+                    r={8}
+                    fill="transparent"
+                    stroke="none"
+                    isFront
+                    shape={<AlertMarker alert={a} />}
+                  />
+                </>
               );
             })}
         </LineChart>

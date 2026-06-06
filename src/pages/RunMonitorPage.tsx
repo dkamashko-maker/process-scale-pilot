@@ -116,6 +116,10 @@ export default function RunMonitorPage() {
       elapsed_h: doDip ? doDip.elapsed_h : Math.round(maxH * 0.45),
       label: "Dissolved O₂ below threshold",
       severity: "critical",
+      parameter: "DO",
+      description: doDip
+        ? `DO dropped to ${(doDip.DO as number).toFixed(2)}% — below ${doParam.min_value}% setpoint`
+        : "Dissolved oxygen fell below operating threshold",
     });
 
     // 2. pH drift detected during the harvest transition (late in the run).
@@ -127,6 +131,10 @@ export default function RunMonitorPage() {
       elapsed_h: phDrift ? phDrift.elapsed_h : Math.round(maxH * 0.88),
       label: "pH drift during harvest transition",
       severity: "warning",
+      parameter: "pH",
+      description: phDrift && phParam
+        ? `pH at ${(phDrift.PH as number).toFixed(2)} — outside ${phParam.min_value}–${phParam.max_value} range`
+        : "pH deviation detected in late-run window",
     });
 
     return alerts;
