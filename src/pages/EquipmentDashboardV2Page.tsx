@@ -448,10 +448,13 @@ export default function EquipmentDashboardV2Page() {
 
   return (
     <div className="px-6 pt-4 pb-6 space-y-5">
-      {/* Header block: compact context bar → page title */}
+      {/* Header block: product identity → context bar → page title */}
       <div>
+        {/* Product identity — prominent, single source on this page */}
+        <h1 className="text-[26px] font-medium tracking-tight text-foreground leading-none">Data Vest</h1>
+
         {/* Compact process context bar */}
-        <div className="flex items-center gap-2 text-[11px] flex-wrap">
+        <div className="mt-3 flex items-center gap-2 text-[11px] flex-wrap">
           <span className="text-[10px] uppercase tracking-wide text-text-secondary font-medium">Process</span>
           <span className="font-mono text-foreground">FSH-Campaign-042</span>
           <span className="text-text-tertiary">·</span>
@@ -469,10 +472,10 @@ export default function EquipmentDashboardV2Page() {
           </button>
         </div>
 
-        {/* Page title */}
+        {/* Page title — secondary to product identity */}
         <div className="mt-3">
-          <h1 className="text-[20px] font-medium tracking-tight text-foreground">Equipment Dashboard</h1>
-          <p className="text-[13px] text-text-secondary mt-1">
+          <h2 className="text-[15px] font-medium text-foreground">Equipment Dashboard</h2>
+          <p className="text-[13px] text-text-secondary mt-0.5">
             Operational equipment, assays and connection status across the fleet.
           </p>
         </div>
