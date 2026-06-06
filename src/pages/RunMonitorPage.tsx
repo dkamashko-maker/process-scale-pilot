@@ -320,8 +320,6 @@ export default function RunMonitorPage() {
             <ControlActionsPanel
               events={runEvents}
               runStartTime={run.start_time}
-              canLogEvents={canLogEvents}
-              onLogEvent={openNewEvent}
               basalMedium={run.basal_medium}
               feedMedium={run.feed_medium}
             />
