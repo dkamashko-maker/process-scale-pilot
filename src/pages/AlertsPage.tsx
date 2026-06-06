@@ -383,6 +383,7 @@ export default function AlertsPage() {
   const [searchParams] = useSearchParams();
   // Optional equipment context passed from the Equipment Dashboard drawer.
   const equipmentId = searchParams.get("equipmentId") || undefined;
+  const focusAlertId = searchParams.get("alertId") || undefined;
   return (
     <div className="px-8 py-8">
       <OverviewHeader
