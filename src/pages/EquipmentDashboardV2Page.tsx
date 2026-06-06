@@ -187,7 +187,7 @@ function EquipmentCard({
           }
         }}
         className={`group relative card-operational border-l-[3px] ${cat.border} cursor-pointer transition-colors hover:border-primary hover:border-l-[3px] ${
-          isDownstream ? "hover:bg-secondary/40" : ""
+          isDownstreamLink ? "hover:bg-secondary/40" : ""
         }`}
       >
         {/* Header row */}
@@ -198,7 +198,7 @@ function EquipmentCard({
             </div>
             <div
               className={`text-[14px] font-medium leading-tight truncate text-foreground ${
-                isDownstream
+                isDownstreamLink
                   ? "group-hover:underline underline-offset-2 decoration-primary/70"
                   : ""
               }`}
