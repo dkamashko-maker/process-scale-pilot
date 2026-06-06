@@ -171,6 +171,7 @@ export function ProcessChart({
   highlightedEventH,
   showRangeBands,
   chartAlerts = [],
+  onAlertClick,
 }: ProcessChartProps) {
   const chartData = useMemo(() => {
     return timeseries.map((point) => {
