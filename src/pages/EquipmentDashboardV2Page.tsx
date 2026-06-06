@@ -487,7 +487,7 @@ function EquipmentDrawer({
                 {alerts.map((a) => (
                   <li
                     key={a.id}
-                    onClick={() => navigate(`/alerts${equipmentContextQuery()}`)}
+                    onClick={() => navigate(`/alerts${equipmentContextQuery()}&alertId=${encodeURIComponent(a.id)}&alertType=${encodeURIComponent(a.severity)}`)}
                     className="text-xs border-l-2 pl-2 cursor-pointer rounded-r-sm transition-colors hover:bg-secondary"
                     style={{ borderColor: a.severity === "critical" ? "hsl(var(--destructive))" : a.severity === "warning" ? "hsl(38 92% 50%)" : "hsl(var(--muted-foreground))" }}
                   >
