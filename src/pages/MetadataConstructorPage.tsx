@@ -175,7 +175,7 @@ export default function MetadataConstructorPage() {
   const templateCount = LABEL_TEMPLATES.length;
 
   // Tab control
-  const [activeTab, setActiveTab] = useState<"templates" | "labeling">("templates");
+  const [activeTab, setActiveTab] = useState<"templates" | "labeling">(contextEquipmentId ? "labeling" : "templates");
 
   const jumpToBulkIncomplete = useCallback(() => {
     setCompletenessFilter("incomplete");
