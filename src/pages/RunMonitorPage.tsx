@@ -300,6 +300,8 @@ export default function RunMonitorPage() {
             onSelectEvent={setSelectedEventId}
             canLogEvents={canLogEvents}
             onLogEvent={openNewEvent}
+            basalMedium={run.basal_medium}
+            feedMedium={run.feed_medium}
           />
         </Card>
       </div>

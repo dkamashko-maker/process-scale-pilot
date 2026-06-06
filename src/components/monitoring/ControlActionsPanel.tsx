@@ -65,16 +65,12 @@ export function ControlActionsPanel({
   // ── Feed status summary ──
   const feedSummary = useMemo(() => {
     const feeds = events.filter((e) => e.event_type === "FEED");
-    const bases = events.filter((e) => e.event_type === "BASE_ADDITION");
-    const antifoams = events.filter((e) => e.event_type === "ANTIFOAM");
     const lastFeed = feeds.length > 0 ? feeds[feeds.length - 1] : null;
     const lastFeedH = lastFeed
       ? ((new Date(lastFeed.timestamp).getTime() - runStart) / 3600000).toFixed(1)
       : null;
     return {
       totalFeeds: feeds.length,
-      totalBases: bases.length,
-      totalAntifoams: antifoams.length,
       lastFeedLine: lastFeed
         ? `Last feed: h${lastFeedH} — ${lastFeed.amount ?? "—"} ${lastFeed.amount_unit ?? ""}`.trim()
         : "No feeds logged yet",
