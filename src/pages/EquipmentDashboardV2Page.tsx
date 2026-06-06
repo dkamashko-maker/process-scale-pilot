@@ -463,7 +463,6 @@ function EquipmentDrawer({
           <div className="grid grid-cols-1 gap-2">
             {!isAnalytical && (
               <Button
-                variant="outline"
                 size="sm"
                 className="justify-start"
                 onClick={() => {
@@ -475,7 +474,7 @@ function EquipmentDrawer({
               </Button>
             )}
             <Button variant="outline" size="sm" className="justify-start" onClick={() => navigate("/data-storage")}>
-              <Database className="h-4 w-4 mr-2" /> View ledger records
+              <Database className="h-4 w-4 mr-2" /> View equipment data series
             </Button>
             <Button variant="outline" size="sm" className="justify-start" onClick={() => navigate("/metadata")}>
               <BookOpen className="h-4 w-4 mr-2" /> Open metadata
