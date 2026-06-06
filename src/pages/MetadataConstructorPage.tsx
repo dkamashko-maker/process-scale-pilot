@@ -172,7 +172,6 @@ export default function MetadataConstructorPage() {
 
   // Counts for KPI/tab badges
   const incompleteRecordCount = stats.incomplete;
-  const templateCount = LABEL_TEMPLATES.length;
 
   // Tab control
   const [activeTab, setActiveTab] = useState<"labeling">("labeling");
