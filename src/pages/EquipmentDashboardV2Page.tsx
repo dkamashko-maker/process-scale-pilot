@@ -346,6 +346,24 @@ function EquipmentDrawer({
   const isAnalytical = equipment.equipmentCategory === "analytical";
   const alerts = getRecentAlertsForEquipment(equipment.equipmentId);
 
+  // Build a lightweight, contextual query string so downstream destination pages
+  // can preserve equipment context instead of opening generic, unfiltered views.
+  const equipmentContextQuery = (): string => {
+    const run = getRunForEquipmentId(equipment.equipmentId);
+    const params = new URLSearchParams();
+    params.set("source", "equipment-dashboard");
+    params.set("equipmentId", equipment.equipmentId);
+    params.set("equipmentName", equipment.equipmentName);
+    params.set("equipmentCategory", equipment.equipmentCategory);
+    params.set("status", equipment.status);
+    // data-storage uses the equipment id as the interface/equipment filter
+    params.set("equipment", equipment.equipmentId);
+    const batch = equipment.currentBatch ?? equipment.lastBatch;
+    if (batch) params.set("batch", batch);
+    if (run?.run_id) params.set("runId", run.run_id);
+    return `?${params.toString()}`;
+  };
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-full sm:max-w-md overflow-y-auto">
