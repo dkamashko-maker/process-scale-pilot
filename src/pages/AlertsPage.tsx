@@ -395,11 +395,11 @@ export default function AlertsPage() {
         </TabsList>
 
         <TabsContent value="feed" className="mt-0">
-          <AlertsFeed />
+          <AlertsFeed equipmentId={equipmentId} />
         </TabsContent>
 
         <TabsContent value="rules" className="mt-0">
-          <RulesTable />
+          <RulesTable initialInstrument={equipmentId ?? "ALL"} />
         </TabsContent>
       </Tabs>
     </div>
