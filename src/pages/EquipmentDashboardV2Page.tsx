@@ -401,7 +401,18 @@ const STATUS_LABEL: Record<StatusFilter, string> = {
 
 export default function EquipmentDashboardV2Page() {
   const navigate = useNavigate();
-  const kpis = useMemo(() => getFleetKpis(), []);
+  // Local KPI model — reconciles with the visible category tabs.
+  // Total = Upstream + Downstream + Analytical. Active includes operating
+  // equipment that is currently alerting (status "error"), so Active + Idle = Total.
+  // "With alerts" is an overlapping state (alertCount > 0), not a primary status.
+  const kpis = useMemo(() => {
+    const total = EQUIPMENT.length;
+    const active = EQUIPMENT.filter((e) => e.status === "active" || e.status === "error").length;
+    const idle = EQUIPMENT.filter((e) => e.status === "idle").length;
+    const withAlerts = EQUIPMENT.filter((e) => e.alertCount > 0).length;
+    const uploadsToday = getFleetKpis().analyticalUploadsToday;
+    return { total, active, idle, withAlerts, uploadsToday };
+  }, []);
   const [tab, setTab] = useState<EquipmentCategory>("upstream");
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
