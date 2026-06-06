@@ -441,6 +441,9 @@ export default function EquipmentDashboardV2Page() {
         )) return false;
       }
       return true;
+    }).sort((a, b) => {
+      const rank: Record<EquipmentStatus, number> = { active: 0, error: 1, idle: 2 };
+      return rank[a.status] - rank[b.status];
     });
 
   // Trend stub (no historical series in fixture data — render only when meaningful)
