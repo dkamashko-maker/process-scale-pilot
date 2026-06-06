@@ -35,6 +35,8 @@ export interface ChartAlert {
   elapsed_h: number;
   label: string;
   severity: "critical" | "warning";
+  description?: string;
+  parameter?: string;
 }
 
 interface ProcessChartProps {
