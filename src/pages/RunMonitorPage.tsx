@@ -168,8 +168,8 @@ export default function RunMonitorPage() {
       parameter: "pH",
       alertId: "ALR-BR003-PH-DRIFT",
       description: phDrift && phParam
-        ? `pH at ${(phDrift.PH as number).toFixed(2)} — outside ${phParam.min_value}–${phParam.max_value} range`
-        : "pH deviation detected in late-run window",
+        ? `pH drift to ${(phDrift.PH as number).toFixed(2)} — outside the ${phParam.min_value}–${phParam.max_value} operating band`
+        : "pH deviation detected during the harvest transition",
     });
 
 
