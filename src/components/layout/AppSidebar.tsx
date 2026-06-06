@@ -70,7 +70,7 @@ export function AppSidebar() {
           >
             {!collapsed && (
               <>
-                <h2 className="text-section text-foreground">Data Vest</h2>
+                <h2 className="text-xl font-semibold tracking-tight text-foreground">Data Vest</h2>
                 <p className="text-[11px] text-text-secondary mt-1">
                   Instrumental Data Collection &amp; Analytics
                 </p>
