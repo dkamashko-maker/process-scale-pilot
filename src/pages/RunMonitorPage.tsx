@@ -36,11 +36,13 @@ function buildAiAnalysisUrl(run: (typeof RUNS)[number], prompt?: string): string
   // Derive equipment identity from the bioreactor run label (e.g. "#002").
   const equipmentId = run.bioreactor_run.includes("#001") ? "UP-001" : "UP-002";
   const equipmentName = run.bioreactor_run.split("—")[0].trim();
+  const runLabel = run.bioreactor_run.split("—")[1]?.trim() || run.run_id;
   const params = new URLSearchParams({
     source: "monitoring",
     equipmentId,
     equipmentName,
     runId: run.run_id,
+    runLabel,
     batchId: run.batch_id,
   });
   if (prompt) params.set("prompt", prompt);
