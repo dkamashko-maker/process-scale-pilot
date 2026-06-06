@@ -269,9 +269,6 @@ function EquipmentCard({
               </div>
               <div className="flex items-start justify-between gap-2 text-[12px]">
                 <div className="min-w-0">
-                  <div className="text-[11px] uppercase tracking-wide text-text-secondary mb-0.5">
-                    {eq.currentBatch ? "Batch" : "Last batch"}
-                  </div>
                   <BatchBadge batch={eq.currentBatch ?? eq.lastBatch} />
                 </div>
                 <div className="min-w-0 text-right">
@@ -284,7 +281,6 @@ function EquipmentCard({
             <>
               <div className="flex items-start justify-between gap-2 text-[12px]">
                 <div className="min-w-0">
-                  <div className="text-[11px] uppercase tracking-wide text-text-secondary mb-0.5">Batch</div>
                   <BatchBadge batch={eq.currentBatch} />
                 </div>
                 <div className="min-w-0 text-right">
@@ -301,10 +297,14 @@ function EquipmentCard({
               )}
             </>
           ) : (
-            <div className="rounded-md bg-secondary px-2.5 py-2">
-              <div className="text-[11px] uppercase tracking-wide text-text-secondary mb-1">Last batch</div>
-              <BatchBadge batch={eq.lastBatch ?? eq.currentBatch} />
-              <div className="text-[11px] text-text-secondary mt-1.5">{format(new Date(eq.lastOperationAt), "MMM d, HH:mm")}</div>
+            <div className="flex items-start justify-between gap-2 text-[12px]">
+              <div className="min-w-0">
+                <BatchBadge batch={eq.lastBatch ?? eq.currentBatch} />
+              </div>
+              <div className="min-w-0 text-right">
+                <div className="text-[11px] uppercase tracking-wide text-text-secondary">Idle since</div>
+                <div className="truncate">{format(new Date(eq.lastOperationAt), "MMM d, HH:mm")}</div>
+              </div>
             </div>
           )}
 
@@ -315,7 +315,6 @@ function EquipmentCard({
               {eq.serviceAlert}
             </div>
           )}
-
 
           {/* Footer: connection + alert breakdown + hover CTA */}
           <div className="flex items-center justify-between pt-2 mt-1 border-t border-border-tertiary">
