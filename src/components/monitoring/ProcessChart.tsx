@@ -151,6 +151,11 @@ function AlertMarker(props: any) {
                 {alert.description}
               </div>
             )}
+            {typeof onAlertClick === "function" && (
+              <div className="mt-1 font-medium" style={{ color }}>
+                Click to open in Alerts →
+              </div>
+            )}
           </div>
         </foreignObject>
       )}
