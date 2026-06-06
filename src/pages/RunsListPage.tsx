@@ -198,6 +198,7 @@ function CreateRunDialog({
       timeline_version: "Timeline 2",
       timezone: "Europe/Zurich",
       seed: Date.now() % 100000,
+      status: "active" as const,
     };
     onCreated(newRun);
     setForm({

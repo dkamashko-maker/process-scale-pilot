@@ -17,6 +17,7 @@ export interface Run {
   timeline_version: string;
   timezone: string;
   seed: number;
+  status: "active" | "completed";
 }
 
 export interface ParameterDef {
