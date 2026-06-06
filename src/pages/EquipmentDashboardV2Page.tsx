@@ -23,7 +23,7 @@ import {
   FileText, BookOpen, LineChart, Bell, Database, ScrollText, UploadCloud, Cable,
   Hash, Layers, Clock, ArrowUpRight, ArrowDownRight, X,
 } from "lucide-react";
-import { format, formatDistanceToNow } from "date-fns";
+import { format } from "date-fns";
 import { EquipmentTooltip } from "@/components/equipment/EquipmentTooltip";
 
 // ── Category accent (subtle — used for tab + 3px left card border only) ──
