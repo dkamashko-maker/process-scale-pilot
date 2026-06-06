@@ -117,6 +117,7 @@ export default function RunMonitorPage() {
       label: "Dissolved O₂ below threshold",
       severity: "critical",
       parameter: "DO",
+      alertId: "ALR-BR003-DO-LOW",
       description: doDip
         ? `DO dropped to ${(doDip.DO as number).toFixed(2)}% — below ${doParam.min_value}% setpoint`
         : "Dissolved oxygen fell below operating threshold",
