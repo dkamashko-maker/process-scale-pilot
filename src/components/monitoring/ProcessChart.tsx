@@ -37,6 +37,8 @@ export interface ChartAlert {
   severity: "critical" | "warning";
   description?: string;
   parameter?: string;
+  /** Optional concrete alert id, used to focus the Alerts destination. */
+  alertId?: string;
 }
 
 interface ProcessChartProps {
