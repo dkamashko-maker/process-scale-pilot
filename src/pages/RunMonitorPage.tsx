@@ -327,38 +327,58 @@ export default function RunMonitorPage() {
             <div className="flex items-center gap-2 mb-2">
               <Sparkles className="h-4 w-4 text-primary" />
               <h4 className="text-[11px] uppercase tracking-wide text-text-secondary font-medium">
-                Analyze Data with AI
+                AI Analysis
               </h4>
             </div>
-            <p className="text-[12px] text-text-secondary mb-3">
-              Ask AI to interpret process data, alerts, and trends for this run.
+            <p className="text-[11px] text-text-secondary mb-2.5 leading-relaxed">
+              Quick interpretation of this run&apos;s process data and alerts.
             </p>
-            <ul className="space-y-1.5 mb-3">
+            <div className="flex flex-wrap gap-1.5 mb-3">
               {[
-                "Analyze current process status",
-                "Explain current alerts",
-                "Summarize parameter deviations",
-                "Predict next risks",
-              ].map((prompt) => (
-                <li key={prompt}>
-                  <button
-                    type="button"
-                    onClick={() => navigate(buildAiAnalysisUrl(run, prompt))}
-                    className="text-[12px] text-primary hover:underline text-left w-full truncate"
-                  >
-                    {prompt}
-                  </button>
-                </li>
+                { label: "Status", prompt: "Analyze current process status" },
+                { label: "Alerts", prompt: "Explain current alerts" },
+                { label: "Deviations", prompt: "Summarize parameter deviations" },
+                { label: "Risks", prompt: "Predict next risks" },
+              ].map(({ label, prompt }) => (
+                <button
+                  key={label}
+                  type="button"
+                  onClick={() => navigate(buildAiAnalysisUrl(run, prompt))}
+                  className="text-[11px] px-2 py-1 rounded-md bg-muted hover:bg-muted/80 text-foreground transition-colors border border-border"
+                >
+                  {label}
+                </button>
               ))}
-            </ul>
+            </div>
             <Button
               size="sm"
-              className="w-full gap-1.5"
+              variant="outline"
+              className="w-full gap-1.5 text-[12px] mb-2"
               onClick={() => navigate(buildAiAnalysisUrl(run))}
             >
               <Sparkles className="h-3.5 w-3.5" />
               Open AI analysis
             </Button>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const input = e.currentTarget.querySelector("input") as HTMLInputElement;
+                const value = input.value.trim();
+                if (value) {
+                  navigate(buildAiAnalysisUrl(run, value));
+                  input.value = "";
+                }
+              }}
+              className="flex gap-1.5"
+            >
+              <Input
+                placeholder="Ask about this run…"
+                className="h-7 text-[11px] px-2 py-0 bg-background"
+              />
+              <Button type="submit" size="sm" className="h-7 px-2 text-[11px]">
+                Ask
+              </Button>
+            </form>
           </Card>
         </div>
       </div>
