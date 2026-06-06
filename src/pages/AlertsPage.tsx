@@ -161,9 +161,9 @@ function severityRowTint(s: Severity) {
   return "";
 }
 
-function RulesTable() {
+function RulesTable({ initialInstrument = "ALL" }: { initialInstrument?: string }) {
   const [query, setQuery] = useState("");
-  const [instrument, setInstrument] = useState<string>("ALL");
+  const [instrument, setInstrument] = useState<string>(initialInstrument);
 
   const instruments = useMemo(
     () => Array.from(new Set(RULES.map((r) => r.instrument))),
