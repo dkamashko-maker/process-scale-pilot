@@ -104,7 +104,7 @@ function AlertBreakdown({ count, critical }: { count: number; critical: boolean 
   );
 }
 
-function Sparkline({ data, label }: { data: number[]; label?: string }) {
+function Sparkline({ data, label, onClick }: { data: number[]; label?: string; onClick?: () => void }) {
   if (!data?.length) return null;
   const w = 96, h = 28;
   const min = Math.min(...data), max = Math.max(...data);
@@ -112,11 +112,18 @@ function Sparkline({ data, label }: { data: number[]; label?: string }) {
   const step = w / (data.length - 1);
   const pts = data.map((v, i) => `${i * step},${h - ((v - min) / range) * h}`).join(" ");
   const area = `0,${h} ${pts} ${w},${h}`;
+  const interactive = !!onClick;
+  const Wrapper: React.ElementType = interactive ? "button" : "div";
   return (
-    <div className="flex items-center justify-between rounded-md bg-secondary px-2.5 py-1.5">
-      {label && (
-        <span className="text-[10px] uppercase tracking-wide text-text-secondary">{label}</span>
-      )}
+    <Wrapper
+      type={interactive ? "button" : undefined}
+      onClick={interactive ? (e: React.MouseEvent) => { e.stopPropagation(); onClick(); } : undefined}
+      className={`flex w-full items-center justify-between rounded-md bg-secondary px-2.5 py-1.5 text-left ${interactive ? "transition-colors hover:bg-muted cursor-pointer" : ""}`}
+    >
+      <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wide text-text-secondary">
+        {label ?? "Trend · 7d"}
+        {interactive && <ArrowUpRight className="h-3 w-3" />}
+      </span>
       <svg width={w} height={h} className="text-primary overflow-visible">
         <defs>
           <linearGradient id="spark-fill" x1="0" x2="0" y1="0" y2="1">
@@ -127,7 +134,7 @@ function Sparkline({ data, label }: { data: number[]; label?: string }) {
         <polygon fill="url(#spark-fill)" points={area} />
         <polyline fill="none" stroke="currentColor" strokeWidth="1.75" points={pts} strokeLinecap="round" strokeLinejoin="round" />
       </svg>
-    </div>
+    </Wrapper>
   );
 }
 
@@ -142,6 +149,7 @@ function EquipmentCard({
   onOpen: () => void;
   onCta: () => void;
 }) {
+  const navigate = useNavigate();
   const cat = CATEGORY[eq.equipmentCategory];
   const isActive = eq.status === "active" || eq.status === "error";
   const isAnalytical = eq.equipmentCategory === "analytical";
@@ -210,7 +218,11 @@ function EquipmentCard({
                 </div>
               </div>
               {eq.trendPreview && (
-                <Sparkline data={eq.trendPreview} label="Temp · 7d" />
+                <Sparkline
+                  data={eq.trendPreview}
+                  label="Trend · 7d"
+                  onClick={() => navigate(`/data-storage?equipment=${encodeURIComponent(eq.equipmentId)}`)}
+                />
               )}
             </>
           ) : (
