@@ -149,6 +149,7 @@ function EquipmentCard({
   onOpen: () => void;
   onCta: () => void;
 }) {
+  const navigate = useNavigate();
   const cat = CATEGORY[eq.equipmentCategory];
   const isActive = eq.status === "active" || eq.status === "error";
   const isAnalytical = eq.equipmentCategory === "analytical";
