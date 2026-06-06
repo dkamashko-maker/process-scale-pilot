@@ -22,20 +22,23 @@ import {
 
 /**
  * Active state — Data Vest design system.
- * 3px primary left border + very-light primary bg tint (no full blue fill).
+ * 3px primary left border + light primary bg tint (no full blue fill).
+ * Strengthened for orientation: active items also tint the icon primary and
+ * carry medium weight so the current location reads at a glance.
  * Inactive items: no border, transparent bg.
  */
 const NAV_BASE =
   "flex items-center gap-3 pl-3 pr-3 py-2 text-[13px] font-normal rounded-md " +
   "border-l-[3px] border-transparent transition-colors hover:bg-accent/40";
 const NAV_ACTIVE =
-  "bg-[hsl(var(--nav-active-bg))] border-primary text-foreground font-medium";
+  "bg-[hsl(var(--nav-active-bg))] border-primary text-primary font-medium " +
+  "shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.15)] [&_svg]:text-primary";
 const SUB_BASE =
   "flex items-center gap-2.5 pl-5 pr-3 py-1.5 text-[13px] font-normal rounded-md " +
   "border-l-[3px] border-transparent ml-3 text-text-secondary " +
   "transition-colors hover:bg-accent/40 hover:text-foreground";
 const SUB_ACTIVE =
-  "bg-[hsl(var(--nav-active-bg))] border-primary text-foreground font-medium";
+  "bg-[hsl(var(--nav-active-bg))] border-primary text-primary font-medium [&_svg]:text-primary";
 
 const navItems = [
   { title: "Data Storage", url: "/data-storage", icon: Database },
