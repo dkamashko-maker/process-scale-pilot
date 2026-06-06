@@ -167,12 +167,12 @@ function EquipmentCard({
   const isActive = eq.status === "active" || eq.status === "error";
   const isAnalytical = eq.equipmentCategory === "analytical";
   const isManual = eq.integrationMode === "manual";
-  const isDownstream = eq.equipmentCategory === "downstream";
-  const cta = isActive ? "View run" : "Start run";
   const choRoute =
     eq.equipmentCategory === "downstream"
       ? DOWNSTREAM_ROUTE_MAP[eq.equipmentId]
       : undefined;
+  // Only show the "opens a page" affordance when a real destination exists
+  const isDownstreamLink = !!choRoute;
 
   // Card chrome — Operational card type from design system
   return (
