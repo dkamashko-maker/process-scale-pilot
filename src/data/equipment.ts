@@ -26,6 +26,8 @@ export interface Equipment {
   connectionHealth: ConnectionHealth;
   /** Active batch id, if any */
   currentBatch: string | null;
+  /** Most recent completed/associated batch id (shown on idle cards) */
+  lastBatch?: string | null;
   /** Free-form process phase label (e.g. "Production day 7", "Idle") */
   processPhase: string;
   /** Last time the equipment performed a meaningful operation */
@@ -124,6 +126,7 @@ export const EQUIPMENT: Equipment[] = [
     status: "idle",
     connectionHealth: "connected",
     currentBatch: null,
+    lastBatch: "B-250422-DS03",
     processPhase: "Idle",
     lastOperationAt: "2026-04-22T16:10:00",
     lastDataReceivedAt: "2026-04-22T16:10:00",
@@ -172,6 +175,7 @@ export const EQUIPMENT: Equipment[] = [
     status: "idle",
     connectionHealth: "connected",
     currentBatch: null,
+    lastBatch: "B-250421-DS02",
     processPhase: "Idle",
     lastOperationAt: "2026-04-21T11:00:00",
     lastDataReceivedAt: "2026-04-21T11:00:00",

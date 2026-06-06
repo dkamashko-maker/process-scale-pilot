@@ -215,9 +215,9 @@ function EquipmentCard({
             </>
           ) : (
             <div className="rounded-md bg-secondary px-2.5 py-2">
-              <div className="text-[11px] uppercase tracking-wide text-text-secondary">Last operation</div>
-              <div className="text-[12px]">{format(new Date(eq.lastOperationAt), "MMM d, HH:mm")}</div>
-              <div className="text-[11px] text-text-secondary italic mt-0.5">No active run</div>
+              <div className="text-[11px] uppercase tracking-wide text-text-secondary">Last batch</div>
+              <div className="font-mono text-[12px] truncate">{eq.lastBatch ?? eq.currentBatch ?? "—"}</div>
+              <div className="text-[11px] text-text-secondary mt-0.5">{format(new Date(eq.lastOperationAt), "MMM d, HH:mm")}</div>
             </div>
           )}
 
