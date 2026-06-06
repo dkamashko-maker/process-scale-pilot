@@ -385,6 +385,7 @@ export default function RunMonitorPage() {
             highlightedEventH={highlightedEventH}
             showRangeBands={showRangeBands}
             chartAlerts={chartAlerts}
+            onAlertClick={(alert) => navigate(buildAlertUrl(run, alert))}
           />
         </ChartCard>
 
