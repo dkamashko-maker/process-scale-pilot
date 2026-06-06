@@ -126,52 +126,95 @@ export default function RunMonitorPage() {
    */
   const chartAlerts = useMemo((): ChartAlert[] => {
     if (timeseries.length === 0) return [];
-    const maxH = timeseries[timeseries.length - 1].elapsed_h;
     const doParam = PARAMETERS.find((p) => p.parameter_code === "DO");
     const phParam = PARAMETERS.find((p) => p.parameter_code === "PH");
 
     const alerts: ChartAlert[] = [];
 
-    // 1. Dissolved O2 dipped below its lower threshold (sustained while recovering).
-    const doDip = doParam
-      ? timeseries.find((pt) => (pt.DO as number) < doParam.min_value)
-      : undefined;
-    const doStart = doDip ? doDip.elapsed_h : Math.round(maxH * 0.45);
-    // Recovery point: first reading back above setpoint after the dip began.
-    const doRecover = doParam && doDip
-      ? timeseries.find((pt) => pt.elapsed_h > doDip.elapsed_h && (pt.DO as number) >= doParam.min_value)
-      : undefined;
-    alerts.push({
-      elapsed_h: doStart,
-      elapsed_h_end: doRecover ? doRecover.elapsed_h : doDip ? undefined : Math.round(maxH * 0.5),
-      label: "Dissolved O₂ excursion during transition",
-      severity: "critical",
-      parameter: "DO",
-      alertId: "ALR-BR003-DO-LOW",
-      description: doDip
-        ? `DO dipped to ~${(doDip.DO as number).toFixed(0)}% — excursion below the ${doParam.min_value}% operating band`
-        : "Dissolved O₂ excursion detected during the process transition",
-    });
+    // Find the longest sustained window where a parameter sits outside its
+    // operating band. Returns null unless the deviation persists, so isolated
+    // single-point sensor noise never produces a marker.
+    const findSustainedExcursion = (
+      key: string,
+      min: number,
+      max: number,
+      minPoints = 3,
+    ) => {
+      let best: { start: number; end: number; len: number } | null = null;
+      let runStart: number | null = null;
+      let runLen = 0;
+      for (let i = 0; i < timeseries.length; i++) {
+        const v = timeseries[i][key] as number;
+        const outside = v < min || v > max;
+        if (outside) {
+          if (runStart === null) runStart = timeseries[i].elapsed_h;
+          runLen++;
+        } else {
+          if (runStart !== null && runLen >= minPoints) {
+            const end = timeseries[i - 1].elapsed_h;
+            if (!best || runLen > best.len) best = { start: runStart, end, len: runLen };
+          }
+          runStart = null;
+          runLen = 0;
+        }
+      }
+      if (runStart !== null && runLen >= minPoints) {
+        const end = timeseries[timeseries.length - 1].elapsed_h;
+        if (!best || runLen > best.len) best = { start: runStart, end, len: runLen };
+      }
+      return best;
+    };
 
-    // 2. pH drift detected during the harvest transition (late-run sustained window).
-    const lateWindow = timeseries.filter((pt) => pt.elapsed_h >= maxH * 0.8);
-    const phOutside = phParam
-      ? lateWindow.filter((pt) => !((pt.PH as number) >= phParam.min_value && (pt.PH as number) <= phParam.max_value))
-      : [];
-    const phDrift = phOutside[0];
-    const phDriftEnd = phOutside.length > 1 ? phOutside[phOutside.length - 1] : undefined;
-    alerts.push({
-      elapsed_h: phDrift ? phDrift.elapsed_h : Math.round(maxH * 0.88),
-      elapsed_h_end: phDriftEnd ? phDriftEnd.elapsed_h : phDrift ? undefined : Math.round(maxH * 0.94),
-      label: "pH drift during harvest transition",
-      severity: "warning",
-      parameter: "pH",
-      alertId: "ALR-BR003-PH-DRIFT",
-      description: phDrift && phParam
-        ? `pH drift to ${(phDrift.PH as number).toFixed(2)} — outside the ${phParam.min_value}–${phParam.max_value} operating band`
-        : "pH deviation detected during the harvest transition",
-    });
+    // 1. Dissolved O₂ — the seeded trend shows a real, visible dip mid-run as
+    //    cells grow, then a partial recovery. The dip approaches but does not
+    //    breach the lower operating band, so we mark the dip honestly and only
+    //    call it an "excursion below the band" if the data actually crosses it.
+    if (doParam) {
+      const doTrough = timeseries.reduce((lo, pt) =>
+        (pt.DO as number) < (lo.DO as number) ? pt : lo,
+      );
+      const doMin = doTrough.DO as number;
+      const breached = doMin < doParam.min_value;
+      // Recovery: first reading back a clear step above the trough.
+      const doRecover = timeseries.find(
+        (pt) => pt.elapsed_h > doTrough.elapsed_h && (pt.DO as number) >= doMin + 5,
+      );
+      alerts.push({
+        elapsed_h: doTrough.elapsed_h,
+        elapsed_h_end: doRecover ? doRecover.elapsed_h : undefined,
+        label: "Dissolved O₂ dip during transition",
+        severity: breached ? "critical" : "warning",
+        parameter: "DO",
+        alertId: "ALR-BR003-DO-LOW",
+        description: breached
+          ? `DO dipped to ~${doMin.toFixed(0)}% — excursion below the ${doParam.min_value}% lower operating band`
+          : `DO dipped to ~${doMin.toFixed(0)}% during the transition — a marked decline within the ${doParam.min_value}–${doParam.max_value}% operating band`,
+      });
+    }
 
+    // 2. pH — only annotate if the seeded trend actually holds outside the
+    //    operating band for a sustained window. The seeded pH oscillates
+    //    tightly around 7.0, so no marker is added when no real drift exists
+    //    (avoids fictional / contradictory threshold events).
+    if (phParam) {
+      const phWindow = findSustainedExcursion("PH", phParam.min_value, phParam.max_value);
+      if (phWindow) {
+        const mid = timeseries.find(
+          (pt) => pt.elapsed_h >= phWindow.start && pt.elapsed_h <= phWindow.end,
+        );
+        alerts.push({
+          elapsed_h: phWindow.start,
+          elapsed_h_end: phWindow.end > phWindow.start ? phWindow.end : undefined,
+          label: "pH drift during transition",
+          severity: "warning",
+          parameter: "pH",
+          alertId: "ALR-BR003-PH-DRIFT",
+          description: mid
+            ? `pH drift to ${(mid.PH as number).toFixed(2)} — sustained outside the ${phParam.min_value}–${phParam.max_value} operating band`
+            : `pH drift sustained outside the ${phParam.min_value}–${phParam.max_value} operating band`,
+        });
+      }
+    }
 
     return alerts;
   }, [timeseries]);
