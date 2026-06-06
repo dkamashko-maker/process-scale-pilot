@@ -112,13 +112,19 @@ function BatchBadge({ batch }: { batch: string | null | undefined }) {
       </span>
     );
   }
-  // Deterministic hue from batch string; keep saturation low for enterprise
-  let hash = 0;
-  for (let i = 0; i < batch.length; i++) hash = batch.charCodeAt(i) + ((hash << 5) - hash);
-  const hue = Math.abs(hash) % 360;
-  const bg = `hsl(${hue} 45% 88%)`;
-  const fg = `hsl(${hue} 60% 28%)`;
-  const bar = `hsl(${hue} 55% 45%)`;
+  // Fixed scenario mapping takes precedence; otherwise deterministic hue.
+  const fixed = BATCH_COLOR_MAP[batch];
+  let bg: string, fg: string, bar: string;
+  if (fixed) {
+    ({ bg, fg, bar } = fixed);
+  } else {
+    let hash = 0;
+    for (let i = 0; i < batch.length; i++) hash = batch.charCodeAt(i) + ((hash << 5) - hash);
+    const hue = Math.abs(hash) % 360;
+    bg = `hsl(${hue} 45% 88%)`;
+    fg = `hsl(${hue} 60% 28%)`;
+    bar = `hsl(${hue} 55% 45%)`;
+  }
   return (
     <span
       className="inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-sm text-[12px] font-mono"
