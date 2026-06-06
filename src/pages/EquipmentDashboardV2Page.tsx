@@ -437,8 +437,12 @@ function EquipmentDrawer({
             ) : (
               <ul className="space-y-2">
                 {alerts.map((a) => (
-                  <li key={a.id} className="text-xs border-l-2 pl-2"
-                      style={{ borderColor: a.severity === "critical" ? "hsl(var(--destructive))" : a.severity === "warning" ? "hsl(38 92% 50%)" : "hsl(var(--muted-foreground))" }}>
+                  <li
+                    key={a.id}
+                    onClick={() => navigate("/alerts")}
+                    className="text-xs border-l-2 pl-2 cursor-pointer rounded-r-sm transition-colors hover:bg-secondary"
+                    style={{ borderColor: a.severity === "critical" ? "hsl(var(--destructive))" : a.severity === "warning" ? "hsl(38 92% 50%)" : "hsl(var(--muted-foreground))" }}
+                  >
                     <div className="font-medium">{a.message}</div>
                     <div className="text-text-secondary">{format(new Date(a.timestamp), "MMM d, HH:mm")}</div>
                   </li>
@@ -466,9 +470,6 @@ function EquipmentDrawer({
                 <LineChart className="h-4 w-4 mr-2" /> Open monitoring view
               </Button>
             )}
-            <Button variant="outline" size="sm" className="justify-start" onClick={() => navigate("/events")}>
-              <Bell className="h-4 w-4 mr-2" /> View alerts
-            </Button>
             <Button variant="outline" size="sm" className="justify-start" onClick={() => navigate("/metadata")}>
               <BookOpen className="h-4 w-4 mr-2" /> Open metadata
             </Button>
