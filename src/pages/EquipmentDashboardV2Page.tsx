@@ -59,6 +59,7 @@ const CATEGORY: Record<
 const DOWNSTREAM_ROUTE_MAP: Record<string, string> = {
   "DS-101": "/cho-production-line/centrifuge",
   "DS-102": "/cho-production-line/centrifuge",
+  "DS-200": "/cho-production-line/ultrafiltration",
   "DS-201": "/cho-production-line/fplc",
   "DS-202": "/cho-production-line/ultrafiltration",
   "DS-301": "/cho-production-line/vial-washer",
@@ -66,6 +67,17 @@ const DOWNSTREAM_ROUTE_MAP: Record<string, string> = {
   "DS-401": "/cho-production-line/lyophilizer",
   "DS-402": "/cho-production-line/filling-pump",
   "DS-403": "/cho-production-line/capping",
+};
+
+/**
+ * Fixed batch → color mapping for the consultant downstream scenario.
+ * Batch identity color (NOT equipment state). Idle / no batch falls back to gray.
+ */
+const BATCH_COLOR_MAP: Record<string, { bg: string; fg: string; bar: string }> = {
+  "B-25-456-033": { bg: "hsl(214 90% 92%)", fg: "hsl(214 80% 32%)", bar: "hsl(214 85% 50%)" }, // blue
+  "B-25-456-032": { bg: "hsl(142 55% 90%)", fg: "hsl(142 60% 26%)", bar: "hsl(142 55% 40%)" }, // green
+  "B-25-456-030": { bg: "hsl(268 60% 92%)", fg: "hsl(268 55% 38%)", bar: "hsl(268 55% 52%)" }, // violet
+  "B-25-456-029": { bg: "hsl(38 92% 90%)",  fg: "hsl(30 80% 34%)",  bar: "hsl(36 90% 48%)"  }, // amber/orange
 };
 
 // ── Small visual helpers ────────────────────────────────────────────────
@@ -100,13 +112,19 @@ function BatchBadge({ batch }: { batch: string | null | undefined }) {
       </span>
     );
   }
-  // Deterministic hue from batch string; keep saturation low for enterprise
-  let hash = 0;
-  for (let i = 0; i < batch.length; i++) hash = batch.charCodeAt(i) + ((hash << 5) - hash);
-  const hue = Math.abs(hash) % 360;
-  const bg = `hsl(${hue} 45% 88%)`;
-  const fg = `hsl(${hue} 60% 28%)`;
-  const bar = `hsl(${hue} 55% 45%)`;
+  // Fixed scenario mapping takes precedence; otherwise deterministic hue.
+  const fixed = BATCH_COLOR_MAP[batch];
+  let bg: string, fg: string, bar: string;
+  if (fixed) {
+    ({ bg, fg, bar } = fixed);
+  } else {
+    let hash = 0;
+    for (let i = 0; i < batch.length; i++) hash = batch.charCodeAt(i) + ((hash << 5) - hash);
+    const hue = Math.abs(hash) % 360;
+    bg = `hsl(${hue} 45% 88%)`;
+    fg = `hsl(${hue} 60% 28%)`;
+    bar = `hsl(${hue} 55% 45%)`;
+  }
   return (
     <span
       className="inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-sm text-[12px] font-mono"
@@ -287,6 +305,15 @@ function EquipmentCard({
               <div className="text-[11px] text-text-secondary mt-1.5">{format(new Date(eq.lastOperationAt), "MMM d, HH:mm")}</div>
             </div>
           )}
+
+          {/* Service / maintenance alert — attention without a broken state */}
+          {eq.serviceAlert && (
+            <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-[hsl(var(--pill-warning-bg))] text-[hsl(var(--pill-warning-fg))] text-[11px] font-medium">
+              <AlertTriangle className="h-3 w-3 shrink-0" />
+              {eq.serviceAlert}
+            </div>
+          )}
+
 
           {/* Footer: connection + alert breakdown + hover CTA */}
           <div className="flex items-center justify-between pt-2 mt-1 border-t border-border-tertiary">
