@@ -433,6 +433,30 @@ function EquipmentDrawer({
 
           <Separator />
 
+          {/* Actions — monitoring primary, then data series, then metadata */}
+          <div className="grid grid-cols-1 gap-2">
+            {!isAnalytical && (
+              <Button
+                size="sm"
+                className="justify-start"
+                onClick={() => {
+                  const run = getRunForEquipmentId(equipment.equipmentId);
+                  navigate(run ? `/run/${run.run_id}` : "/equipment");
+                }}
+              >
+                <LineChart className="h-4 w-4 mr-2" /> Open monitoring view
+              </Button>
+            )}
+            <Button variant="outline" size="sm" className="justify-start" onClick={() => navigate("/data-storage")}>
+              <Database className="h-4 w-4 mr-2" /> View equipment data series
+            </Button>
+            <Button variant="outline" size="sm" className="justify-start" onClick={() => navigate("/metadata")}>
+              <BookOpen className="h-4 w-4 mr-2" /> Open metadata
+            </Button>
+          </div>
+
+          <Separator />
+
           {/* Recent alerts */}
           <div>
             <div className="text-xs text-text-secondary mb-2 flex items-center gap-1">
@@ -455,30 +479,6 @@ function EquipmentDrawer({
                 ))}
               </ul>
             )}
-          </div>
-
-          <Separator />
-
-          {/* Actions — monitoring primary, then data series, then metadata */}
-          <div className="grid grid-cols-1 gap-2">
-            {!isAnalytical && (
-              <Button
-                size="sm"
-                className="justify-start"
-                onClick={() => {
-                  const run = getRunForEquipmentId(equipment.equipmentId);
-                  navigate(run ? `/run/${run.run_id}` : "/equipment");
-                }}
-              >
-                <LineChart className="h-4 w-4 mr-2" /> Open monitoring view
-              </Button>
-            )}
-            <Button variant="outline" size="sm" className="justify-start" onClick={() => navigate("/data-storage")}>
-              <Database className="h-4 w-4 mr-2" /> View equipment data series
-            </Button>
-            <Button variant="outline" size="sm" className="justify-start" onClick={() => navigate("/metadata")}>
-              <BookOpen className="h-4 w-4 mr-2" /> Open metadata
-            </Button>
           </div>
         </div>
       </SheetContent>
