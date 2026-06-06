@@ -65,7 +65,7 @@ const DOWNSTREAM_ROUTE_MAP: Record<string, string> = {
   "DS-302": "/cho-production-line/depyrogenation",
   "DS-401": "/cho-production-line/lyophilizer",
   "DS-402": "/cho-production-line/filling-pump",
-  "DS-403": "/cho-production-line/capping-labeling",
+  "DS-403": "/cho-production-line/capping",
 };
 
 // ── Small visual helpers ────────────────────────────────────────────────
