@@ -39,6 +39,8 @@ export interface ChartAlert {
   parameter?: string;
   /** Optional concrete alert id, used to focus the Alerts destination. */
   alertId?: string;
+  /** Optional end hour — when present the alert is a sustained/duration condition. */
+  elapsed_h_end?: number;
 }
 
 interface ProcessChartProps {
@@ -265,6 +267,26 @@ export function ProcessChart({
               strokeOpacity={0.8}
             />
           )}
+
+          {/* Sustained-alert windows — subtle translucent band between start and end */}
+          {chartAlerts
+            .filter((a) => typeof a.elapsed_h_end === "number" && a.elapsed_h_end! > a.elapsed_h)
+            .map((a, i) => {
+              const color = a.severity === "critical" ? "#ef4444" : "#f59e0b";
+              return (
+                <ReferenceArea
+                  key={`alert-band-${i}`}
+                  x1={Math.max(0, a.elapsed_h)}
+                  x2={Math.min(maxH, a.elapsed_h_end!)}
+                  fill={color}
+                  fillOpacity={0.08}
+                  stroke={color}
+                  strokeOpacity={0.25}
+                  strokeDasharray="3 3"
+                  ifOverflow="extendDomain"
+                />
+              );
+            })}
 
           {/* Alert markers — thin solid line + hoverable pin */}
           {chartAlerts

@@ -132,12 +132,18 @@ export default function RunMonitorPage() {
 
     const alerts: ChartAlert[] = [];
 
-    // 1. Dissolved O2 dipped below its lower threshold.
+    // 1. Dissolved O2 dipped below its lower threshold (sustained while recovering).
     const doDip = doParam
       ? timeseries.find((pt) => (pt.DO as number) < doParam.min_value)
       : undefined;
+    const doStart = doDip ? doDip.elapsed_h : Math.round(maxH * 0.45);
+    // Recovery point: first reading back above setpoint after the dip began.
+    const doRecover = doParam && doDip
+      ? timeseries.find((pt) => pt.elapsed_h > doDip.elapsed_h && (pt.DO as number) >= doParam.min_value)
+      : undefined;
     alerts.push({
-      elapsed_h: doDip ? doDip.elapsed_h : Math.round(maxH * 0.45),
+      elapsed_h: doStart,
+      elapsed_h_end: doRecover ? doRecover.elapsed_h : doDip ? undefined : Math.round(maxH * 0.5),
       label: "Dissolved O₂ below threshold",
       severity: "critical",
       parameter: "DO",
@@ -147,13 +153,16 @@ export default function RunMonitorPage() {
         : "Dissolved oxygen fell below operating threshold",
     });
 
-    // 2. pH drift detected during the harvest transition (late in the run).
+    // 2. pH drift detected during the harvest transition (late-run sustained window).
     const lateWindow = timeseries.filter((pt) => pt.elapsed_h >= maxH * 0.8);
-    const phDrift = phParam
-      ? lateWindow.find((pt) => !((pt.PH as number) >= phParam.min_value && (pt.PH as number) <= phParam.max_value))
-      : undefined;
+    const phOutside = phParam
+      ? lateWindow.filter((pt) => !((pt.PH as number) >= phParam.min_value && (pt.PH as number) <= phParam.max_value))
+      : [];
+    const phDrift = phOutside[0];
+    const phDriftEnd = phOutside.length > 1 ? phOutside[phOutside.length - 1] : undefined;
     alerts.push({
       elapsed_h: phDrift ? phDrift.elapsed_h : Math.round(maxH * 0.88),
+      elapsed_h_end: phDriftEnd ? phDriftEnd.elapsed_h : phDrift ? undefined : Math.round(maxH * 0.94),
       label: "pH drift during harvest transition",
       severity: "warning",
       parameter: "pH",
@@ -162,6 +171,7 @@ export default function RunMonitorPage() {
         ? `pH at ${(phDrift.PH as number).toFixed(2)} — outside ${phParam.min_value}–${phParam.max_value} range`
         : "pH deviation detected in late-run window",
     });
+
 
     return alerts;
   }, [timeseries]);
