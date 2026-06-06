@@ -168,12 +168,22 @@ function EquipmentCard({
   const isAnalytical = eq.equipmentCategory === "analytical";
   const isManual = eq.integrationMode === "manual";
   const cta = isActive ? "View run" : "Start run";
+  const choRoute =
+    eq.equipmentCategory === "downstream"
+      ? DOWNSTREAM_ROUTE_MAP[eq.equipmentId]
+      : undefined;
 
   // Card chrome — Operational card type from design system
   return (
     <EquipmentTooltip equipment={eq}>
       <div
-        onClick={onOpen}
+        onClick={() => {
+          if (choRoute) {
+            navigate(choRoute);
+          } else {
+            onOpen();
+          }
+        }}
         className={`group relative card-operational border-l-[3px] ${cat.border} cursor-pointer transition-colors hover:border-primary hover:border-l-[3px]`}
       >
         {/* Header row */}
