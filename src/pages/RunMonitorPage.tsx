@@ -4,7 +4,7 @@ import { RUNS, PARAMETERS, getTimeseries } from "@/data/runData";
 import { FileText, Sparkles } from "lucide-react";
 import { useEvents } from "@/contexts/EventsContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { ProcessChart, colorFor } from "@/components/monitoring/ProcessChart";
+import { ProcessChart, colorFor, type ChartAlert } from "@/components/monitoring/ProcessChart";
 import { ControlActionsPanel } from "@/components/monitoring/ControlActionsPanel";
 import { ChartCard } from "@/components/shared/ChartCard";
 import { DataTable } from "@/components/shared/DataTable";
