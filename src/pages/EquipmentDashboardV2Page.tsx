@@ -465,10 +465,10 @@ function EquipmentDrawer({
                 <LineChart className="h-4 w-4 mr-2" /> Open monitoring view
               </Button>
             )}
-            <Button variant="outline" size="sm" className="justify-start" onClick={() => navigate("/data-storage")}>
+            <Button variant="outline" size="sm" className="justify-start" onClick={() => navigate(`/data-storage${equipmentContextQuery()}`)}>
               <Database className="h-4 w-4 mr-2" /> View equipment data series
             </Button>
-            <Button variant="outline" size="sm" className="justify-start" onClick={() => navigate("/metadata")}>
+            <Button variant="outline" size="sm" className="justify-start" onClick={() => navigate(`/metadata${equipmentContextQuery()}`)}>
               <BookOpen className="h-4 w-4 mr-2" /> Open metadata
             </Button>
           </div>
