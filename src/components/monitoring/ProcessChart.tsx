@@ -196,8 +196,47 @@ export function ProcessChart({
               strokeOpacity={0.8}
             />
           )}
+
+          {/* Alert markers — thin solid line + pin, distinct from neutral event lines */}
+          {chartAlerts
+            .filter((a) => a.elapsed_h >= 0 && a.elapsed_h <= maxH)
+            .map((a, i) => {
+              const color = a.severity === "critical" ? "#ef4444" : "#f59e0b";
+              return (
+                <ReferenceLine
+                  key={`alert-${i}`}
+                  x={a.elapsed_h}
+                  stroke={color}
+                  strokeWidth={1.5}
+                  ifOverflow="extendDomain"
+                  label={{
+                    value: "▲",
+                    position: "top",
+                    fill: color,
+                    fontSize: 11,
+                  }}
+                />
+              );
+            })}
         </LineChart>
       </ResponsiveContainer>
+
+      {/* Alert legend strip — only when alerts exist */}
+      {chartAlerts.length > 0 && (
+        <ul className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px]">
+          {chartAlerts.map((a, i) => (
+            <li key={`alert-legend-${i}`} className="flex items-center gap-1.5 text-text-secondary">
+              <span
+                className="inline-block h-2.5 w-2.5 rotate-45 rounded-[1px] shrink-0"
+                style={{ backgroundColor: a.severity === "critical" ? "#ef4444" : "#f59e0b" }}
+                aria-hidden
+              />
+              <span className="tabular-nums text-text-tertiary">h{a.elapsed_h.toFixed(1)}</span>
+              <span className="text-foreground">{a.label}</span>
+            </li>
+          ))}
+        </ul>
+      )}
 
       {/* Compact horizontal legend, beneath the chart */}
       {visibleParams.length > 0 && (
