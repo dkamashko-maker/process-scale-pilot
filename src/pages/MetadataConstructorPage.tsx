@@ -44,9 +44,15 @@ const TYPE_ICONS: Record<string, React.ReactNode> = {
 export default function MetadataConstructorPage() {
   const { toast } = useToast();
   const [, setTick] = useState(0);
+  const [searchParams] = useSearchParams();
+
+  // Optional equipment context passed from the Equipment Dashboard drawer.
+  const fromEquipmentDashboard = searchParams.get("source") === "equipment-dashboard";
+  const contextEquipmentId = searchParams.get("equipment") || searchParams.get("equipmentId") || undefined;
+  const contextEquipmentName = searchParams.get("equipmentName") || undefined;
 
   // Filters for labeling tab
-  const [interfaceFilter, setInterfaceFilter] = useState("all");
+  const [interfaceFilter, setInterfaceFilter] = useState(contextEquipmentId ?? "all");
   const [typeFilter, setTypeFilter] = useState("all");
   const [completenessFilter, setCompletenessFilter] = useState("all");
   const [page, setPage] = useState(0);
