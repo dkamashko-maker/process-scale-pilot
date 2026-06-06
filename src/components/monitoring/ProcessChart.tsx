@@ -101,18 +101,23 @@ function ChartTooltip({ active, payload, label, parameters }: any) {
   );
 }
 
-/** Hoverable alert marker shape with inline tooltip. */
+/** Hoverable/clickable alert marker shape with inline tooltip. */
 function AlertMarker(props: any) {
-  const { cx, cy, alert } = props;
+  const { cx, cy, alert, onAlertClick } = props;
   const [hovered, setHovered] = useState(false);
   if (cx == null || cy == null || !alert) return null;
   const color = alert.severity === "critical" ? "#ef4444" : "#f59e0b";
+  const clickable = typeof onAlertClick === "function";
 
   return (
     <g
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
+      onClick={clickable ? () => onAlertClick(alert) : undefined}
       style={{ cursor: "pointer" }}
+      role={clickable ? "button" : undefined}
+      tabIndex={clickable ? 0 : undefined}
+      aria-label={clickable ? `View alert: ${alert.label}` : undefined}
     >
       {/* Invisible wider hit area for easier hovering */}
       <circle cx={cx} cy={cy} r={10} fill="transparent" />
