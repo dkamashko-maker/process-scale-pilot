@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { CheckCircle2, FlaskConical, Filter as FilterIcon, Droplets } from "lucide-react";
+import { FlaskConical, Filter as FilterIcon, Droplets } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
