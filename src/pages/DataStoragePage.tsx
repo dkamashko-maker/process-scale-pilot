@@ -71,10 +71,23 @@ export default function DataStoragePage() {
   // Filters
   const [interfaceFilter, setInterfaceFilter]       = useState<string>(searchParams.get("equipment") || searchParams.get("interface") || "all");
   const [typeFilter, setTypeFilter]                 = useState<string>("all");
-  const [runFilter, setRunFilter]                   = useState<string>("all");
+  const [runFilter, setRunFilter]                   = useState<string>(() => {
+    const rid = searchParams.get("runId");
+    // Only prefilter by run if records actually exist for it, so the page never
+    // lands on an empty view from stale context.
+    if (rid && getDataRecords().some((r) => r.linked_run_id === rid)) return rid;
+    return "all";
+  });
   const [sourceFilter, setSourceFilter]             = useState<string>("all");   // entry mode (renamed from "completeness")
   const [flagFilter, setFlagFilter]                 = useState<string>("all");
   const [severityFilter, setSeverityFilter]         = useState<"all" | AlertSeverity>("all");
+
+  // Optional equipment context passed from the Equipment Dashboard drawer.
+  const fromEquipmentDashboard = searchParams.get("source") === "equipment-dashboard";
+  const contextEquipmentName = searchParams.get("equipmentName") || undefined;
+  const contextEquipmentId = searchParams.get("equipmentId") || undefined;
+  const contextBatch = searchParams.get("batch") || undefined;
+  const contextRunId = searchParams.get("runId") || undefined;
 
   // Pagination + drawer
   const [page, setPage] = useState(0);
@@ -172,6 +185,29 @@ export default function DataStoragePage() {
             </span>
           }
         />
+
+        {/* Equipment context indicator — shown when arriving from the Equipment Dashboard drawer */}
+        {fromEquipmentDashboard && contextEquipmentName && interfaceFilter === contextEquipmentId && (
+          <div className="flex flex-wrap items-center gap-2 rounded-md border border-border-tertiary bg-secondary/60 px-3 py-2 text-[12px]">
+            <Filter className="h-3.5 w-3.5 text-primary shrink-0" />
+            <span className="text-text-secondary">Filtered by equipment:</span>
+            <span className="font-medium text-foreground">{contextEquipmentName}</span>
+            <Badge variant="neutral" className="font-mono">{contextEquipmentId}</Badge>
+            {contextBatch && (
+              <Badge variant="neutral">Batch {contextBatch}</Badge>
+            )}
+            {contextRunId && runFilter === contextRunId && (
+              <Badge variant="neutral" className="font-mono">Run {contextRunId}</Badge>
+            )}
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="ml-auto inline-flex items-center gap-1 text-text-secondary hover:text-foreground transition-colors"
+            >
+              <X className="h-3.5 w-3.5" /> Clear
+            </button>
+          </div>
+        )}
 
         <DataQualityLog />
 
