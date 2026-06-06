@@ -218,7 +218,11 @@ function EquipmentCard({
                 </div>
               </div>
               {eq.trendPreview && (
-                <Sparkline data={eq.trendPreview} label="Temp · 7d" />
+                <Sparkline
+                  data={eq.trendPreview}
+                  label="Trend · 7d"
+                  onClick={() => navigate(`/data-storage?equipment=${encodeURIComponent(eq.equipmentId)}`)}
+                />
               )}
             </>
           ) : (
