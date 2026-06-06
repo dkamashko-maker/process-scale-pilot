@@ -261,26 +261,8 @@ export default function MetadataConstructorPage() {
 
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "labeling")}>
         <TabsList className="h-auto bg-transparent p-0 gap-2">
-          <PillTab value="templates"  label="Label Templates" count={templateCount} />
           <PillTab value="labeling"   label="Bulk Labeling"   count={incompleteRecordCount} countSuffix="pending" pendingTone />
         </TabsList>
-
-        {/* ─── Templates Tab ─── */}
-        <TabsContent value="templates" className="mt-4 space-y-3">
-          {LABEL_TEMPLATES.map((tpl) => (
-            <TemplateCard
-              key={tpl.template_id}
-              template={tpl}
-              recordCount={recordsWithCompleteness.filter((r) => r.completeness.template?.template_id === tpl.template_id).length}
-              onOpenRebuild={() => navigate("/metadata/rebuild")}
-              onOpenRecords={() => {
-                setCompletenessFilter("all");
-                setPage(0);
-                setActiveTab("labeling");
-              }}
-            />
-          ))}
-        </TabsContent>
 
         {/* ─── Labeling Tab ─── */}
         <TabsContent value="labeling" className="space-y-4">
