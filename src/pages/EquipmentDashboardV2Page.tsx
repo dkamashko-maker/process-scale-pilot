@@ -448,11 +448,8 @@ export default function EquipmentDashboardV2Page() {
 
   return (
     <div className="px-6 pt-4 pb-6 space-y-5">
-      {/* Header block: product identity → context bar → page title */}
+      {/* Header block: context bar → page title */}
       <div>
-        {/* Product identity — prominent, single source on this page */}
-        <h1 className="text-[26px] font-medium tracking-tight text-foreground leading-none">Data Vest</h1>
-
         {/* Compact process context bar */}
         <div className="mt-3 flex items-center gap-2 text-[11px] flex-wrap">
           <span className="text-[10px] uppercase tracking-wide text-text-secondary font-medium">Process</span>
