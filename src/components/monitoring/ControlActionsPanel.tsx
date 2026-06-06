@@ -45,6 +45,8 @@ interface ControlActionsPanelProps {
   onSelectEvent: (eventId: string | null) => void;
   canLogEvents: boolean;
   onLogEvent: () => void;
+  basalMedium?: string;
+  feedMedium?: string;
 }
 
 export function ControlActionsPanel({
