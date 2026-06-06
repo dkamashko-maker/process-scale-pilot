@@ -401,7 +401,18 @@ const STATUS_LABEL: Record<StatusFilter, string> = {
 
 export default function EquipmentDashboardV2Page() {
   const navigate = useNavigate();
-  const kpis = useMemo(() => getFleetKpis(), []);
+  // Local KPI model — reconciles with the visible category tabs.
+  // Total = Upstream + Downstream + Analytical. Active includes operating
+  // equipment that is currently alerting (status "error"), so Active + Idle = Total.
+  // "With alerts" is an overlapping state (alertCount > 0), not a primary status.
+  const kpis = useMemo(() => {
+    const total = EQUIPMENT.length;
+    const active = EQUIPMENT.filter((e) => e.status === "active" || e.status === "error").length;
+    const idle = EQUIPMENT.filter((e) => e.status === "idle").length;
+    const withAlerts = EQUIPMENT.filter((e) => e.alertCount > 0).length;
+    const uploadsToday = getFleetKpis().analyticalUploadsToday;
+    return { total, active, idle, withAlerts, uploadsToday };
+  }, []);
   const [tab, setTab] = useState<EquipmentCategory>("upstream");
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
@@ -432,8 +443,7 @@ export default function EquipmentDashboardV2Page() {
       return true;
     });
 
-  // Trend stubs (no historical series in fixture data — render only when meaningful)
-  const connectedTrend: "up" | "down" | undefined = kpis.connected > 0 ? "up" : undefined;
+  // Trend stub (no historical series in fixture data — render only when meaningful)
   const activeTrend: "up" | "down" | undefined = kpis.active > 0 ? "up" : undefined;
 
   return (
@@ -474,22 +484,10 @@ export default function EquipmentDashboardV2Page() {
         </div>
       </div>
 
-      {/* KPI summary strip — Summary card style */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-        <SummaryTile
-          label="Connected"
-          value={kpis.connected}
-          Icon={Wifi}
-          tone="primary"
-          trend={connectedTrend}
-        />
-        <SummaryTile
-          label="Active"
-          value={kpis.active}
-          Icon={Activity}
-          tone="active"
-          trend={activeTrend}
-        />
+      {/* KPI summary strip — compact, aligned, reconciled with category tabs */}
+      <div className="-mt-2 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        <SummaryTile label="Total equipment" value={kpis.total} Icon={Layers} tone="primary" />
+        <SummaryTile label="Active" value={kpis.active} Icon={Activity} tone="active" trend={activeTrend} />
         <SummaryTile label="Idle" value={kpis.idle} Icon={CircleDot} tone="idle" />
         <SummaryTile
           label="With alerts"
@@ -500,10 +498,10 @@ export default function EquipmentDashboardV2Page() {
         />
         <SummaryTile
           label="Uploads today"
-          value={kpis.analyticalUploadsToday}
+          value={kpis.uploadsToday}
           Icon={UploadCloud}
           tone="primary"
-          demoted={kpis.analyticalUploadsToday === 0}
+          demoted={kpis.uploadsToday === 0}
         />
       </div>
 
@@ -630,16 +628,16 @@ function SummaryTile({
     ? "bg-amber-50"
     : "bg-secondary";
   const valueCls = demoted
-    ? "text-[18px] text-text-secondary"
-    : "text-kpi text-foreground";
+    ? "text-[20px] text-text-secondary"
+    : "text-[26px] font-medium text-foreground";
 
   return (
-    <div className={`rounded-lg p-4 ${bg}`}>
-      <div className="flex items-start justify-between gap-3">
-        <p className="text-[13px] font-normal text-text-secondary">{label}</p>
-        <Icon className={`h-4 w-4 shrink-0 ${TONE_ICON[tone]}`} />
+    <div className={`rounded-lg px-4 py-3 ${bg}`}>
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-[12px] font-normal text-text-secondary">{label}</p>
+        <Icon className={`h-3.5 w-3.5 shrink-0 ${TONE_ICON[tone]}`} />
       </div>
-      <div className="mt-2 flex items-baseline gap-1.5">
+      <div className="mt-1 flex items-baseline gap-1.5">
         <p className={`tabular-nums leading-none ${valueCls}`}>{value}</p>
         {trend && !demoted && (
           trend === "up"
