@@ -451,7 +451,7 @@ export default function EquipmentDashboardV2Page() {
       {/* Header block: context bar → page title */}
       <div>
         {/* Compact process context bar */}
-        <div className="mt-3 flex items-center gap-2 text-[11px] flex-wrap">
+        <div className="flex items-center gap-2 text-[11px] flex-wrap">
           <span className="text-[10px] uppercase tracking-wide text-text-secondary font-medium">Process</span>
           <span className="font-mono text-foreground">FSH-Campaign-042</span>
           <span className="text-text-tertiary">·</span>
