@@ -350,6 +350,7 @@ export default function RunMonitorPage() {
             eventMarkers={eventMarkers}
             highlightedEventH={highlightedEventH}
             showRangeBands={showRangeBands}
+            chartAlerts={chartAlerts}
           />
         </ChartCard>
 
