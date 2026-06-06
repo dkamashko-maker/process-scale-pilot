@@ -144,13 +144,13 @@ export default function RunMonitorPage() {
     alerts.push({
       elapsed_h: doStart,
       elapsed_h_end: doRecover ? doRecover.elapsed_h : doDip ? undefined : Math.round(maxH * 0.5),
-      label: "Dissolved O₂ below threshold",
+      label: "Dissolved O₂ excursion during transition",
       severity: "critical",
       parameter: "DO",
       alertId: "ALR-BR003-DO-LOW",
       description: doDip
-        ? `DO dropped to ${(doDip.DO as number).toFixed(2)}% — below ${doParam.min_value}% setpoint`
-        : "Dissolved oxygen fell below operating threshold",
+        ? `DO dipped to ~${(doDip.DO as number).toFixed(0)}% — excursion below the ${doParam.min_value}% operating band`
+        : "Dissolved O₂ excursion detected during the process transition",
     });
 
     // 2. pH drift detected during the harvest transition (late-run sustained window).
