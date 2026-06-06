@@ -306,6 +306,15 @@ function EquipmentCard({
             </div>
           )}
 
+          {/* Service / maintenance alert — attention without a broken state */}
+          {eq.serviceAlert && (
+            <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-[hsl(var(--pill-warning-bg))] text-[hsl(var(--pill-warning-fg))] text-[11px] font-medium">
+              <AlertTriangle className="h-3 w-3 shrink-0" />
+              {eq.serviceAlert}
+            </div>
+          )}
+
+
           {/* Footer: connection + alert breakdown + hover CTA */}
           <div className="flex items-center justify-between pt-2 mt-1 border-t border-border-tertiary">
             <ConnectionLine health={eq.connectionHealth} />
