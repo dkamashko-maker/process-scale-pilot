@@ -167,6 +167,7 @@ function EquipmentCard({
   const isActive = eq.status === "active" || eq.status === "error";
   const isAnalytical = eq.equipmentCategory === "analytical";
   const isManual = eq.integrationMode === "manual";
+  const cta = isActive ? "View run" : "Start run";
   const choRoute =
     eq.equipmentCategory === "downstream"
       ? DOWNSTREAM_ROUTE_MAP[eq.equipmentId]
