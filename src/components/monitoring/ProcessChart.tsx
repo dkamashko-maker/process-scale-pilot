@@ -37,6 +37,8 @@ export interface ChartAlert {
   severity: "critical" | "warning";
   description?: string;
   parameter?: string;
+  /** Optional concrete alert id, used to focus the Alerts destination. */
+  alertId?: string;
 }
 
 interface ProcessChartProps {
@@ -47,6 +49,8 @@ interface ProcessChartProps {
   highlightedEventH: number | null;
   showRangeBands: boolean;
   chartAlerts?: ChartAlert[];
+  /** Invoked when an alert marker is clicked — navigates to the Alerts context. */
+  onAlertClick?: (alert: ChartAlert) => void;
 }
 
 function normalize(value: number, param: ParameterDef) {
@@ -97,18 +101,23 @@ function ChartTooltip({ active, payload, label, parameters }: any) {
   );
 }
 
-/** Hoverable alert marker shape with inline tooltip. */
+/** Hoverable/clickable alert marker shape with inline tooltip. */
 function AlertMarker(props: any) {
-  const { cx, cy, alert } = props;
+  const { cx, cy, alert, onAlertClick } = props;
   const [hovered, setHovered] = useState(false);
   if (cx == null || cy == null || !alert) return null;
   const color = alert.severity === "critical" ? "#ef4444" : "#f59e0b";
+  const clickable = typeof onAlertClick === "function";
 
   return (
     <g
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
+      onClick={clickable ? () => onAlertClick(alert) : undefined}
       style={{ cursor: "pointer" }}
+      role={clickable ? "button" : undefined}
+      tabIndex={clickable ? 0 : undefined}
+      aria-label={clickable ? `View alert: ${alert.label}` : undefined}
     >
       {/* Invisible wider hit area for easier hovering */}
       <circle cx={cx} cy={cy} r={10} fill="transparent" />
@@ -142,6 +151,11 @@ function AlertMarker(props: any) {
                 {alert.description}
               </div>
             )}
+            {typeof onAlertClick === "function" && (
+              <div className="mt-1 font-medium" style={{ color }}>
+                Click to open in Alerts →
+              </div>
+            )}
           </div>
         </foreignObject>
       )}
@@ -157,6 +171,7 @@ export function ProcessChart({
   highlightedEventH,
   showRangeBands,
   chartAlerts = [],
+  onAlertClick,
 }: ProcessChartProps) {
   const chartData = useMemo(() => {
     return timeseries.map((point) => {
@@ -273,7 +288,7 @@ export function ProcessChart({
                     fill="transparent"
                     stroke="none"
                     isFront
-                    shape={<AlertMarker alert={a} />}
+                    shape={<AlertMarker alert={a} onAlertClick={onAlertClick} />}
                   />
                 </>
               );

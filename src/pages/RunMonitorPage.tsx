@@ -36,12 +36,18 @@ const CLUSTER_ORDER: { id: ParameterDef["type_priority"]; label: string }[] = [
 
 const EVENT_TYPES = ["FEED", "BASE_ADDITION", "ANTIFOAM", "INDUCER", "ADDITIVE", "HARVEST", "SAMPLE", "NOTE"];
 
+/** Derive the equipment context shared across deep-links for a run. */
+function runEquipmentContext(run: (typeof RUNS)[number]) {
+  return {
+    equipmentId: run.bioreactor_run.includes("#001") ? "UP-001" : "UP-002",
+    equipmentName: run.bioreactor_run.split("—")[0].trim(),
+    runLabel: run.bioreactor_run.split("—")[1]?.trim() || run.run_id,
+  };
+}
+
 /** Build a contextual deep-link into the existing AI/Insights flow for a run. */
 function buildAiAnalysisUrl(run: (typeof RUNS)[number], prompt?: string): string {
-  // Derive equipment identity from the bioreactor run label (e.g. "#002").
-  const equipmentId = run.bioreactor_run.includes("#001") ? "UP-001" : "UP-002";
-  const equipmentName = run.bioreactor_run.split("—")[0].trim();
-  const runLabel = run.bioreactor_run.split("—")[1]?.trim() || run.run_id;
+  const { equipmentId, equipmentName, runLabel } = runEquipmentContext(run);
   const params = new URLSearchParams({
     source: "monitoring",
     equipmentId,
@@ -53,6 +59,24 @@ function buildAiAnalysisUrl(run: (typeof RUNS)[number], prompt?: string): string
   if (prompt) params.set("prompt", prompt);
   return `/ai?${params.toString()}`;
 }
+
+/** Build a deep-link into the Alerts page for an alert clicked on the chart. */
+function buildAlertUrl(run: (typeof RUNS)[number], alert: ChartAlert): string {
+  const { equipmentName, runLabel } = runEquipmentContext(run);
+  // Alerts page keys the feed/rules off the reactor instrument id (e.g. "BR-003-p").
+  const params = new URLSearchParams({
+    source: "monitoring-chart",
+    equipmentId: `BR-${run.reactor_id}`,
+    equipmentName,
+    runId: run.run_id,
+    runLabel,
+    batchId: run.batch_id,
+  });
+  if (alert.alertId) params.set("alertId", alert.alertId);
+  if (alert.parameter) params.set("alertType", alert.parameter);
+  return `/alerts?${params.toString()}`;
+}
+
 
 export default function RunMonitorPage() {
   const { runId } = useParams<{ runId: string }>();
@@ -117,6 +141,7 @@ export default function RunMonitorPage() {
       label: "Dissolved O₂ below threshold",
       severity: "critical",
       parameter: "DO",
+      alertId: "ALR-BR003-DO-LOW",
       description: doDip
         ? `DO dropped to ${(doDip.DO as number).toFixed(2)}% — below ${doParam.min_value}% setpoint`
         : "Dissolved oxygen fell below operating threshold",
@@ -132,6 +157,7 @@ export default function RunMonitorPage() {
       label: "pH drift during harvest transition",
       severity: "warning",
       parameter: "pH",
+      alertId: "ALR-BR003-PH-DRIFT",
       description: phDrift && phParam
         ? `pH at ${(phDrift.PH as number).toFixed(2)} — outside ${phParam.min_value}–${phParam.max_value} range`
         : "pH deviation detected in late-run window",
@@ -359,6 +385,7 @@ export default function RunMonitorPage() {
             highlightedEventH={highlightedEventH}
             showRangeBands={showRangeBands}
             chartAlerts={chartAlerts}
+            onAlertClick={(alert) => navigate(buildAlertUrl(run, alert))}
           />
         </ChartCard>
 
