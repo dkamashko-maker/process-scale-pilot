@@ -288,7 +288,7 @@ export function ProcessChart({
                     fill="transparent"
                     stroke="none"
                     isFront
-                    shape={<AlertMarker alert={a} />}
+                    shape={<AlertMarker alert={a} onAlertClick={onAlertClick} />}
                   />
                 </>
               );
