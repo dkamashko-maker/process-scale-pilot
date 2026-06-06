@@ -55,6 +55,19 @@ const CATEGORY: Record<
   },
 };
 
+// ── Downstream equipment → CHO production line detail routes ──────────────
+const DOWNSTREAM_ROUTE_MAP: Record<string, string> = {
+  "DS-101": "/cho-production-line/centrifuge",
+  "DS-102": "/cho-production-line/centrifuge",
+  "DS-201": "/cho-production-line/fplc",
+  "DS-202": "/cho-production-line/ultrafiltration",
+  "DS-301": "/cho-production-line/vial-washer",
+  "DS-302": "/cho-production-line/depyrogenation",
+  "DS-401": "/cho-production-line/lyophilizer",
+  "DS-402": "/cho-production-line/filling-pump",
+  "DS-403": "/cho-production-line/capping-labeling",
+};
+
 // ── Small visual helpers ────────────────────────────────────────────────
 
 function StatusBadge({ status }: { status: EquipmentStatus }) {
@@ -155,12 +168,22 @@ function EquipmentCard({
   const isAnalytical = eq.equipmentCategory === "analytical";
   const isManual = eq.integrationMode === "manual";
   const cta = isActive ? "View run" : "Start run";
+  const choRoute =
+    eq.equipmentCategory === "downstream"
+      ? DOWNSTREAM_ROUTE_MAP[eq.equipmentId]
+      : undefined;
 
   // Card chrome — Operational card type from design system
   return (
     <EquipmentTooltip equipment={eq}>
       <div
-        onClick={onOpen}
+        onClick={() => {
+          if (choRoute) {
+            navigate(choRoute);
+          } else {
+            onOpen();
+          }
+        }}
         className={`group relative card-operational border-l-[3px] ${cat.border} cursor-pointer transition-colors hover:border-primary hover:border-l-[3px]`}
       >
         {/* Header row */}
