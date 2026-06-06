@@ -97,6 +97,59 @@ function ChartTooltip({ active, payload, label, parameters }: any) {
   );
 }
 
+/** Hoverable alert marker shape with inline tooltip. */
+function AlertMarker(props: any) {
+  const { cx, cy, payload } = props;
+  const alert: ChartAlert = payload;
+  const [hovered, setHovered] = useState(false);
+  if (cx == null || cy == null) return null;
+  const color = alert.severity === "critical" ? "#ef4444" : "#f59e0b";
+
+  return (
+    <g
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{ cursor: "pointer" }}
+    >
+      {/* Invisible wider hit area for easier hovering */}
+      <circle cx={cx} cy={cy} r={10} fill="transparent" />
+      {/* Visible triangle pin */}
+      <text x={cx} y={cy} textAnchor="middle" fill={color} fontSize={11} dy={3}>
+        ▲
+      </text>
+      {hovered && (
+        <foreignObject x={cx - 90} y={cy + 12} width="180" height="70">
+          <div
+            className="rounded-md border p-2 shadow-md text-[11px] leading-snug"
+            style={{
+              backgroundColor: "hsl(var(--background))",
+              borderColor: color,
+              color: "hsl(var(--foreground))",
+            }}
+          >
+            <div className="font-medium mb-0.5" style={{ color }}>
+              {alert.label}
+            </div>
+            <div className="tabular-nums text-text-secondary">
+              Hour {alert.elapsed_h.toFixed(1)}
+            </div>
+            {alert.parameter && (
+              <div className="text-text-secondary mt-0.5">
+                Parameter: {alert.parameter}
+              </div>
+            )}
+            {alert.description && (
+              <div className="text-text-secondary mt-0.5">
+                {alert.description}
+              </div>
+            )}
+          </div>
+        </foreignObject>
+      )}
+    </g>
+  );
+}
+
 export function ProcessChart({
   timeseries,
   selectedParams,
