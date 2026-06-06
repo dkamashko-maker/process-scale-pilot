@@ -100,6 +100,28 @@ interface FeedAlert {
 
 const FEED: FeedAlert[] = [
   {
+    id: "ALR-BR003-DO-LOW",
+    instrument: "BR-003-p",
+    parameter: "Dissolved O₂",
+    observed: "Below setpoint",
+    threshold: "< DO setpoint",
+    severity: "CRITICAL",
+    occurredAt: "Bioreactor chart marker",
+    evidenceLabel: "Process monitoring chart — DO trend marker",
+    evidenceIcon: "chart",
+  },
+  {
+    id: "ALR-BR003-PH-DRIFT",
+    instrument: "BR-003-p",
+    parameter: "pH",
+    observed: "Outside range (harvest transition)",
+    threshold: "6.80–7.20",
+    severity: "HIGH",
+    occurredAt: "Bioreactor chart marker",
+    evidenceLabel: "Process monitoring chart — pH trend marker",
+    evidenceIcon: "chart",
+  },
+  {
     id: "ALR-BR003-NH4-D8",
     instrument: "BR-003-p",
     parameter: "NH₄⁺",
