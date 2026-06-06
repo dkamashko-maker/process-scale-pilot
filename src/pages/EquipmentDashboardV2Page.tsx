@@ -90,6 +90,34 @@ function ConnectionLine({ health }: { health: Equipment["connectionHealth"] }) {
   );
 }
 
+/** Compact deterministic batch badge — batch identity color, not state color */
+function BatchBadge({ batch }: { batch: string | null | undefined }) {
+  if (!batch) {
+    return (
+      <span className="inline-flex items-center gap-1.5 text-[12px] font-mono text-text-secondary">
+        <span className="inline-block w-2 h-2 rounded-sm bg-muted" />
+        —
+      </span>
+    );
+  }
+  // Deterministic hue from batch string; keep saturation low for enterprise
+  let hash = 0;
+  for (let i = 0; i < batch.length; i++) hash = batch.charCodeAt(i) + ((hash << 5) - hash);
+  const hue = Math.abs(hash) % 360;
+  const bg = `hsl(${hue} 45% 88%)`;
+  const fg = `hsl(${hue} 60% 28%)`;
+  const bar = `hsl(${hue} 55% 45%)`;
+  return (
+    <span
+      className="inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-sm text-[12px] font-mono"
+      style={{ backgroundColor: bg, color: fg }}
+    >
+      <span className="inline-block w-1.5 h-3 rounded-[1px]" style={{ backgroundColor: bar }} />
+      {batch}
+    </span>
+  );
+}
+
 /** Severity breakdown chip — "1 critical · 1 warning" style */
 function AlertBreakdown({ count, critical }: { count: number; critical: boolean }) {
   if (count === 0) {
