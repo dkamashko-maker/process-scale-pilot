@@ -252,25 +252,32 @@ export function ProcessChart({
             />
           )}
 
-          {/* Alert markers — thin solid line + pin, distinct from neutral event lines */}
+          {/* Alert markers — thin solid line + hoverable pin */}
           {chartAlerts
             .filter((a) => a.elapsed_h >= 0 && a.elapsed_h <= maxH)
             .map((a, i) => {
               const color = a.severity === "critical" ? "#ef4444" : "#f59e0b";
               return (
-                <ReferenceLine
-                  key={`alert-${i}`}
-                  x={a.elapsed_h}
-                  stroke={color}
-                  strokeWidth={1.5}
-                  ifOverflow="extendDomain"
-                  label={{
-                    value: "▲",
-                    position: "top",
-                    fill: color,
-                    fontSize: 11,
-                  }}
-                />
+                <>
+                  <ReferenceLine
+                    key={`alert-line-${i}`}
+                    x={a.elapsed_h}
+                    stroke={color}
+                    strokeWidth={1.5}
+                    ifOverflow="extendDomain"
+                  />
+                  <ReferenceDot
+                    key={`alert-dot-${i}`}
+                    x={a.elapsed_h}
+                    y={108}
+                    r={8}
+                    fill="transparent"
+                    stroke="none"
+                    payload={a}
+                    isFront
+                    shape={AlertMarker}
+                  />
+                </>
               );
             })}
         </LineChart>
