@@ -277,8 +277,9 @@ function RulesTable({ initialInstrument = "ALL" }: { initialInstrument?: string 
   );
 }
 
-function AlertsFeed({ equipmentId }: { equipmentId?: string }) {
+function AlertsFeed({ equipmentId, focusAlertId }: { equipmentId?: string; focusAlertId?: string }) {
   const items = equipmentId ? FEED.filter((a) => a.instrument === equipmentId) : FEED;
+  const hasFocusMatch = focusAlertId ? items.some((a) => a.id === focusAlertId) : false;
   return (
     <div className="space-y-3">
       {equipmentId && (
@@ -286,6 +287,12 @@ function AlertsFeed({ equipmentId }: { equipmentId?: string }) {
           <div className="flex flex-wrap items-center gap-2 text-[12px]">
             <span className="text-text-secondary">Filtered to equipment</span>
             <Badge variant="neutral" className="font-mono">{equipmentId}</Badge>
+            {focusAlertId && (
+              <>
+                <span className="text-text-secondary">· Focused alert</span>
+                <Badge variant="neutral" className="font-mono">{focusAlertId}</Badge>
+              </>
+            )}
             {items.length === 0 && (
               <span className="text-text-secondary">— no triggered alerts for this equipment.</span>
             )}
@@ -310,11 +317,12 @@ function AlertsFeed({ equipmentId }: { equipmentId?: string }) {
 
       {items.map((a) => {
         const EvIcon = a.evidenceIcon === "sample" ? FlaskConical : LineChartIcon;
+        const isFocused = hasFocusMatch && a.id === focusAlertId;
         return (
           <Card
             key={a.id}
             kind="operational"
-            className={"p-4 border-l-[3px] " + (a.severity === "CRITICAL" ? "border-l-destructive" : "border-l-amber-500")}
+            className={"p-4 border-l-[3px] " + (a.severity === "CRITICAL" ? "border-l-destructive" : "border-l-amber-500") + (isFocused ? " ring-2 ring-primary" : "")}
           >
             <div className="flex items-start gap-3">
               <div
