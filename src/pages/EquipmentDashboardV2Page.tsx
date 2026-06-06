@@ -470,9 +470,6 @@ function EquipmentDrawer({
                 <LineChart className="h-4 w-4 mr-2" /> Open monitoring view
               </Button>
             )}
-            <Button variant="outline" size="sm" className="justify-start" onClick={() => navigate("/events")}>
-              <Bell className="h-4 w-4 mr-2" /> View alerts
-            </Button>
             <Button variant="outline" size="sm" className="justify-start" onClick={() => navigate("/metadata")}>
               <BookOpen className="h-4 w-4 mr-2" /> Open metadata
             </Button>
