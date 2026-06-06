@@ -60,7 +60,7 @@ export function AppLayout({ children }: AppLayoutProps) {
             </div>
           </header>
           <main className="flex-1 overflow-auto bg-muted/30">
-            <GlobalCampaignBanner />
+            {location.pathname !== "/equipment" && <GlobalCampaignBanner />}
             {children}
           </main>
         </div>

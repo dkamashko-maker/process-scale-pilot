@@ -11,7 +11,7 @@ import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
 } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
-import { OverviewHeader } from "@/components/shared/PageHeader";
+
 import { KpiCard } from "@/components/shared/KpiCard";
 import {
   EQUIPMENT, getFleetKpis, getRecentAlertsForEquipment,
@@ -438,10 +438,41 @@ export default function EquipmentDashboardV2Page() {
 
   return (
     <div className="p-6 stack-page">
-      <OverviewHeader
-        title="Equipment Dashboard"
-        description="Operational equipment, assays and connection status across the fleet."
-      />
+      {/* Header block: product identity → context bar → page title */}
+      <div>
+        {/* Product identity */}
+        <div className="mb-1">
+          <h1 className="text-[24px] font-medium tracking-tight text-foreground">Data Vest</h1>
+        </div>
+        <p className="text-[12px] text-text-secondary mb-5">Total process command</p>
+
+        {/* Compact context bar */}
+        <div className="mb-6 flex items-center gap-2 text-[11px] flex-wrap">
+          <span className="text-[10px] uppercase tracking-wide text-text-secondary font-medium">Process</span>
+          <span className="font-mono text-foreground">FSH-Campaign-042</span>
+          <span className="text-text-tertiary">·</span>
+          <span className="text-foreground">rhFSH</span>
+          <span className="text-text-tertiary">·</span>
+          <span className="text-text-secondary">9 instruments</span>
+          <span className="text-text-tertiary">·</span>
+          <button
+            type="button"
+            onClick={() => navigate("/alerts")}
+            className="inline-flex items-center gap-1 text-foreground hover:text-primary transition-colors"
+          >
+            <AlertTriangle className="h-3 w-3 text-status-warning" />
+            2 open items
+          </button>
+        </div>
+
+        {/* Page title */}
+        <div>
+          <h2 className="text-[16px] font-medium text-foreground">Equipment Dashboard</h2>
+          <p className="text-[13px] text-text-secondary mt-1">
+            Operational equipment, assays and connection status across the fleet.
+          </p>
+        </div>
+      </div>
 
       {/* KPI summary strip — Summary card style */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
