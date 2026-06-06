@@ -580,7 +580,7 @@ export default function EquipmentDashboardV2Page() {
             className="inline-flex items-center gap-1 text-foreground hover:text-primary transition-colors"
           >
             <AlertTriangle className="h-3 w-3 text-status-warning" />
-            2 open items
+            2 alerts
           </button>
         </div>
 
