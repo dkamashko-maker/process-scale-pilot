@@ -4,7 +4,7 @@ import {
   Database, Construction, Brain, Activity, FileText,
   Map, ChevronDown, ChevronRight, Workflow, Boxes, GitBranch, ClipboardList,
   Factory, FlaskConical, Filter as FilterIcon, Droplets, Bell, BarChart3,
-  Beaker, Sparkles, Flame, Syringe, Snowflake, Tag,
+  Beaker, Sparkles, Flame, Syringe, Snowflake, Tag, History,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { RUNS } from "@/data/runData";
