@@ -296,8 +296,6 @@ export default function RunMonitorPage() {
           <ControlActionsPanel
             events={runEvents}
             runStartTime={run.start_time}
-            selectedEventId={selectedEventId}
-            onSelectEvent={setSelectedEventId}
             canLogEvents={canLogEvents}
             onLogEvent={openNewEvent}
             basalMedium={run.basal_medium}
