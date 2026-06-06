@@ -522,7 +522,7 @@ export function getRecentAlertsForEquipment(id: string): Array<{
   if (!eq || eq.alertCount === 0) return [];
   const samples: Record<string, Array<{ severity: "info" | "warning" | "critical"; message: string; offsetMin: number }>> = {
     "UP-002": [
-      { severity: "warning",  message: "Dissolved O₂ dipped below 25 % for 8 min",        offsetMin: 38 },
+      { severity: "warning",  message: "Dissolved O₂ excursion detected during transition", offsetMin: 38 },
       { severity: "info",     message: "pH drift detected during harvest transition",     offsetMin: 96 },
     ],
     "DS-201": [
