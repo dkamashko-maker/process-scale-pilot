@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { format } from "date-fns";
 import {
   Tag, CheckCircle2, AlertTriangle, Filter, X,
@@ -44,9 +44,15 @@ const TYPE_ICONS: Record<string, React.ReactNode> = {
 export default function MetadataConstructorPage() {
   const { toast } = useToast();
   const [, setTick] = useState(0);
+  const [searchParams] = useSearchParams();
+
+  // Optional equipment context passed from the Equipment Dashboard drawer.
+  const fromEquipmentDashboard = searchParams.get("source") === "equipment-dashboard";
+  const contextEquipmentId = searchParams.get("equipment") || searchParams.get("equipmentId") || undefined;
+  const contextEquipmentName = searchParams.get("equipmentName") || undefined;
 
   // Filters for labeling tab
-  const [interfaceFilter, setInterfaceFilter] = useState("all");
+  const [interfaceFilter, setInterfaceFilter] = useState(contextEquipmentId ?? "all");
   const [typeFilter, setTypeFilter] = useState("all");
   const [completenessFilter, setCompletenessFilter] = useState("all");
   const [page, setPage] = useState(0);
@@ -169,7 +175,7 @@ export default function MetadataConstructorPage() {
   const templateCount = LABEL_TEMPLATES.length;
 
   // Tab control
-  const [activeTab, setActiveTab] = useState<"templates" | "labeling">("templates");
+  const [activeTab, setActiveTab] = useState<"templates" | "labeling">(contextEquipmentId ? "labeling" : "templates");
 
   const jumpToBulkIncomplete = useCallback(() => {
     setCompletenessFilter("incomplete");
@@ -184,6 +190,25 @@ export default function MetadataConstructorPage() {
         title="Metadata Constructor"
         description="Define label templates, apply metadata to records, and track completeness scores."
       />
+
+      {/* Equipment context indicator — shown when arriving from the Equipment Dashboard drawer */}
+      {fromEquipmentDashboard && contextEquipmentId && interfaceFilter === contextEquipmentId && (
+        <div className="flex flex-wrap items-center gap-2 rounded-md border border-border-tertiary bg-secondary/60 px-3 py-2 text-xs">
+          <Filter className="h-3.5 w-3.5 text-primary shrink-0" />
+          <span className="text-muted-foreground">Filtered by equipment:</span>
+          <span className="font-medium text-foreground">{contextEquipmentName ?? contextEquipmentId}</span>
+          <Badge variant="neutral" className="font-mono">{contextEquipmentId}</Badge>
+          <button
+            type="button"
+            onClick={() => { setInterfaceFilter("all"); setPage(0); setSelected(new Set()); }}
+            className="ml-auto inline-flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <X className="h-3.5 w-3.5" /> Clear
+          </button>
+        </div>
+      )}
+
+
 
       {/* KPI strip — Summary card style */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
