@@ -95,6 +95,44 @@ export default function RunMonitorPage() {
     return marker ? marker.elapsed_h : null;
   }, [selectedEventId, eventMarkers]);
 
+  /**
+   * Seeded monitoring alerts surfaced directly on the chart. Time positions are
+   * derived from the run's own timeseries so the markers land where the
+   * deviation actually occurred (with sensible fallbacks for short runs).
+   */
+  const chartAlerts = useMemo((): ChartAlert[] => {
+    if (timeseries.length === 0) return [];
+    const maxH = timeseries[timeseries.length - 1].elapsed_h;
+    const doParam = PARAMETERS.find((p) => p.parameter_code === "DO");
+    const phParam = PARAMETERS.find((p) => p.parameter_code === "PH");
+
+    const alerts: ChartAlert[] = [];
+
+    // 1. Dissolved O2 dipped below its lower threshold.
+    const doDip = doParam
+      ? timeseries.find((pt) => (pt.DO as number) < doParam.min_value)
+      : undefined;
+    alerts.push({
+      elapsed_h: doDip ? doDip.elapsed_h : Math.round(maxH * 0.45),
+      label: "Dissolved O₂ below threshold",
+      severity: "critical",
+    });
+
+    // 2. pH drift detected during the harvest transition (late in the run).
+    const lateWindow = timeseries.filter((pt) => pt.elapsed_h >= maxH * 0.8);
+    const phDrift = phParam
+      ? lateWindow.find((pt) => !((pt.PH as number) >= phParam.min_value && (pt.PH as number) <= phParam.max_value))
+      : undefined;
+    alerts.push({
+      elapsed_h: phDrift ? phDrift.elapsed_h : Math.round(maxH * 0.88),
+      label: "pH drift during harvest transition",
+      severity: "warning",
+    });
+
+    return alerts;
+  }, [timeseries]);
+
+
   const paramGroups = useMemo(() => {
     const groups: Record<string, ParameterDef[]> = {};
     MONITORING_PARAMETERS.forEach((p) => {
