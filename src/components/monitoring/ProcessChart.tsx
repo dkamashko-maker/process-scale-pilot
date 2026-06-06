@@ -272,9 +272,8 @@ export function ProcessChart({
                     r={8}
                     fill="transparent"
                     stroke="none"
-                    payload={a}
                     isFront
-                    shape={AlertMarker}
+                    shape={<AlertMarker alert={a} />}
                   />
                 </>
               );
