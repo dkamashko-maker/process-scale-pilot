@@ -276,7 +276,7 @@ export default function RunMonitorPage() {
         </CardContent>
       </Card>
 
-      {/* ── Chart + Control Actions Side Panel ── */}
+      {/* ── Chart + Side Panel ── */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
         <ChartCard
           title="Process Monitoring"
@@ -292,16 +292,61 @@ export default function RunMonitorPage() {
           />
         </ChartCard>
 
-        <Card kind="operational" className="overflow-hidden p-0">
-          <ControlActionsPanel
-            events={runEvents}
-            runStartTime={run.start_time}
-            canLogEvents={canLogEvents}
-            onLogEvent={openNewEvent}
-            basalMedium={run.basal_medium}
-            feedMedium={run.feed_medium}
-          />
-        </Card>
+        <div className="flex flex-col gap-4">
+          <Card kind="operational" className="overflow-hidden p-0 flex-1 min-h-0">
+            <ControlActionsPanel
+              events={runEvents}
+              runStartTime={run.start_time}
+              canLogEvents={canLogEvents}
+              onLogEvent={openNewEvent}
+              basalMedium={run.basal_medium}
+              feedMedium={run.feed_medium}
+            />
+          </Card>
+
+          {/* ── AI Analysis Entry Point ── */}
+          <Card className="p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Sparkles className="h-4 w-4 text-primary" />
+              <h4 className="text-[11px] uppercase tracking-wide text-text-secondary font-medium">
+                Analyze Data with AI
+              </h4>
+            </div>
+            <p className="text-[12px] text-text-secondary mb-3">
+              Ask AI to interpret process data, alerts, and trends for this run.
+            </p>
+            <ul className="space-y-1.5 mb-3">
+              {[
+                "Analyze current process status",
+                "Explain current alerts",
+                "Summarize parameter deviations",
+                "Predict next risks",
+              ].map((prompt) => (
+                <li key={prompt}>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      navigate(
+                        `/ai?prompt=${encodeURIComponent(prompt)}&runId=${run.run_id}`
+                      )
+                    }
+                    className="text-[12px] text-primary hover:underline text-left w-full truncate"
+                  >
+                    {prompt}
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <Button
+              size="sm"
+              className="w-full gap-1.5"
+              onClick={() => navigate(`/ai?runId=${run.run_id}`)}
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              Open AI analysis
+            </Button>
+          </Card>
+        </div>
       </div>
 
       {/* ── Event Log ── */}
