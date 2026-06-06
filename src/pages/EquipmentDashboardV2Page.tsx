@@ -65,7 +65,7 @@ const DOWNSTREAM_ROUTE_MAP: Record<string, string> = {
   "DS-302": "/cho-production-line/depyrogenation",
   "DS-401": "/cho-production-line/lyophilizer",
   "DS-402": "/cho-production-line/filling-pump",
-  "DS-403": "/cho-production-line/capping-labeling",
+  "DS-403": "/cho-production-line/capping",
 };
 
 // ── Small visual helpers ────────────────────────────────────────────────
@@ -167,12 +167,13 @@ function EquipmentCard({
   const isActive = eq.status === "active" || eq.status === "error";
   const isAnalytical = eq.equipmentCategory === "analytical";
   const isManual = eq.integrationMode === "manual";
-  const isDownstream = eq.equipmentCategory === "downstream";
   const cta = isActive ? "View run" : "Start run";
   const choRoute =
     eq.equipmentCategory === "downstream"
       ? DOWNSTREAM_ROUTE_MAP[eq.equipmentId]
       : undefined;
+  // Only show the "opens a page" affordance when a real destination exists
+  const isDownstreamLink = !!choRoute;
 
   // Card chrome — Operational card type from design system
   return (
@@ -186,7 +187,7 @@ function EquipmentCard({
           }
         }}
         className={`group relative card-operational border-l-[3px] ${cat.border} cursor-pointer transition-colors hover:border-primary hover:border-l-[3px] ${
-          isDownstream ? "hover:bg-secondary/40" : ""
+          isDownstreamLink ? "hover:bg-secondary/40" : ""
         }`}
       >
         {/* Header row */}
@@ -197,7 +198,7 @@ function EquipmentCard({
             </div>
             <div
               className={`text-[14px] font-medium leading-tight truncate text-foreground ${
-                isDownstream
+                isDownstreamLink
                   ? "group-hover:underline underline-offset-2 decoration-primary/70"
                   : ""
               }`}
