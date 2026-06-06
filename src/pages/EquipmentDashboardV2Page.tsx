@@ -23,7 +23,7 @@ import {
   FileText, BookOpen, LineChart, Bell, Database, ScrollText, UploadCloud, Cable,
   Hash, Layers, Clock, ArrowUpRight, ArrowDownRight, X,
 } from "lucide-react";
-import { format, formatDistanceToNow } from "date-fns";
+import { format } from "date-fns";
 import { EquipmentTooltip } from "@/components/equipment/EquipmentTooltip";
 
 // ── Category accent (subtle — used for tab + 3px left card border only) ──
@@ -358,6 +358,7 @@ function EquipmentDrawer({
         </SheetHeader>
 
         <div className="mt-6 space-y-5 text-sm">
+          {/* Top metadata — connection + mode */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <div className="text-xs text-text-secondary">Connection</div>
@@ -371,20 +372,26 @@ function EquipmentDrawer({
 
           <Separator />
 
+          {/* Core metadata — batch, phase, operation, data */}
           {isAnalytical ? (
             <div className="space-y-2">
               <div>
-                <div className="text-xs text-text-secondary">Last result received</div>
-                <div className="text-sm">
-                  {format(new Date(equipment.lastDataReceivedAt), "MMM d, yyyy HH:mm")}
-                  <span className="text-text-secondary ml-2">
-                    ({formatDistanceToNow(new Date(equipment.lastDataReceivedAt), { addSuffix: true })})
-                  </span>
-                </div>
+                <div className="text-xs text-text-secondary">Assigned batch</div>
+                <div className="font-mono text-xs">{equipment.currentBatch ?? equipment.lastBatch ?? "—"}</div>
               </div>
               <div>
-                <div className="text-xs text-text-secondary">Latest batch / series</div>
-                <div className="font-mono text-xs">{equipment.currentBatch ?? "—"}</div>
+                <div className="text-xs text-text-secondary">Process phase</div>
+                <div className="text-sm">{equipment.processPhase}</div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <div className="text-xs text-text-secondary">Last operation</div>
+                  <div className="text-xs">{format(new Date(equipment.lastOperationAt), "MMM d, HH:mm")}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-text-secondary">Last data received</div>
+                  <div className="text-xs">{format(new Date(equipment.lastDataReceivedAt), "MMM d, HH:mm")}</div>
+                </div>
               </div>
               <div>
                 <div className="text-xs text-text-secondary">Method</div>
@@ -413,21 +420,20 @@ function EquipmentDrawer({
                 <div className="text-xs text-text-secondary">Process phase</div>
                 <div className="text-sm">{equipment.processPhase}</div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <div className="text-xs text-text-secondary">Last operation</div>
-                  <div className="text-xs">{format(new Date(equipment.lastOperationAt), "MMM d, HH:mm")}</div>
-                </div>
-                <div>
-                  <div className="text-xs text-text-secondary">Last data received</div>
-                  <div className="text-xs">{format(new Date(equipment.lastDataReceivedAt), "MMM d, HH:mm")}</div>
-                </div>
+              <div>
+                <div className="text-xs text-text-secondary">Last operation</div>
+                <div className="text-xs">{format(new Date(equipment.lastOperationAt), "MMM d, HH:mm")}</div>
+              </div>
+              <div>
+                <div className="text-xs text-text-secondary">Last data received</div>
+                <div className="text-xs">{format(new Date(equipment.lastDataReceivedAt), "MMM d, HH:mm")}</div>
               </div>
             </div>
           )}
 
           <Separator />
 
+          {/* Recent alerts */}
           <div>
             <div className="text-xs text-text-secondary mb-2 flex items-center gap-1">
               <AlertTriangle className="h-3 w-3" /> Recent alerts
@@ -453,10 +459,8 @@ function EquipmentDrawer({
 
           <Separator />
 
+          {/* Actions — monitoring first, then ledger, then metadata / reports */}
           <div className="grid grid-cols-1 gap-2">
-            <Button variant="outline" size="sm" className="justify-start" onClick={() => navigate("/data-storage")}>
-              <Database className="h-4 w-4 mr-2" /> View ledger records
-            </Button>
             {!isAnalytical && (
               <Button
                 variant="outline"
@@ -470,6 +474,9 @@ function EquipmentDrawer({
                 <LineChart className="h-4 w-4 mr-2" /> Open monitoring view
               </Button>
             )}
+            <Button variant="outline" size="sm" className="justify-start" onClick={() => navigate("/data-storage")}>
+              <Database className="h-4 w-4 mr-2" /> View ledger records
+            </Button>
             <Button variant="outline" size="sm" className="justify-start" onClick={() => navigate("/metadata")}>
               <BookOpen className="h-4 w-4 mr-2" /> Open metadata
             </Button>
