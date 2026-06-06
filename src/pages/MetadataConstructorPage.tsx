@@ -172,10 +172,22 @@ export default function MetadataConstructorPage() {
 
   // Counts for KPI/tab badges
   const incompleteRecordCount = stats.incomplete;
-  const templateCount = LABEL_TEMPLATES.length;
 
   // Tab control
-  const [activeTab, setActiveTab] = useState<"templates" | "labeling">(contextEquipmentId ? "labeling" : "templates");
+  const [activeTab, setActiveTab] = useState<"labeling">("labeling");
+
+  // Template search
+  const [templateSearch, setTemplateSearch] = useState("");
+  const filteredTemplates = useMemo(() => {
+    const q = templateSearch.trim().toLowerCase();
+    if (!q) return LABEL_TEMPLATES;
+    return LABEL_TEMPLATES.filter((t) =>
+      t.name.toLowerCase().includes(q) ||
+      t.template_id.toLowerCase().includes(q) ||
+      t.applies_to.interface_id.toLowerCase().includes(q) ||
+      t.applies_to.data_type.toLowerCase().includes(q)
+    );
+  }, [templateSearch]);
 
   const jumpToBulkIncomplete = useCallback(() => {
     setCompletenessFilter("incomplete");
@@ -215,17 +227,20 @@ export default function MetadataConstructorPage() {
         <SummaryTile label="Total metadata records" value={stats.total} Icon={Layers} />
       </div>
 
-      <ProcessTemplatesPanel />
-
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "templates" | "labeling")}>
-        <TabsList className="h-auto bg-transparent p-0 gap-2">
-          <PillTab value="templates"  label="Label Templates" count={templateCount} />
-          <PillTab value="labeling"   label="Bulk Labeling"   count={incompleteRecordCount} countSuffix="pending" pendingTone />
-        </TabsList>
-
-        {/* ─── Templates Tab ─── */}
-        <TabsContent value="templates" className="mt-4 space-y-3">
-          {LABEL_TEMPLATES.map((tpl) => (
+      {/* Template selection — primary working control */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="text-section text-foreground">Label Templates</h3>
+          <span className="text-[11px] text-text-secondary">{filteredTemplates.length} of {LABEL_TEMPLATES.length}</span>
+        </div>
+        <Input
+          placeholder="Search templates by name, ID, interface or type..."
+          value={templateSearch}
+          onChange={(e) => setTemplateSearch(e.target.value)}
+          className="h-8 text-[13px]"
+        />
+        <div className="space-y-3">
+          {filteredTemplates.map((tpl) => (
             <TemplateCard
               key={tpl.template_id}
               template={tpl}
@@ -238,7 +253,15 @@ export default function MetadataConstructorPage() {
               }}
             />
           ))}
-        </TabsContent>
+        </div>
+      </div>
+
+      <ProcessTemplatesPanel />
+
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "labeling")}>
+        <TabsList className="h-auto bg-transparent p-0 gap-2">
+          <PillTab value="labeling"   label="Bulk Labeling"   count={incompleteRecordCount} countSuffix="pending" pendingTone />
+        </TabsList>
 
         {/* ─── Labeling Tab ─── */}
         <TabsContent value="labeling" className="space-y-4">
