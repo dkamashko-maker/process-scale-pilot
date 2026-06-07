@@ -20,7 +20,7 @@ import { OverviewHeader } from "@/components/shared/PageHeader";
 import { ProcessTemplatesPanel } from "@/components/cho/ProcessTemplatesPanel";
 import { useToast } from "@/hooks/use-toast";
 import { getDataRecords } from "@/data/dataRecords";
-import { INTERFACES, RUNS } from "@/data/runData";
+import { INTERFACES } from "@/data/runData";
 import {
   LABEL_TEMPLATES,
   computeCompleteness,
