@@ -189,12 +189,6 @@ export default function MetadataConstructorPage() {
     );
   }, [templateSearch]);
 
-  const jumpToBulkIncomplete = useCallback(() => {
-    setCompletenessFilter("incomplete");
-    setPage(0);
-    setSelected(new Set());
-    setActiveTab("labeling");
-  }, []);
 
   return (
     <div className="p-6 stack-page animate-fade-in">
