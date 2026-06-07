@@ -20,7 +20,7 @@ import { OverviewHeader } from "@/components/shared/PageHeader";
 import { ProcessTemplatesPanel } from "@/components/cho/ProcessTemplatesPanel";
 import { useToast } from "@/hooks/use-toast";
 import { getDataRecords } from "@/data/dataRecords";
-import { INTERFACES, RUNS } from "@/data/runData";
+import { INTERFACES } from "@/data/runData";
 import {
   LABEL_TEMPLATES,
   computeCompleteness,
@@ -189,12 +189,6 @@ export default function MetadataConstructorPage() {
     );
   }, [templateSearch]);
 
-  const jumpToBulkIncomplete = useCallback(() => {
-    setCompletenessFilter("incomplete");
-    setPage(0);
-    setSelected(new Set());
-    setActiveTab("labeling");
-  }, []);
 
   return (
     <div className="p-6 stack-page animate-fade-in">
