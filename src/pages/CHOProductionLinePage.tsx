@@ -176,33 +176,30 @@ export default function CHOProductionLinePage() {
 
       {/* Material Balance mini-widget */}
       <section className="mt-8" ref={materialBalanceRef}>
-        <h2 className="text-section text-foreground mb-3">Material Balance — Vial Counts</h2>
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <h2 className="text-section text-foreground">Material Balance — Vial Counts</h2>
+          <Badge variant="neutral" className="font-mono text-[11px]">
+            Completed batch B-250318-FF07
+          </Badge>
+        </div>
         <Card kind="operational" className="p-4">
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
             {[
               { id: "VW-03", label: "Processed", count: "12,000", note: "Cleaned" },
               { id: "DPY-01", label: "Depyrogenated", count: "12,000", note: "Sterile vials" },
-              { id: "FP-02", label: "Filled", count: "12,500", note: "+500 vs upstream", warn: true },
-              { id: "LPZ-03", label: "Lyophilised", count: "12,000", note: "Loaded" },
-              { id: "CAP-01", label: "Released", count: "11,988", note: "12 rejected" },
+              { id: "FP-02", label: "Filled", count: "11,940", note: "60 fill rejects" },
+              { id: "LPZ-03", label: "Lyophilised", count: "11,928", note: "12 cake defects" },
+              { id: "CAP-01", label: "Released", count: "11,902", note: "26 cap/label rejects" },
             ].map((s, i, arr) => (
               <div key={s.id} className="flex items-center gap-2">
-                <div
-                  className={
-                    "flex-1 rounded-md border p-3 " +
-                    (s.warn
-                      ? "border-amber-500/50 bg-amber-500/[0.06]"
-                      : "border-border-tertiary bg-background")
-                  }
-                >
+                <div className="flex-1 rounded-md border border-border-tertiary bg-background p-3">
                   <div className="flex items-center gap-1.5">
                     <Badge variant="neutral" className="font-mono text-[10px]">{s.id}</Badge>
-                    {s.warn && <AlertTriangle className="h-3 w-3 text-amber-600" />}
                   </div>
                   <div className="text-[10px] uppercase tracking-wide text-text-secondary mt-1">
                     {s.label}
                   </div>
-                  <div className={"text-[20px] tabular-nums " + (s.warn ? "text-amber-700 dark:text-amber-400" : "text-foreground")}>
+                  <div className="text-[20px] tabular-nums text-foreground">
                     {s.count}
                   </div>
                   <div className="text-[10px] text-text-secondary">{s.note}</div>
@@ -214,9 +211,10 @@ export default function CHOProductionLinePage() {
             ))}
           </div>
           <p className="mt-3 text-[11px] text-text-secondary">
-            Cross-instrument material balance: FP-02 reports{" "}
-            <span className="text-amber-700 dark:text-amber-400 font-medium">+500 vials (+4.2 %)</span>{" "}
-            vs upstream container preparation. Investigation open.
+            Reconciled material balance for completed batch{" "}
+            <span className="font-mono">B-250318-FF07</span>: each stage is consistent with
+            upstream counts. Total yield <span className="font-medium text-foreground">11,902 / 12,000 (99.2 %)</span>,
+            98 vials accounted for as in-process rejects.
           </p>
         </Card>
       </section>
