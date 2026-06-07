@@ -134,25 +134,25 @@ export default function CHOProductionLinePage() {
         </div>
       </div>
 
-      {/* Process chain — two swim lanes converging at fill-finish */}
-      <section>
+      {/* Process chain — two process stages converging at fill-finish */}
+      <section ref={processChainRef}>
         <h2 className="text-section text-foreground mb-4">Process Chain</h2>
 
         <div className="space-y-6">
-          {/* Drug Substance lane */}
+          {/* Drug Substance stage */}
           <div className="rounded-md border border-border-tertiary p-5">
             <div className="text-[11px] uppercase tracking-wide text-text-secondary font-medium mb-3">
-              Drug Substance Lane
+              Drug Substance Stage
             </div>
-            <LaneRow nodes={DS_LANE} onSelect={go} />
+            <StageRow nodes={DS_STAGE} onSelect={go} />
           </div>
 
-          {/* Container Preparation lane */}
+          {/* Container Preparation stage */}
           <div className="rounded-md border border-border-tertiary p-5">
             <div className="text-[11px] uppercase tracking-wide text-text-secondary font-medium mb-3">
-              Container Preparation Lane
+              Container Preparation Stage
             </div>
-            <LaneRow nodes={CP_LANE} onSelect={go} />
+            <StageRow nodes={CP_STAGE} onSelect={go} />
           </div>
 
           {/* Convergence indicator */}
@@ -164,18 +164,18 @@ export default function CHOProductionLinePage() {
             <div className="flex-1 border-t border-dashed border-border-tertiary" />
           </div>
 
-          {/* Fill-Finish lane */}
+          {/* Fill-Finish stage */}
           <div className="rounded-md border border-border-tertiary p-5 bg-[hsl(var(--nav-active-bg))]/40">
             <div className="text-[11px] uppercase tracking-wide text-text-secondary font-medium mb-3">
-              Fill-Finish Lane
+              Fill-Finish Stage
             </div>
-            <LaneRow nodes={FF_LANE} onSelect={go} />
+            <StageRow nodes={FF_STAGE} onSelect={go} />
           </div>
         </div>
       </section>
 
       {/* Material Balance mini-widget */}
-      <section className="mt-8">
+      <section className="mt-8" ref={materialBalanceRef}>
         <h2 className="text-section text-foreground mb-3">Material Balance — Vial Counts</h2>
         <Card kind="operational" className="p-4">
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
