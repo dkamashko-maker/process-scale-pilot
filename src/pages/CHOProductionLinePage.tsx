@@ -176,15 +176,20 @@ export default function CHOProductionLinePage() {
 
       {/* Material Balance mini-widget */}
       <section className="mt-8" ref={materialBalanceRef}>
-        <h2 className="text-section text-foreground mb-3">Material Balance — Vial Counts</h2>
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <h2 className="text-section text-foreground">Material Balance — Vial Counts</h2>
+          <Badge variant="neutral" className="font-mono text-[11px]">
+            Completed batch B-250318-FF07
+          </Badge>
+        </div>
         <Card kind="operational" className="p-4">
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
             {[
               { id: "VW-03", label: "Processed", count: "12,000", note: "Cleaned" },
               { id: "DPY-01", label: "Depyrogenated", count: "12,000", note: "Sterile vials" },
-              { id: "FP-02", label: "Filled", count: "12,500", note: "+500 vs upstream", warn: true },
-              { id: "LPZ-03", label: "Lyophilised", count: "12,000", note: "Loaded" },
-              { id: "CAP-01", label: "Released", count: "11,988", note: "12 rejected" },
+              { id: "FP-02", label: "Filled", count: "11,940", note: "60 fill rejects" },
+              { id: "LPZ-03", label: "Lyophilised", count: "11,928", note: "12 cake defects" },
+              { id: "CAP-01", label: "Released", count: "11,902", note: "26 cap/label rejects" },
             ].map((s, i, arr) => (
               <div key={s.id} className="flex items-center gap-2">
                 <div
