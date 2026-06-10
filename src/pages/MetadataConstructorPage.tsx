@@ -207,34 +207,6 @@ export default function MetadataConstructorPage() {
         <SummaryTile label="Total metadata records" value={stats.total} Icon={Layers} />
       </div>
 
-      {/* Template selection — primary working control */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h3 className="text-section text-foreground">Label Templates</h3>
-          <span className="text-[11px] text-text-secondary">{filteredTemplates.length} of {LABEL_TEMPLATES.length}</span>
-        </div>
-        <Input
-          placeholder="Search templates by name, ID, interface or type..."
-          value={templateSearch}
-          onChange={(e) => setTemplateSearch(e.target.value)}
-          className="h-8 text-[13px]"
-        />
-        <div className="space-y-3">
-          {filteredTemplates.map((tpl) => (
-            <TemplateCard
-              key={tpl.template_id}
-              template={tpl}
-              recordCount={recordsWithCompleteness.filter((r) => r.completeness.template?.template_id === tpl.template_id).length}
-              onOpenRebuild={() => navigate("/metadata/rebuild")}
-              onOpenRecords={() => {
-                setCompletenessFilter("all");
-                setPage(0);
-                setActiveTab("labeling");
-              }}
-            />
-          ))}
-        </div>
-      </div>
 
       <ProcessTemplatesPanel />
 
