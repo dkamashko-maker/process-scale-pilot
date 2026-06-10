@@ -174,18 +174,6 @@ export default function MetadataConstructorPage() {
   // Tab control
   const [activeTab, setActiveTab] = useState<"labeling">("labeling");
 
-  // Template search
-  const [templateSearch, setTemplateSearch] = useState("");
-  const filteredTemplates = useMemo(() => {
-    const q = templateSearch.trim().toLowerCase();
-    if (!q) return LABEL_TEMPLATES;
-    return LABEL_TEMPLATES.filter((t) =>
-      t.name.toLowerCase().includes(q) ||
-      t.template_id.toLowerCase().includes(q) ||
-      t.applies_to.interface_id.toLowerCase().includes(q) ||
-      t.applies_to.data_type.toLowerCase().includes(q)
-    );
-  }, [templateSearch]);
 
 
   return (
