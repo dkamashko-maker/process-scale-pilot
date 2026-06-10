@@ -22,12 +22,10 @@ import { useToast } from "@/hooks/use-toast";
 import { getDataRecords } from "@/data/dataRecords";
 import { INTERFACES } from "@/data/runData";
 import {
-  LABEL_TEMPLATES,
   computeCompleteness,
   applyLabels,
   bulkApplyLabels,
   getTemplateForRecord,
-  type LabelTemplate,
   type CompletenessResult,
 } from "@/data/labelTemplates";
 import type { DataRecord } from "@/data/runTypes";
