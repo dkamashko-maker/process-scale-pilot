@@ -224,6 +224,51 @@ export default function CHOProductionLinePage() {
             upstream counts. Total yield <span className="font-medium text-foreground">11,902 / 12,000 (99.2 %)</span>,
             98 vials accounted for as in-process rejects.
           </p>
+
+          {/* Detailed downstream product balance */}
+          <div className="mt-5">
+            <h3 className="text-[12px] font-medium text-foreground mb-2">
+              Downstream Product Balance — Batch B-250318-FF07
+            </h3>
+            <div className="rounded-md border overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-[11px]">Process Step & Equipment</TableHead>
+                    <TableHead className="text-[11px]">Input</TableHead>
+                    <TableHead className="text-[11px]">Yield / Output</TableHead>
+                    <TableHead className="text-[11px]">Losses / Waste</TableHead>
+                    <TableHead className="text-[11px]">Remarks</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {[
+                    { step: "Cell Culture Harvest", eq: "BR-003-p", input: "5,000 g", output: "4,990 g", loss: "10 g", remark: "Cell retention, in-process samples" },
+                    { step: "Centrifugation", eq: "CFG-003", input: "4,990 g", output: "4,920 g", loss: "70 g", remark: "Cell pellet and debris discarded" },
+                    { step: "UF / Diafiltration", eq: "UF-03", input: "4,920 g", output: "4,770 g", loss: "150 g", remark: "Permeate and buffer exchange losses" },
+                    { step: "Anion Exchange", eq: "FPLC-01", input: "4,770 g", output: "4,400 g", loss: "370 g", remark: "Flow-through and strip/wash fractions" },
+                    { step: "Aseptic Filling", eq: "FP-02", input: "4,400 g", output: "4,380 g", loss: "20 g", remark: "Hold-up volume, 60 fill rejects" },
+                    { step: "Lyophilization", eq: "LPZ-03", input: "4,380 g", output: "4,380 g", loss: "—", remark: "Mass conserved; water removed as vapor" },
+                    { step: "Capping & Labelling", eq: "CAP-01", input: "4,380 g", output: "4,372 g", loss: "8 g", remark: "26 cap/label rejects" },
+                  ].map((row, i) => (
+                    <TableRow key={i}>
+                      <TableCell className="text-[11px]">
+                        <div className="font-medium">{row.step}</div>
+                        <div className="text-text-secondary font-mono">{row.eq}</div>
+                      </TableCell>
+                      <TableCell className="text-[11px] tabular-nums">{row.input}</TableCell>
+                      <TableCell className="text-[11px] tabular-nums">{row.output}</TableCell>
+                      <TableCell className="text-[11px] tabular-nums">{row.loss}</TableCell>
+                      <TableCell className="text-[11px] text-text-secondary">{row.remark}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+            <p className="mt-2 text-[11px] text-text-secondary">
+              Overall protein recovery: <span className="font-medium text-foreground">4,372 g / 5,000 g (87.4 %)</span>. Losses are within expected ranges for a 4-step downstream train with UF/DF and AEX polishing.
+            </p>
+          </div>
         </Card>
       </section>
     </div>
