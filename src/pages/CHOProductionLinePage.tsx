@@ -269,6 +269,51 @@ export default function CHOProductionLinePage() {
               Overall protein recovery: <span className="font-medium text-foreground">4,372 g / 5,000 g (87.4 %)</span>. Losses are within expected ranges for a 4-step downstream train with UF/DF and AEX polishing.
             </p>
           </div>
+
+          {/* Feed / media balance for upstream production */}
+          <div className="mt-6">
+            <h3 className="text-[12px] font-medium text-foreground mb-2">
+              Feed / Media Balance — Upstream Production for Batch B-250318-FF07
+            </h3>
+            <div className="rounded-md border overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-[11px]">Day</TableHead>
+                    <TableHead className="text-[11px]">Projected Feed Addition</TableHead>
+                    <TableHead className="text-[11px]">Projected Cumulative Feed</TableHead>
+                    <TableHead className="text-[11px]">Actual Feed Addition</TableHead>
+                    <TableHead className="text-[11px]">Actual Cumulative Feed</TableHead>
+                    <TableHead className="text-[11px]">Notes / Deviations</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {[
+                    { day: "0", projAdd: "—", projCum: "0 kg", actAdd: "—", actCum: "0 kg", note: "Inoculation; no feed addition" },
+                    { day: "3", projAdd: "40 kg", projCum: "40 kg", actAdd: "40 kg", actCum: "40 kg", note: "On target" },
+                    { day: "5", projAdd: "50 kg", projCum: "90 kg", actAdd: "50 kg", actCum: "90 kg", note: "On target" },
+                    { day: "7", projAdd: "60 kg", projCum: "150 kg", actAdd: "58 kg", actCum: "148 kg", note: "Pump calibration drift; corrected same day" },
+                    { day: "9", projAdd: "70 kg", projCum: "220 kg", actAdd: "72 kg", actCum: "220 kg", note: "Slight overfeed due to pH correction" },
+                    { day: "11", projAdd: "80 kg", projCum: "300 kg", actAdd: "80 kg", actCum: "300 kg", note: "On target" },
+                    { day: "13", projAdd: "90 kg", projCum: "390 kg", actAdd: "90 kg", actCum: "390 kg", note: "On target" },
+                    { day: "14", projAdd: "—", projCum: "390 kg", actAdd: "—", actCum: "390 kg", note: "Harvest; no further feed" },
+                  ].map((row, i) => (
+                    <TableRow key={i}>
+                      <TableCell className="text-[11px] tabular-nums">{row.day}</TableCell>
+                      <TableCell className="text-[11px] tabular-nums">{row.projAdd}</TableCell>
+                      <TableCell className="text-[11px] tabular-nums">{row.projCum}</TableCell>
+                      <TableCell className="text-[11px] tabular-nums">{row.actAdd}</TableCell>
+                      <TableCell className="text-[11px] tabular-nums">{row.actCum}</TableCell>
+                      <TableCell className="text-[11px] text-text-secondary">{row.note}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+            <p className="mt-2 text-[11px] text-text-secondary">
+              Total planned feed: <span className="font-medium text-foreground">390 kg</span>. Actual delivered: <span className="font-medium text-foreground">390 kg</span> (0.0 % variance). Minor intra-run deviations were logged and resolved during the run.
+            </p>
+          </div>
         </Card>
       </section>
     </div>
