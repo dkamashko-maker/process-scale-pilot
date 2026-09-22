@@ -291,7 +291,7 @@ export default function OverviewPage() {
   const now = Date.now();
 
   const activeRuns = useMemo(
-    () => RUNS.filter((r) => !r.end_time || new Date(r.end_time).getTime() > now),
+    () => RUNS.filter((r) => r.status === "active"),
     [now],
   );
 
