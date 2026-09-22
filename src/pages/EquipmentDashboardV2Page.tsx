@@ -21,7 +21,7 @@ import { getRunForEquipmentId } from "@/data/runData";
 import {
   Activity, AlertTriangle, Search, Wifi, WifiOff, CircleDot,
   BookOpen, LineChart, Bell, Database, ScrollText, UploadCloud, Cable,
-  Hash, Layers, Clock, ArrowUpRight, ArrowDownRight, X,
+  Hash, Layers, Clock, ArrowUpRight, ArrowDownRight, X, ImageOff,
 } from "lucide-react";
 import { format } from "date-fns";
 import { EquipmentTooltip } from "@/components/equipment/EquipmentTooltip";
@@ -158,6 +158,39 @@ function AlertBreakdown({ count, critical }: { count: number; critical: boolean 
   );
 }
 
+function EquipmentImage({
+  imageUrl,
+  equipmentName,
+  variant,
+}: {
+  imageUrl?: string;
+  equipmentName: string;
+  variant: "card" | "drawer";
+}) {
+  const [failed, setFailed] = useState(false);
+  const height = variant === "card" ? "h-32" : "h-40";
+
+  return (
+    <div className={`${height} overflow-hidden bg-secondary ${variant === "card" ? "-mx-4 -mt-4 mb-4 rounded-t-lg" : "-mx-6 -mt-6 mb-5"}`}>
+      {imageUrl && !failed ? (
+        <img
+          src={imageUrl}
+          alt={`${equipmentName} equipment`}
+          loading="lazy"
+          width={768}
+          height={512}
+          onError={() => setFailed(true)}
+          className="h-full w-full object-cover"
+        />
+      ) : (
+        <div className="flex h-full w-full items-center justify-center text-text-tertiary" role="img" aria-label={`${equipmentName} image unavailable`}>
+          <ImageOff className="h-8 w-8" />
+        </div>
+      )}
+    </div>
+  );
+}
+
 function Sparkline({ data, label, onClick }: { data: number[]; label?: string; onClick?: () => void }) {
   if (!data?.length) return null;
   const w = 96, h = 28;
@@ -231,6 +264,12 @@ function EquipmentCard({
           isDownstreamLink ? "hover:bg-secondary/40" : ""
         }`}
       >
+        <EquipmentImage
+          key={eq.imageUrl ?? eq.equipmentId}
+          imageUrl={eq.imageUrl}
+          equipmentName={eq.equipmentName}
+          variant="card"
+        />
         {/* Header row */}
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="min-w-0">
@@ -367,6 +406,12 @@ function EquipmentDrawer({
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-full sm:max-w-md overflow-y-auto">
+        <EquipmentImage
+          key={equipment.imageUrl ?? equipment.equipmentId}
+          imageUrl={equipment.imageUrl}
+          equipmentName={equipment.equipmentName}
+          variant="drawer"
+        />
         <SheetHeader>
           <div className="flex items-center justify-between gap-2">
             <SheetTitle>{equipment.equipmentName}</SheetTitle>
@@ -507,6 +552,7 @@ function EquipmentDrawer({
 // ── Page ─────────────────────────────────────────────────────────────────
 
 type StatusFilter = "all" | EquipmentStatus;
+type EquipmentTab = "all" | EquipmentCategory;
 const STATUS_LABEL: Record<StatusFilter, string> = {
   all: "All statuses", active: "Active", idle: "Idle", error: "Alerting",
 };
@@ -525,7 +571,7 @@ export default function EquipmentDashboardV2Page() {
     const uploadsToday = getFleetKpis().analyticalUploadsToday;
     return { total, active, idle, withAlerts, uploadsToday };
   }, []);
-  const [tab, setTab] = useState<EquipmentCategory>("upstream");
+  const [tab, setTab] = useState<EquipmentTab>("all");
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [selected, setSelected] = useState<Equipment | null>(null);
@@ -542,8 +588,8 @@ export default function EquipmentDashboardV2Page() {
     }
   };
 
-  const filteredFor = (cat: EquipmentCategory) =>
-    EQUIPMENT.filter((e) => e.equipmentCategory === cat).filter((e) => {
+  const filteredFor = (cat: EquipmentTab) =>
+    EQUIPMENT.filter((e) => cat === "all" || e.equipmentCategory === cat).filter((e) => {
       if (statusFilter !== "all" && e.status !== statusFilter) return false;
       if (query) {
         const q = query.toLowerCase();
@@ -615,9 +661,18 @@ export default function EquipmentDashboardV2Page() {
       </div>
 
       {/* Category tabs + inline search/filter */}
-      <Tabs value={tab} onValueChange={(v) => setTab(v as EquipmentCategory)}>
+      <Tabs value={tab} onValueChange={(v) => setTab(v as EquipmentTab)}>
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <TabsList className="h-auto bg-transparent p-0 gap-2 flex-wrap">
+            <TabsTrigger
+              value="all"
+              className="h-9 px-3.5 rounded-full border border-border-tertiary text-[13px] font-medium gap-2 text-text-secondary transition-colors hover:text-foreground hover:border-foreground/30 data-[state=active]:bg-secondary data-[state=active]:text-foreground data-[state=active]:border-border"
+            >
+              <span>All</span>
+              <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-background/70 border border-current/20 text-[11px] tabular-nums">
+                {filteredFor("all").length}
+              </span>
+            </TabsTrigger>
             {(Object.keys(CATEGORY) as EquipmentCategory[]).map((value) => {
               const meta = CATEGORY[value];
               const count = filteredFor(value).length;
@@ -688,6 +743,20 @@ export default function EquipmentDashboardV2Page() {
             )}
           </div>
         </div>
+
+        <TabsContent value="all" className="mt-5">
+          <CardGrid
+            items={filteredFor("all")}
+            renderCard={(eq) => (
+              <EquipmentCard
+                key={eq.equipmentId}
+                eq={eq}
+                onOpen={() => openCard(eq)}
+                onCta={() => handleCta(eq)}
+              />
+            )}
+          />
+        </TabsContent>
 
         {(["upstream", "downstream", "analytical"] as EquipmentCategory[]).map((cat) => (
           <TabsContent key={cat} value={cat} className="mt-5">
