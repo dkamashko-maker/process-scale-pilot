@@ -21,7 +21,7 @@ import { getRunForEquipmentId } from "@/data/runData";
 import {
   Activity, AlertTriangle, Search, Wifi, WifiOff, CircleDot,
   BookOpen, LineChart, Bell, Database, ScrollText, UploadCloud, Cable,
-  Hash, Layers, Clock, ArrowUpRight, ArrowDownRight, X, ImageOff,
+  Hash, Layers, Clock, ArrowUpRight, ArrowDownRight, X, ImageOff, Factory,
 } from "lucide-react";
 import { format } from "date-fns";
 import { EquipmentTooltip } from "@/components/equipment/EquipmentTooltip";
@@ -171,7 +171,7 @@ function EquipmentImage({
   const height = variant === "card" ? "h-32" : "h-40";
 
   return (
-    <div className={`${height} overflow-hidden bg-secondary ${variant === "card" ? "-mx-4 -mt-4 mb-4 rounded-t-lg" : "-mx-6 -mt-6 mb-5"}`}>
+    <div className={`${height} overflow-hidden bg-secondary ${variant === "card" ? "-mx-4 -mt-4 mb-4" : "-mx-6 -mt-6 mb-5"}`}>
       {imageUrl && !failed ? (
         <img
           src={imageUrl}
@@ -241,28 +241,24 @@ function EquipmentCard({
   const isActive = eq.status === "active" || eq.status === "error";
   const isAnalytical = eq.equipmentCategory === "analytical";
   const isManual = eq.integrationMode === "manual";
-  const cta = isActive ? "View run" : "Start run";
   const choRoute =
     eq.equipmentCategory === "downstream"
       ? DOWNSTREAM_ROUTE_MAP[eq.equipmentId]
       : undefined;
-  // Only show the "opens a page" affordance when a real destination exists
-  const isDownstreamLink = !!choRoute;
+  const cta = isAnalytical
+    ? "View data records"
+    : choRoute
+      ? "Open production line"
+      : eq.equipmentCategory === "upstream"
+        ? (isActive ? "View run" : "Start run")
+        : "View details";
 
   // Card chrome — Operational card type from design system
   return (
     <EquipmentTooltip equipment={eq}>
       <div
-        onClick={() => {
-          if (choRoute) {
-            navigate(choRoute);
-          } else {
-            onOpen();
-          }
-        }}
-        className={`group relative card-operational border-l-[3px] ${cat.border} cursor-pointer transition-colors hover:border-primary hover:border-l-[3px] ${
-          isDownstreamLink ? "hover:bg-secondary/40" : ""
-        }`}
+        onClick={onOpen}
+        className={`group relative card-operational overflow-hidden border-l-[3px] ${cat.border} cursor-pointer transition-colors hover:border-primary hover:border-l-[3px]`}
       >
         <EquipmentImage
           key={eq.imageUrl ?? eq.equipmentId}
@@ -276,13 +272,7 @@ function EquipmentCard({
             <div className="text-[11px] uppercase tracking-wide text-text-secondary font-medium">
               {isAnalytical ? (isManual ? "Manual upload" : "Analytical") : cat.short}
             </div>
-            <div
-              className={`text-[14px] font-medium leading-tight truncate text-foreground ${
-                isDownstreamLink
-                  ? "group-hover:underline underline-offset-2 decoration-primary/70"
-                  : ""
-              }`}
-            >
+            <div className="text-[14px] font-medium leading-tight truncate text-foreground">
               {eq.equipmentName}
             </div>
             <div className="text-[11px] text-text-secondary mt-0.5 font-mono">{eq.equipmentId}</div>
@@ -383,6 +373,11 @@ function EquipmentDrawer({
   const navigate = useNavigate();
   if (!equipment) return null;
   const isAnalytical = equipment.equipmentCategory === "analytical";
+  const isUpstream = equipment.equipmentCategory === "upstream";
+  const run = isUpstream ? getRunForEquipmentId(equipment.equipmentId) : undefined;
+  const productionLineRoute = equipment.equipmentCategory === "downstream"
+    ? DOWNSTREAM_ROUTE_MAP[equipment.equipmentId]
+    : undefined;
   const alerts = getRecentAlertsForEquipment(equipment.equipmentId);
 
   // Build a lightweight, contextual query string so downstream destination pages
@@ -496,21 +491,27 @@ function EquipmentDrawer({
 
           <Separator />
 
-          {/* Actions — monitoring primary, then data series, then metadata */}
+          {/* Actions — category-specific primary destination, then supporting records */}
           <div className="grid grid-cols-1 gap-2">
-            {!isAnalytical && (
+            {run && (
               <Button
                 size="sm"
                 className="justify-start"
-                onClick={() => {
-                  const run = getRunForEquipmentId(equipment.equipmentId);
-                  navigate(run ? `/run/${run.run_id}` : "/equipment");
-                }}
+                onClick={() => navigate(`/run/${run.run_id}`)}
               >
                 <LineChart className="h-4 w-4 mr-2" /> Open monitoring view
               </Button>
             )}
-            <Button variant="outline" size="sm" className="justify-start" onClick={() => navigate(`/data-storage${equipmentContextQuery()}`)}>
+            {productionLineRoute && (
+              <Button
+                size="sm"
+                className="justify-start"
+                onClick={() => navigate(productionLineRoute)}
+              >
+                <Factory className="h-4 w-4 mr-2" /> Open production line view
+              </Button>
+            )}
+            <Button variant={isAnalytical ? "default" : "outline"} size="sm" className="justify-start" onClick={() => navigate(`/data-storage${equipmentContextQuery()}`)}>
               <Database className="h-4 w-4 mr-2" /> View equipment data series
             </Button>
             <Button variant="outline" size="sm" className="justify-start" onClick={() => navigate(`/metadata${equipmentContextQuery()}`)}>
@@ -580,12 +581,30 @@ export default function EquipmentDashboardV2Page() {
   const openCard = (eq: Equipment) => { setSelected(eq); setDrawerOpen(true); };
 
   const handleCta = (eq: Equipment) => {
-    if (eq.status === "active" || eq.status === "error") {
-      const run = getRunForEquipmentId(eq.equipmentId);
-      navigate(run ? `/run/${run.run_id}` : "/equipment");
-    } else {
-      openCard(eq);
+    if (eq.equipmentCategory === "analytical") {
+      navigate(`/data-storage?equipment=${encodeURIComponent(eq.equipmentId)}`);
+      return;
     }
+
+    if (eq.equipmentCategory === "downstream") {
+      const productionLineRoute = DOWNSTREAM_ROUTE_MAP[eq.equipmentId];
+      if (productionLineRoute) {
+        navigate(productionLineRoute);
+      } else {
+        openCard(eq);
+      }
+      return;
+    }
+
+    if (eq.equipmentCategory === "upstream") {
+      const run = getRunForEquipmentId(eq.equipmentId);
+      if (run) {
+        navigate(`/run/${run.run_id}`);
+        return;
+      }
+    }
+
+    openCard(eq);
   };
 
   const filteredFor = (cat: EquipmentTab) =>
