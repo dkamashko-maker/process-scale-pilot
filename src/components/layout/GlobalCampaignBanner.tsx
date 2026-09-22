@@ -9,13 +9,27 @@ import {
  * Persistent campaign banner — shown above main content on every authenticated view.
  * Surfaces campaign ID, product, instrument count, and a clickable open-items count.
  */
-export function GlobalCampaignBanner() {
+export function GlobalCampaignBanner({ compact = false }: { compact?: boolean }) {
   const navigate = useNavigate();
 
   const openItems = [
     { label: "Material balance — FP-02 vial count discrepancy (+500)", route: "/cho-production-line/filling-pump", severity: "HIGH" as const },
     { label: "QC OOS — BR-003-p Glycation", route: "/cho-production-line/bioreactor", severity: "OOS" as const },
   ];
+
+  if (compact) {
+    return (
+      <div className="border-b border-border-tertiary bg-[hsl(var(--nav-active-bg))]/60 px-6 py-1.5">
+        <div className="flex items-center gap-3 text-[12px] flex-wrap">
+          <Layers className="h-3.5 w-3.5 text-primary shrink-0" />
+          <span className="text-[10px] uppercase tracking-wide text-text-secondary font-medium">
+            Process
+          </span>
+          <span className="font-mono text-foreground">FSH-Campaign-042</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <TooltipProvider delayDuration={150}>
