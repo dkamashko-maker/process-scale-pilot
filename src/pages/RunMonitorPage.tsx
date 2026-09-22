@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { RUNS, PARAMETERS, getTimeseries } from "@/data/runData";
 import { FileText, Sparkles } from "lucide-react";
 import { useEvents } from "@/contexts/EventsContext";
