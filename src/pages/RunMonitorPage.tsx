@@ -81,6 +81,7 @@ function buildAlertUrl(run: (typeof RUNS)[number], alert: ChartAlert): string {
 export default function RunMonitorPage() {
   const { runId } = useParams<{ runId: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user, canLogEvents, isManager } = useAuth();
   const { toast } = useToast();
   const { events, addEvent, updateEvent, deleteEvent } = useEvents();
