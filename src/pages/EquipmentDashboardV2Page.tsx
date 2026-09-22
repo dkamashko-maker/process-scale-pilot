@@ -634,34 +634,12 @@ export default function EquipmentDashboardV2Page() {
 
   return (
     <div className="px-6 pt-4 pb-6 space-y-5">
-      {/* Header block: context bar → page title */}
+      {/* Page title */}
       <div>
-        {/* Compact process context bar */}
-        <div className="flex items-center gap-2 text-[11px] flex-wrap">
-          <span className="text-[10px] uppercase tracking-wide text-text-secondary font-medium">Process</span>
-          <span className="font-mono text-foreground">FSH-Campaign-042</span>
-          <span className="text-text-tertiary">·</span>
-          <span className="text-foreground">rhFSH</span>
-          <span className="text-text-tertiary">·</span>
-          <span className="text-text-secondary">9 instruments</span>
-          <span className="text-text-tertiary">·</span>
-          <button
-            type="button"
-            onClick={() => navigate("/alerts")}
-            className="inline-flex items-center gap-1 text-foreground hover:text-primary transition-colors"
-          >
-            <AlertTriangle className="h-3 w-3 text-status-warning" />
-            2 alerts
-          </button>
-        </div>
-
-        {/* Page title — secondary to product identity */}
-        <div className="mt-3">
-          <h2 className="text-[15px] font-medium text-foreground">Equipment Dashboard</h2>
-          <p className="text-[13px] text-text-secondary mt-0.5">
-            Operational equipment, assays and connection status across the fleet.
-          </p>
-        </div>
+        <h2 className="text-[15px] font-medium text-foreground">Equipment Dashboard</h2>
+        <p className="text-[13px] text-text-secondary mt-0.5">
+          Operational equipment, assays and connection status across the fleet.
+        </p>
       </div>
 
       {/* KPI summary strip — compact, aligned, reconciled with category tabs */}
