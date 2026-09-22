@@ -236,13 +236,40 @@ export default function RunMonitorPage() {
   }, []);
 
   if (!run) {
+    const equipmentName = searchParams.get("equipmentName");
+    const equipmentId = searchParams.get("equipmentId");
     return (
-      <div className="p-6">
-        <h2 className="text-2xl font-bold mb-4">Run not found</h2>
-        <Button onClick={() => navigate("/equipment")}>Back to Equipment Dashboard</Button>
+      <div className="p-8 max-w-[1400px] mx-auto">
+        <DetailHeader
+          name={equipmentName ?? "Bioreactor monitoring"}
+          status={<Badge variant="neutral">No active run</Badge>}
+          meta={[
+            ...(equipmentId ? [{ label: "Equipment ID", value: equipmentId }] : []),
+            { label: "Run", value: "—" },
+            { label: "Batch", value: "—" },
+            { label: "Process phase", value: "—" },
+          ]}
+        />
+        <Card kind="operational" className="p-8">
+          <div className="text-[15px] text-foreground font-medium">No active run on this bioreactor</div>
+          <div className="mt-2 text-[13px] text-text-secondary max-w-[520px]">
+            This bioreactor is currently idle, so there is no process data, event log, or chart to
+            display. Monitoring content will appear here once a run is started and data ingestion
+            begins.
+          </div>
+          <div className="mt-6 flex gap-2">
+            <Button size="sm" onClick={() => navigate("/equipment")}>
+              Back to Equipment Dashboard
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => navigate("/experiments")}>
+              View run history
+            </Button>
+          </div>
+        </Card>
       </div>
     );
   }
+
 
   const toggleParam = (code: string) => {
     setSelectedParams((prev) =>
