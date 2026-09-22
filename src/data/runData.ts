@@ -138,19 +138,6 @@ export const RUNS: Run[] = [
     status: "active" as const,
   },
   {
-    run_id: "CHO-r-hFSG-457-250308-2", batch_id: "B-250420-SD01",
-    reactor_id: "004-p", bioreactor_run: "Seed Bioreactor (#001) — R-457",
-    operator_id: "20-457",
-    cell_line: "CHO-DG44/r-hFSHβ-α-clone_127",
-    target_protein: "Recombinant human FSH",
-    process_strategy: "Fed-Batch", basal_medium: "CHO Medium",
-    feed_medium: "Gibco OneFeed Supplement",
-    start_time: "2026-02-14T08:00:00", end_time: "2026-02-28T08:00:00",
-    sampling_interval_sec: 60, timeline_version: "Timeline 2",
-    timezone: "Europe/Zurich", seed: 457,
-    status: "active" as const,
-  },
-  {
     run_id: "CHO-r-hFSG-458-250308-2", batch_id: "B-250423-PD02",
     reactor_id: "005-p", bioreactor_run: "Prod Bioreactor (#002) — R-458",
     operator_id: "20-458",
@@ -161,23 +148,21 @@ export const RUNS: Run[] = [
     start_time: "2026-02-14T08:00:00", end_time: "2026-02-28T08:00:00",
     sampling_interval_sec: 60, timeline_version: "Timeline 2",
     timezone: "Europe/Zurich", seed: 458,
-    status: "active" as const,
+    status: "completed" as const,
   },
 ];
 
+/** Runs currently in progress — exactly the runs that surface as "active" in the UI. */
+export const ACTIVE_RUNS: Run[] = RUNS.filter((r) => r.status === "active");
+
 /**
  * Map a shared equipment catalog ID (UP-001/UP-002) to the matching
- * legacy run, so the Equipment Dashboard v2 upstream cards can navigate
- * to the existing Bioreactor Monitoring view.
+ * active run. The seed bioreactor (UP-001) is idle and has no run.
  */
 export function getRunForEquipmentId(equipmentId: string): Run | undefined {
-  if (equipmentId === "UP-001") {
-    // Seed bioreactor → R-457 (reactor 004-p)
-    return RUNS.find((r) => r.reactor_id === "004-p");
-  }
   if (equipmentId === "UP-002") {
     // Prod bioreactor → R-456 (reactor 003-p)
-    return RUNS.find((r) => r.reactor_id === "003-p");
+    return ACTIVE_RUNS.find((r) => r.reactor_id === "003-p");
   }
   return undefined;
 }
