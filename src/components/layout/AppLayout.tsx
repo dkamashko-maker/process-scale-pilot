@@ -1,5 +1,5 @@
-import { ReactNode, useEffect } from "react";
-import { SidebarProvider, SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
+import { ReactNode } from "react";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,19 +8,15 @@ import { Badge } from "@/components/ui/badge";
 import { LogOut } from "lucide-react";
 import { GlobalCampaignBanner } from "./GlobalCampaignBanner";
 
-function SidebarAutoCollapse() {
-  const location = useLocation();
-  const { setOpen } = useSidebar();
-  const isMonitorPage = location.pathname.startsWith("/run/") || location.pathname.startsWith("/experiments/");
+const SIDEBAR_COOKIE_NAME = "sidebar:state";
 
-  useEffect(() => {
-    if (isMonitorPage) {
-      setOpen(false);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isMonitorPage]);
-
-  return null;
+function readSidebarCookie(): boolean | null {
+  if (typeof document === "undefined") return null;
+  const match = document.cookie
+    .split("; ")
+    .find((row) => row.startsWith(`${SIDEBAR_COOKIE_NAME}=`));
+  if (!match) return null;
+  return match.split("=")[1] === "true";
 }
 
 interface AppLayoutProps {
@@ -31,7 +27,6 @@ export function AppLayout({ children }: AppLayoutProps) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const defaultOpen = !location.pathname.startsWith("/run/") && !location.pathname.match(/^\/experiments\//);
 
   const handleLogout = () => {
     logout();
@@ -39,8 +34,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   };
 
   return (
-    <SidebarProvider defaultOpen={defaultOpen}>
-      <SidebarAutoCollapse />
+    <SidebarProvider defaultOpen={readSidebarCookie() ?? true}>
       <div className="flex min-h-screen w-full">
         <AppSidebar />
         <div className="flex-1 flex flex-col">
