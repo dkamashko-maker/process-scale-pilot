@@ -7,7 +7,7 @@ import {
   Beaker, Sparkles, Flame, Syringe, Snowflake, Tag, History,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
-import { RUNS } from "@/data/runData";
+import { ACTIVE_RUNS } from "@/data/runData";
 import {
   Sidebar,
   SidebarContent,
@@ -364,7 +364,7 @@ export function AppSidebar() {
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {RUNS.map((run) => (
+              {ACTIVE_RUNS.map((run) => (
                 <SidebarMenuItem key={run.run_id}>
                   <SidebarMenuButton asChild>
                     <NavLink
