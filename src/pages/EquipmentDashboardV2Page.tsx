@@ -493,11 +493,17 @@ function EquipmentDrawer({
 
           {/* Actions — category-specific primary destination, then supporting records */}
           <div className="grid grid-cols-1 gap-2">
-            {run && (
+            {isUpstream && (
               <Button
                 size="sm"
                 className="justify-start"
-                onClick={() => navigate(`/run/${run.run_id}`)}
+                onClick={() =>
+                  navigate(
+                    run
+                      ? `/run/${run.run_id}`
+                      : `/run/no-active-run?equipmentId=${encodeURIComponent(equipment.equipmentId)}&equipmentName=${encodeURIComponent(equipment.equipmentName)}`
+                  )
+                }
               >
                 <LineChart className="h-4 w-4 mr-2" /> Open monitoring view
               </Button>
