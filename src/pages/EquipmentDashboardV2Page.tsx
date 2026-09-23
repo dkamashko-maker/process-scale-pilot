@@ -562,6 +562,7 @@ function EquipmentDrawer({
 
 type StatusFilter = "all" | EquipmentStatus;
 type EquipmentTab = "all" | EquipmentCategory;
+type KpiFilter = "all" | "active" | "idle" | "withAlerts";
 const STATUS_LABEL: Record<StatusFilter, string> = {
   all: "All statuses", active: "Active", idle: "Idle", error: "Alerting",
 };
