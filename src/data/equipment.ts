@@ -12,23 +12,23 @@
  * `datavest_equipment_synthetic_datasets.xlsx`.
  */
 
-import bioreactorImage from "@/assets/equipment/bioreactor.jpg.asset.json";
-import centrifugeImage from "@/assets/equipment/centrifuge.jpg.asset.json";
-import ultrafiltrationImage from "@/assets/equipment/ultrafiltration.jpg.asset.json";
-import fplcImage from "@/assets/equipment/fplc.jpg.asset.json";
-import vialWasherImage from "@/assets/equipment/vial-washer.jpg.asset.json";
-import depyrogenationOvenImage from "@/assets/equipment/depyrogenation-oven.jpg.asset.json";
-import fillingLineImage from "@/assets/equipment/filling-line.jpg.asset.json";
-import lyophilizerImage from "@/assets/equipment/lyophilizer.jpg.asset.json";
-import cappingLabelingImage from "@/assets/equipment/capping-labeling.jpg.asset.json";
-import hplcImage from "@/assets/equipment/hplc.jpg.asset.json";
-import capillaryElectrophoresisImage from "@/assets/equipment/capillary-electrophoresis.jpg.asset.json";
-import microplateReaderImage from "@/assets/equipment/microplate-reader.jpg.asset.json";
-import uvVisImage from "@/assets/equipment/uv-vis.jpg.asset.json";
-import qpcrImage from "@/assets/equipment/qpcr.jpg.asset.json";
-import endotoxinReaderImage from "@/assets/equipment/endotoxin-reader.jpg.asset.json";
-import cellAnalyzerImage from "@/assets/equipment/cell-analyzer.jpg.asset.json";
-import ionChromatographyImage from "@/assets/equipment/ion-chromatography.jpg.asset.json";
+import bioreactorImage from "@/assets/equipment/bioreactor.jpg";
+import centrifugeImage from "@/assets/equipment/centrifuge.jpg";
+import ultrafiltrationImage from "@/assets/equipment/ultrafiltration.jpg";
+import fplcImage from "@/assets/equipment/fplc.jpg";
+import vialWasherImage from "@/assets/equipment/vial-washer.jpg";
+import depyrogenationOvenImage from "@/assets/equipment/depyrogenation-oven.jpg";
+import fillingLineImage from "@/assets/equipment/filling-line.jpg";
+import lyophilizerImage from "@/assets/equipment/lyophilizer.jpg";
+import cappingLabelingImage from "@/assets/equipment/capping-labeling.jpg";
+import hplcImage from "@/assets/equipment/hplc.jpg";
+import capillaryElectrophoresisImage from "@/assets/equipment/capillary-electrophoresis.jpg";
+import microplateReaderImage from "@/assets/equipment/microplate-reader.jpg";
+import uvVisImage from "@/assets/equipment/uv-vis.jpg";
+import qpcrImage from "@/assets/equipment/qpcr.jpg";
+import endotoxinReaderImage from "@/assets/equipment/endotoxin-reader.jpg";
+import cellAnalyzerImage from "@/assets/equipment/cell-analyzer.jpg";
+import ionChromatographyImage from "@/assets/equipment/ion-chromatography.jpg";
 
 export type EquipmentCategory = "upstream" | "downstream" | "analytical";
 export type IntegrationMode = "online" | "manual";
@@ -91,7 +91,7 @@ export const EQUIPMENT: Equipment[] = [
   {
     equipmentId: "UP-001",
     equipmentName: "Seed Bioreactor (#001)",
-    imageUrl: bioreactorImage.url,
+    imageUrl: bioreactorImage,
     equipmentCategory: "upstream",
     integrationMode: "online",
     status: "idle",
@@ -109,7 +109,7 @@ export const EQUIPMENT: Equipment[] = [
   {
     equipmentId: "UP-002",
     equipmentName: "Prod Bioreactor (#002)",
-    imageUrl: bioreactorImage.url,
+    imageUrl: bioreactorImage,
     equipmentCategory: "upstream",
     integrationMode: "online",
     status: "active",
@@ -129,7 +129,7 @@ export const EQUIPMENT: Equipment[] = [
   {
     equipmentId: "DS-101",
     equipmentName: "Centrifuge 1",
-    imageUrl: centrifugeImage.url,
+    imageUrl: centrifugeImage,
     equipmentCategory: "downstream",
     integrationMode: "online",
     status: "idle",
@@ -147,7 +147,7 @@ export const EQUIPMENT: Equipment[] = [
   {
     equipmentId: "DS-102",
     equipmentName: "Centrifuge 2",
-    imageUrl: centrifugeImage.url,
+    imageUrl: centrifugeImage,
     equipmentCategory: "downstream",
     integrationMode: "online",
     status: "idle",
@@ -165,7 +165,7 @@ export const EQUIPMENT: Equipment[] = [
   {
     equipmentId: "DS-200",
     equipmentName: "Ultrafiltration System 1",
-    imageUrl: ultrafiltrationImage.url,
+    imageUrl: ultrafiltrationImage,
     equipmentCategory: "downstream",
     integrationMode: "online",
     status: "idle",
@@ -183,7 +183,7 @@ export const EQUIPMENT: Equipment[] = [
   {
     equipmentId: "DS-201",
     equipmentName: "FPLC Purification System",
-    imageUrl: fplcImage.url,
+    imageUrl: fplcImage,
     equipmentCategory: "downstream",
     integrationMode: "online",
     status: "active",
@@ -200,7 +200,7 @@ export const EQUIPMENT: Equipment[] = [
   {
     equipmentId: "DS-202",
     equipmentName: "Ultrafiltration System 2",
-    imageUrl: ultrafiltrationImage.url,
+    imageUrl: ultrafiltrationImage,
     equipmentCategory: "downstream",
     integrationMode: "online",
     status: "idle",
@@ -218,7 +218,7 @@ export const EQUIPMENT: Equipment[] = [
   {
     equipmentId: "DS-302",
     equipmentName: "Depyrogenation Oven",
-    imageUrl: depyrogenationOvenImage.url,
+    imageUrl: depyrogenationOvenImage,
     equipmentCategory: "downstream",
     integrationMode: "online",
     status: "active",
@@ -235,7 +235,7 @@ export const EQUIPMENT: Equipment[] = [
   {
     equipmentId: "DS-301",
     equipmentName: "Vial Washer",
-    imageUrl: vialWasherImage.url,
+    imageUrl: vialWasherImage,
     equipmentCategory: "downstream",
     integrationMode: "online",
     status: "active",
@@ -252,7 +252,7 @@ export const EQUIPMENT: Equipment[] = [
   {
     equipmentId: "DS-402",
     equipmentName: "Filling Pump",
-    imageUrl: fillingLineImage.url,
+    imageUrl: fillingLineImage,
     equipmentCategory: "downstream",
     integrationMode: "online",
     status: "idle",
@@ -270,7 +270,7 @@ export const EQUIPMENT: Equipment[] = [
   {
     equipmentId: "DS-401",
     equipmentName: "Lyophilizer",
-    imageUrl: lyophilizerImage.url,
+    imageUrl: lyophilizerImage,
     equipmentCategory: "downstream",
     integrationMode: "online",
     status: "idle",
@@ -289,7 +289,7 @@ export const EQUIPMENT: Equipment[] = [
   {
     equipmentId: "DS-403",
     equipmentName: "Capping & Labeling Station",
-    imageUrl: cappingLabelingImage.url,
+    imageUrl: cappingLabelingImage,
     equipmentCategory: "downstream",
     integrationMode: "online",
     status: "idle",
@@ -310,7 +310,7 @@ export const EQUIPMENT: Equipment[] = [
   {
     equipmentId: "AN-101",
     equipmentName: "HPLC-SEC",
-    imageUrl: hplcImage.url,
+    imageUrl: hplcImage,
     equipmentCategory: "analytical",
     integrationMode: "online",
     status: "active",
@@ -327,7 +327,7 @@ export const EQUIPMENT: Equipment[] = [
   {
     equipmentId: "AN-102",
     equipmentName: "HPLC-IEX",
-    imageUrl: hplcImage.url,
+    imageUrl: hplcImage,
     equipmentCategory: "analytical",
     integrationMode: "online",
     status: "idle",
@@ -345,7 +345,7 @@ export const EQUIPMENT: Equipment[] = [
   {
     equipmentId: "AN-103",
     equipmentName: "RP-HPLC",
-    imageUrl: hplcImage.url,
+    imageUrl: hplcImage,
     equipmentCategory: "analytical",
     integrationMode: "online",
     status: "active",
@@ -362,7 +362,7 @@ export const EQUIPMENT: Equipment[] = [
   {
     equipmentId: "AN-104",
     equipmentName: "CE-SDS",
-    imageUrl: capillaryElectrophoresisImage.url,
+    imageUrl: capillaryElectrophoresisImage,
     equipmentCategory: "analytical",
     integrationMode: "online",
     status: "idle",
@@ -380,7 +380,7 @@ export const EQUIPMENT: Equipment[] = [
   {
     equipmentId: "AN-105",
     equipmentName: "ELISA Reader",
-    imageUrl: microplateReaderImage.url,
+    imageUrl: microplateReaderImage,
     equipmentCategory: "analytical",
     integrationMode: "online",
     status: "active",
@@ -397,7 +397,7 @@ export const EQUIPMENT: Equipment[] = [
   {
     equipmentId: "AN-106",
     equipmentName: "UV-VIS",
-    imageUrl: uvVisImage.url,
+    imageUrl: uvVisImage,
     equipmentCategory: "analytical",
     integrationMode: "online",
     status: "active",
@@ -414,7 +414,7 @@ export const EQUIPMENT: Equipment[] = [
   {
     equipmentId: "AN-107",
     equipmentName: "qPCR",
-    imageUrl: qpcrImage.url,
+    imageUrl: qpcrImage,
     equipmentCategory: "analytical",
     integrationMode: "online",
     status: "active",
@@ -431,7 +431,7 @@ export const EQUIPMENT: Equipment[] = [
   {
     equipmentId: "AN-108",
     equipmentName: "Rapid Endotoxin (manual load)",
-    imageUrl: endotoxinReaderImage.url,
+    imageUrl: endotoxinReaderImage,
     equipmentCategory: "analytical",
     integrationMode: "online",
     status: "active",
@@ -448,7 +448,7 @@ export const EQUIPMENT: Equipment[] = [
   {
     equipmentId: "AN-109",
     equipmentName: "Cell Analyzer (Cedex HiRes)",
-    imageUrl: cellAnalyzerImage.url,
+    imageUrl: cellAnalyzerImage,
     equipmentCategory: "analytical",
     integrationMode: "online",
     status: "active",
@@ -465,7 +465,7 @@ export const EQUIPMENT: Equipment[] = [
   {
     equipmentId: "AN-110",
     equipmentName: "HPLC-FLD",
-    imageUrl: hplcImage.url,
+    imageUrl: hplcImage,
     equipmentCategory: "analytical",
     integrationMode: "online",
     status: "idle",
@@ -483,7 +483,7 @@ export const EQUIPMENT: Equipment[] = [
   {
     equipmentId: "AN-111",
     equipmentName: "HPAEC-PAD",
-    imageUrl: ionChromatographyImage.url,
+    imageUrl: ionChromatographyImage,
     equipmentCategory: "analytical",
     integrationMode: "online",
     status: "active",
