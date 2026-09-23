@@ -667,15 +667,17 @@ export default function EquipmentDashboardV2Page() {
 
       {/* KPI summary strip — compact, aligned, reconciled with category tabs */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-        <SummaryTile label="Total equipment" value={kpis.total} Icon={Layers} tone="primary" />
-        <SummaryTile label="Active" value={kpis.active} Icon={Activity} tone="active" trend={activeTrend} />
-        <SummaryTile label="Idle" value={kpis.idle} Icon={CircleDot} tone="idle" />
+        <SummaryTile label="Total equipment" value={kpis.total} Icon={Layers} tone="primary" onClick={() => selectKpiFilter("all")} selected={kpiFilter === "all" && statusFilter !== "all" ? false : undefined} />
+        <SummaryTile label="Active" value={kpis.active} Icon={Activity} tone="active" trend={activeTrend} onClick={() => selectKpiFilter("active")} selected={kpiFilter === "active"} />
+        <SummaryTile label="Idle" value={kpis.idle} Icon={CircleDot} tone="idle" onClick={() => selectKpiFilter("idle")} selected={kpiFilter === "idle"} />
         <SummaryTile
           label="With alerts"
           value={kpis.withAlerts}
           Icon={AlertTriangle}
           tone="warning"
           highlight={kpis.withAlerts > 0 ? "warning" : undefined}
+          onClick={() => selectKpiFilter("withAlerts")}
+          selected={kpiFilter === "withAlerts"}
         />
         <SummaryTile
           label="Uploads today"
