@@ -168,8 +168,8 @@ function EquipmentImage({
   variant: "card" | "drawer";
 }) {
   const [failed, setFailed] = useState(false);
-  // Card: flex-grown so the image fills ~half the card height; drawer: fixed banner.
-  const sizeClass = variant === "card" ? "flex-1 min-h-[240px]" : "h-40";
+  // Card: fixed at half the card height so every category keeps identical proportions.
+  const sizeClass = variant === "card" ? "h-[240px] shrink-0" : "h-40";
 
   return (
     <div className={`${sizeClass} overflow-hidden bg-secondary ${variant === "card" ? "-mx-4 -mt-4 mb-4" : "-mx-6 -mt-6 mb-5"}`}>
@@ -259,7 +259,7 @@ function EquipmentCard({
     <EquipmentTooltip equipment={eq}>
       <div
         onClick={onOpen}
-        className={`group relative card-operational flex flex-col overflow-hidden border-l-[3px] ${cat.border} cursor-pointer transition-colors hover:border-primary hover:border-l-[3px]`}
+        className={`group relative card-operational flex h-[480px] flex-col overflow-hidden border-l-[3px] ${cat.border} cursor-pointer transition-colors hover:border-primary hover:border-l-[3px]`}
       >
         <EquipmentImage
           key={eq.imageUrl ?? eq.equipmentId}
@@ -282,7 +282,7 @@ function EquipmentCard({
         </div>
 
         {/* Body — varies by category and state */}
-        <div className="space-y-2.5">
+        <div className="flex min-h-0 flex-1 flex-col gap-2.5">
           {isAnalytical ? (
             <>
               <div className="flex items-start gap-1.5 text-[12px]">
@@ -342,7 +342,7 @@ function EquipmentCard({
           )}
 
           {/* Footer: connection + alert breakdown + hover CTA */}
-          <div className="flex items-center justify-between pt-2 mt-1 border-t border-border-tertiary">
+          <div className="mt-auto flex items-center justify-between border-t border-border-tertiary pt-2">
             <ConnectionLine health={eq.connectionHealth} />
             <AlertBreakdown count={eq.alertCount} critical={eq.criticalAlert} />
           </div>
