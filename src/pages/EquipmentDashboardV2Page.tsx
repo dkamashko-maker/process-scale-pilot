@@ -813,7 +813,7 @@ export default function EquipmentDashboardV2Page() {
 type KpiTone = "primary" | "active" | "idle" | "warning" | "error";
 
 function SummaryTile({
-  label, value, Icon, tone = "primary", trend, highlight, demoted,
+  label, value, Icon, tone = "primary", trend, highlight, demoted, onClick, selected,
 }: {
   label: string;
   value: number;
@@ -822,6 +822,8 @@ function SummaryTile({
   trend?: "up" | "down";
   highlight?: "warning";
   demoted?: boolean;
+  onClick?: () => void;
+  selected?: boolean;
 }) {
   const TONE_ICON: Record<KpiTone, string> = {
     primary: "text-primary",
@@ -836,9 +838,13 @@ function SummaryTile({
   const valueCls = demoted
     ? "text-[20px] text-text-secondary"
     : "text-[26px] font-medium text-foreground";
+  const stateCls = [
+    onClick ? "cursor-pointer text-left transition-shadow hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40" : "",
+    selected ? "ring-2 ring-primary/50" : "",
+  ].filter(Boolean).join(" ");
 
-  return (
-    <div className={`rounded-lg px-4 py-3 ${bg}`}>
+  const content = (
+    <>
       <div className="flex items-center justify-between gap-3">
         <p className="text-[12px] font-normal text-text-secondary">{label}</p>
         <Icon className={`h-3.5 w-3.5 shrink-0 ${TONE_ICON[tone]}`} />
@@ -851,6 +857,25 @@ function SummaryTile({
             : <ArrowDownRight className="h-3.5 w-3.5 text-status-error" />
         )}
       </div>
+    </>
+  );
+
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        aria-pressed={selected}
+        className={`rounded-lg px-4 py-3 ${bg} ${stateCls}`}
+      >
+        {content}
+      </button>
+    );
+  }
+
+  return (
+    <div className={`rounded-lg px-4 py-3 ${bg}`}>
+      {content}
     </div>
   );
 }
