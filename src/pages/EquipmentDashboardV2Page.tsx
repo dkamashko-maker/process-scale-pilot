@@ -629,7 +629,6 @@ export default function EquipmentDashboardV2Page() {
   const filteredFor = (cat: EquipmentTab) =>
     EQUIPMENT.filter((e) => cat === "all" || e.equipmentCategory === cat).filter((e) => {
       if (!matchesKpiFilter(e)) return false;
-      if (statusFilter !== "all" && e.status !== statusFilter) return false;
       if (query) {
         const q = query.toLowerCase();
         if (!(
@@ -645,8 +644,6 @@ export default function EquipmentDashboardV2Page() {
 
   const selectKpiFilter = (next: KpiFilter) => {
     setKpiFilter((prev) => (prev === next ? "all" : next));
-    // Avoid conflicting layers — the KPI tile defines the status view.
-    if (next !== "all") setStatusFilter("all");
   };
 
   // Trend stub (no historical series in fixture data — render only when meaningful)
