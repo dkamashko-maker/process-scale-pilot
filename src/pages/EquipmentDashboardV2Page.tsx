@@ -5,9 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
-import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
 } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
@@ -564,12 +561,9 @@ function EquipmentDrawer({
 
 // ── Page ─────────────────────────────────────────────────────────────────
 
-type StatusFilter = "all" | EquipmentStatus;
 type EquipmentTab = "all" | EquipmentCategory;
 type KpiFilter = "all" | "active" | "idle" | "withAlerts";
-const STATUS_LABEL: Record<StatusFilter, string> = {
-  all: "All statuses", active: "Active", idle: "Idle", error: "Alerting",
-};
+
 
 export default function EquipmentDashboardV2Page() {
   const navigate = useNavigate();
@@ -587,7 +581,6 @@ export default function EquipmentDashboardV2Page() {
   }, []);
   const [tab, setTab] = useState<EquipmentTab>("all");
   const [query, setQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [kpiFilter, setKpiFilter] = useState<KpiFilter>("all");
   const [selected, setSelected] = useState<Equipment | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -636,7 +629,6 @@ export default function EquipmentDashboardV2Page() {
   const filteredFor = (cat: EquipmentTab) =>
     EQUIPMENT.filter((e) => cat === "all" || e.equipmentCategory === cat).filter((e) => {
       if (!matchesKpiFilter(e)) return false;
-      if (statusFilter !== "all" && e.status !== statusFilter) return false;
       if (query) {
         const q = query.toLowerCase();
         if (!(
@@ -652,8 +644,6 @@ export default function EquipmentDashboardV2Page() {
 
   const selectKpiFilter = (next: KpiFilter) => {
     setKpiFilter((prev) => (prev === next ? "all" : next));
-    // Avoid conflicting layers — the KPI tile defines the status view.
-    if (next !== "all") setStatusFilter("all");
   };
 
   // Trend stub (no historical series in fixture data — render only when meaningful)
@@ -748,32 +738,6 @@ export default function EquipmentDashboardV2Page() {
                 </button>
               )}
             </div>
-
-            {statusFilter === "all" ? (
-              <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)}>
-                <SelectTrigger className="w-[140px] h-9">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All statuses</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="idle">Idle</SelectItem>
-                  <SelectItem value="error">Alerting</SelectItem>
-                </SelectContent>
-              </Select>
-            ) : (
-              <div className="inline-flex items-center gap-1.5 h-9 pl-3 pr-1.5 rounded-md bg-blue-50 border border-blue-200 text-blue-700 text-[13px] font-medium">
-                {STATUS_LABEL[statusFilter]}
-                <button
-                  type="button"
-                  onClick={() => setStatusFilter("all")}
-                  className="h-6 w-6 inline-flex items-center justify-center rounded-sm hover:bg-blue-100"
-                  aria-label="Clear status filter"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            )}
           </div>
         </div>
 
