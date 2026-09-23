@@ -29,31 +29,35 @@ import { EquipmentTooltip } from "@/components/equipment/EquipmentTooltip";
 // ── Category accent (subtle — used for tab + 3px left card border only) ──
 const CATEGORY: Record<
   EquipmentCategory,
-  { label: string; short: string; border: string; activeTab: string }
+  { label: string; short: string; border: string; tabBorder: string; activeTab: string }
 > = {
   upstream: {
     label: "Upstream Process Equipment",
     short: "Upstream",
     border: "border-l-blue-500",
+    tabBorder: "border-blue-500/60 hover:border-blue-500",
     // Full class strings so Tailwind JIT sees them literally
     activeTab:
-      "data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:border-blue-200",
+      "data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:border-blue-500",
   },
   downstream: {
     label: "Downstream Process Equipment",
     short: "Downstream",
     border: "border-l-teal-500",
+    tabBorder: "border-teal-500/60 hover:border-teal-500",
     activeTab:
-      "data-[state=active]:bg-teal-50 data-[state=active]:text-teal-700 data-[state=active]:border-teal-200",
+      "data-[state=active]:bg-teal-50 data-[state=active]:text-teal-700 data-[state=active]:border-teal-500",
   },
   analytical: {
     label: "Analytical Equipment & Assays",
     short: "Analytical",
     border: "border-l-amber-500",
+    tabBorder: "border-amber-500/60 hover:border-amber-500",
     activeTab:
-      "data-[state=active]:bg-amber-50 data-[state=active]:text-amber-700 data-[state=active]:border-amber-200",
+      "data-[state=active]:bg-amber-50 data-[state=active]:text-amber-700 data-[state=active]:border-amber-500",
   },
 };
+
 
 // ── Downstream equipment → CHO production line detail routes ──────────────
 const DOWNSTREAM_ROUTE_MAP: Record<string, string> = {
@@ -709,9 +713,10 @@ export default function EquipmentDashboardV2Page() {
                   key={value}
                   value={value}
                   className={`h-9 px-3.5 rounded-full border text-[13px] font-medium gap-2 transition-colors
-                    border-border-tertiary text-text-secondary
-                    hover:text-foreground hover:border-foreground/30
+                    text-text-secondary hover:text-foreground
+                    ${meta.tabBorder}
                     ${meta.activeTab}`}
+
                 >
                   <span>{meta.label}</span>
                   <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-background/70 border border-current/20 text-[11px] tabular-nums">
