@@ -29,31 +29,35 @@ import { EquipmentTooltip } from "@/components/equipment/EquipmentTooltip";
 // ── Category accent (subtle — used for tab + 3px left card border only) ──
 const CATEGORY: Record<
   EquipmentCategory,
-  { label: string; short: string; border: string; activeTab: string }
+  { label: string; short: string; border: string; tabBorder: string; activeTab: string }
 > = {
   upstream: {
     label: "Upstream Process Equipment",
     short: "Upstream",
     border: "border-l-blue-500",
+    tabBorder: "border-blue-500/60 hover:border-blue-500",
     // Full class strings so Tailwind JIT sees them literally
     activeTab:
-      "data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:border-blue-200",
+      "data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:border-blue-500",
   },
   downstream: {
     label: "Downstream Process Equipment",
     short: "Downstream",
     border: "border-l-teal-500",
+    tabBorder: "border-teal-500/60 hover:border-teal-500",
     activeTab:
-      "data-[state=active]:bg-teal-50 data-[state=active]:text-teal-700 data-[state=active]:border-teal-200",
+      "data-[state=active]:bg-teal-50 data-[state=active]:text-teal-700 data-[state=active]:border-teal-500",
   },
   analytical: {
     label: "Analytical Equipment & Assays",
     short: "Analytical",
     border: "border-l-amber-500",
+    tabBorder: "border-amber-500/60 hover:border-amber-500",
     activeTab:
-      "data-[state=active]:bg-amber-50 data-[state=active]:text-amber-700 data-[state=active]:border-amber-200",
+      "data-[state=active]:bg-amber-50 data-[state=active]:text-amber-700 data-[state=active]:border-amber-500",
   },
 };
+
 
 // ── Downstream equipment → CHO production line detail routes ──────────────
 const DOWNSTREAM_ROUTE_MAP: Record<string, string> = {
