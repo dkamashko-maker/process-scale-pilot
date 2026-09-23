@@ -563,9 +563,7 @@ function EquipmentDrawer({
 
 type EquipmentTab = "all" | EquipmentCategory;
 type KpiFilter = "all" | "active" | "idle" | "withAlerts";
-const STATUS_LABEL: Record<StatusFilter, string> = {
-  all: "All statuses", active: "Active", idle: "Idle", error: "Alerting",
-};
+
 
 export default function EquipmentDashboardV2Page() {
   const navigate = useNavigate();
@@ -583,7 +581,6 @@ export default function EquipmentDashboardV2Page() {
   }, []);
   const [tab, setTab] = useState<EquipmentTab>("all");
   const [query, setQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [kpiFilter, setKpiFilter] = useState<KpiFilter>("all");
   const [selected, setSelected] = useState<Equipment | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
