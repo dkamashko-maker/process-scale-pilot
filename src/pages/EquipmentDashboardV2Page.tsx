@@ -738,32 +738,6 @@ export default function EquipmentDashboardV2Page() {
                 </button>
               )}
             </div>
-
-            {statusFilter === "all" ? (
-              <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)}>
-                <SelectTrigger className="w-[140px] h-9">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All statuses</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="idle">Idle</SelectItem>
-                  <SelectItem value="error">Alerting</SelectItem>
-                </SelectContent>
-              </Select>
-            ) : (
-              <div className="inline-flex items-center gap-1.5 h-9 pl-3 pr-1.5 rounded-md bg-blue-50 border border-blue-200 text-blue-700 text-[13px] font-medium">
-                {STATUS_LABEL[statusFilter]}
-                <button
-                  type="button"
-                  onClick={() => setStatusFilter("all")}
-                  className="h-6 w-6 inline-flex items-center justify-center rounded-sm hover:bg-blue-100"
-                  aria-label="Clear status filter"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            )}
           </div>
         </div>
 
