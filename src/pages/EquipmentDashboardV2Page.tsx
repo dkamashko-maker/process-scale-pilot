@@ -562,6 +562,7 @@ function EquipmentDrawer({
 
 type StatusFilter = "all" | EquipmentStatus;
 type EquipmentTab = "all" | EquipmentCategory;
+type KpiFilter = "all" | "active" | "idle" | "withAlerts";
 const STATUS_LABEL: Record<StatusFilter, string> = {
   all: "All statuses", active: "Active", idle: "Idle", error: "Alerting",
 };
@@ -583,6 +584,7 @@ export default function EquipmentDashboardV2Page() {
   const [tab, setTab] = useState<EquipmentTab>("all");
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [kpiFilter, setKpiFilter] = useState<KpiFilter>("all");
   const [selected, setSelected] = useState<Equipment | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -615,8 +617,21 @@ export default function EquipmentDashboardV2Page() {
     openCard(eq);
   };
 
+  // KPI tiles act as an additional filter layer on top of tab + search + status.
+  // Semantics mirror the KPI counts: Active includes alerting ("error") equipment,
+  // With alerts is an overlapping state (alertCount > 0).
+  const matchesKpiFilter = (e: Equipment) => {
+    switch (kpiFilter) {
+      case "active": return e.status === "active" || e.status === "error";
+      case "idle": return e.status === "idle";
+      case "withAlerts": return e.alertCount > 0;
+      default: return true;
+    }
+  };
+
   const filteredFor = (cat: EquipmentTab) =>
     EQUIPMENT.filter((e) => cat === "all" || e.equipmentCategory === cat).filter((e) => {
+      if (!matchesKpiFilter(e)) return false;
       if (statusFilter !== "all" && e.status !== statusFilter) return false;
       if (query) {
         const q = query.toLowerCase();
@@ -630,6 +645,12 @@ export default function EquipmentDashboardV2Page() {
       const rank: Record<EquipmentStatus, number> = { active: 0, error: 1, idle: 2 };
       return rank[a.status] - rank[b.status];
     });
+
+  const selectKpiFilter = (next: KpiFilter) => {
+    setKpiFilter((prev) => (prev === next ? "all" : next));
+    // Avoid conflicting layers — the KPI tile defines the status view.
+    if (next !== "all") setStatusFilter("all");
+  };
 
   // Trend stub (no historical series in fixture data — render only when meaningful)
   const activeTrend: "up" | "down" | undefined = kpis.active > 0 ? "up" : undefined;
@@ -646,15 +667,17 @@ export default function EquipmentDashboardV2Page() {
 
       {/* KPI summary strip — compact, aligned, reconciled with category tabs */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-        <SummaryTile label="Total equipment" value={kpis.total} Icon={Layers} tone="primary" />
-        <SummaryTile label="Active" value={kpis.active} Icon={Activity} tone="active" trend={activeTrend} />
-        <SummaryTile label="Idle" value={kpis.idle} Icon={CircleDot} tone="idle" />
+        <SummaryTile label="Total equipment" value={kpis.total} Icon={Layers} tone="primary" onClick={() => selectKpiFilter("all")} />
+        <SummaryTile label="Active" value={kpis.active} Icon={Activity} tone="active" trend={activeTrend} onClick={() => selectKpiFilter("active")} selected={kpiFilter === "active"} />
+        <SummaryTile label="Idle" value={kpis.idle} Icon={CircleDot} tone="idle" onClick={() => selectKpiFilter("idle")} selected={kpiFilter === "idle"} />
         <SummaryTile
           label="With alerts"
           value={kpis.withAlerts}
           Icon={AlertTriangle}
           tone="warning"
           highlight={kpis.withAlerts > 0 ? "warning" : undefined}
+          onClick={() => selectKpiFilter("withAlerts")}
+          selected={kpiFilter === "withAlerts"}
         />
         <SummaryTile
           label="Uploads today"
@@ -790,7 +813,7 @@ export default function EquipmentDashboardV2Page() {
 type KpiTone = "primary" | "active" | "idle" | "warning" | "error";
 
 function SummaryTile({
-  label, value, Icon, tone = "primary", trend, highlight, demoted,
+  label, value, Icon, tone = "primary", trend, highlight, demoted, onClick, selected,
 }: {
   label: string;
   value: number;
@@ -799,6 +822,8 @@ function SummaryTile({
   trend?: "up" | "down";
   highlight?: "warning";
   demoted?: boolean;
+  onClick?: () => void;
+  selected?: boolean;
 }) {
   const TONE_ICON: Record<KpiTone, string> = {
     primary: "text-primary",
@@ -813,9 +838,13 @@ function SummaryTile({
   const valueCls = demoted
     ? "text-[20px] text-text-secondary"
     : "text-[26px] font-medium text-foreground";
+  const stateCls = [
+    onClick ? "cursor-pointer text-left transition-shadow hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40" : "",
+    selected ? "ring-2 ring-primary/50" : "",
+  ].filter(Boolean).join(" ");
 
-  return (
-    <div className={`rounded-lg px-4 py-3 ${bg}`}>
+  const content = (
+    <>
       <div className="flex items-center justify-between gap-3">
         <p className="text-[12px] font-normal text-text-secondary">{label}</p>
         <Icon className={`h-3.5 w-3.5 shrink-0 ${TONE_ICON[tone]}`} />
@@ -828,6 +857,25 @@ function SummaryTile({
             : <ArrowDownRight className="h-3.5 w-3.5 text-status-error" />
         )}
       </div>
+    </>
+  );
+
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        aria-pressed={selected}
+        className={`rounded-lg px-4 py-3 ${bg} ${stateCls}`}
+      >
+        {content}
+      </button>
+    );
+  }
+
+  return (
+    <div className={`rounded-lg px-4 py-3 ${bg}`}>
+      {content}
     </div>
   );
 }
