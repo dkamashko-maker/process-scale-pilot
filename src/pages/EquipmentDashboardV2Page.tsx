@@ -169,7 +169,8 @@ function EquipmentImage({
 }) {
   const [failed, setFailed] = useState(false);
   // Card: fixed at half the card height so every category keeps identical proportions.
-  const sizeClass = variant === "card" ? "h-[240px] shrink-0" : "h-40";
+  // Drawer: a quarter of the modal height, with the full photo visible (no crop).
+  const sizeClass = variant === "card" ? "h-[240px] shrink-0" : "h-[25vh] shrink-0";
 
   return (
     <div className={`${sizeClass} overflow-hidden bg-secondary ${variant === "card" ? "-mx-4 -mt-4 mb-4" : "-mx-6 -mt-6 mb-5"}`}>
@@ -181,7 +182,7 @@ function EquipmentImage({
           width={768}
           height={512}
           onError={() => setFailed(true)}
-          className="h-full w-full object-cover"
+          className={variant === "card" ? "h-full w-full object-cover" : "h-full w-full object-contain"}
         />
       ) : (
         <div className="flex h-full w-full items-center justify-center text-text-tertiary" role="img" aria-label={`${equipmentName} image unavailable`}>
