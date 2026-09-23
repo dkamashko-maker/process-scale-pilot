@@ -168,10 +168,11 @@ function EquipmentImage({
   variant: "card" | "drawer";
 }) {
   const [failed, setFailed] = useState(false);
-  const height = variant === "card" ? "h-32" : "h-40";
+  // Card: flex-grown so the image fills ~half the card height; drawer: fixed banner.
+  const sizeClass = variant === "card" ? "flex-1 min-h-[240px]" : "h-40";
 
   return (
-    <div className={`${height} overflow-hidden bg-secondary ${variant === "card" ? "-mx-4 -mt-4 mb-4" : "-mx-6 -mt-6 mb-5"}`}>
+    <div className={`${sizeClass} overflow-hidden bg-secondary ${variant === "card" ? "-mx-4 -mt-4 mb-4" : "-mx-6 -mt-6 mb-5"}`}>
       {imageUrl && !failed ? (
         <img
           src={imageUrl}
@@ -258,7 +259,7 @@ function EquipmentCard({
     <EquipmentTooltip equipment={eq}>
       <div
         onClick={onOpen}
-        className={`group relative card-operational overflow-hidden border-l-[3px] ${cat.border} cursor-pointer transition-colors hover:border-primary hover:border-l-[3px]`}
+        className={`group relative card-operational flex flex-col overflow-hidden border-l-[3px] ${cat.border} cursor-pointer transition-colors hover:border-primary hover:border-l-[3px]`}
       >
         <EquipmentImage
           key={eq.imageUrl ?? eq.equipmentId}
