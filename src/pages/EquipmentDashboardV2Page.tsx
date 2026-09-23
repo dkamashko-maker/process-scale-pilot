@@ -584,6 +584,7 @@ export default function EquipmentDashboardV2Page() {
   const [tab, setTab] = useState<EquipmentTab>("all");
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [kpiFilter, setKpiFilter] = useState<KpiFilter>("all");
   const [selected, setSelected] = useState<Equipment | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -616,8 +617,21 @@ export default function EquipmentDashboardV2Page() {
     openCard(eq);
   };
 
+  // KPI tiles act as an additional filter layer on top of tab + search + status.
+  // Semantics mirror the KPI counts: Active includes alerting ("error") equipment,
+  // With alerts is an overlapping state (alertCount > 0).
+  const matchesKpiFilter = (e: Equipment) => {
+    switch (kpiFilter) {
+      case "active": return e.status === "active" || e.status === "error";
+      case "idle": return e.status === "idle";
+      case "withAlerts": return e.alertCount > 0;
+      default: return true;
+    }
+  };
+
   const filteredFor = (cat: EquipmentTab) =>
     EQUIPMENT.filter((e) => cat === "all" || e.equipmentCategory === cat).filter((e) => {
+      if (!matchesKpiFilter(e)) return false;
       if (statusFilter !== "all" && e.status !== statusFilter) return false;
       if (query) {
         const q = query.toLowerCase();
@@ -631,6 +645,12 @@ export default function EquipmentDashboardV2Page() {
       const rank: Record<EquipmentStatus, number> = { active: 0, error: 1, idle: 2 };
       return rank[a.status] - rank[b.status];
     });
+
+  const selectKpiFilter = (next: KpiFilter) => {
+    setKpiFilter((prev) => (prev === next ? "all" : next));
+    // Avoid conflicting layers — the KPI tile defines the status view.
+    if (next !== "all") setStatusFilter("all");
+  };
 
   // Trend stub (no historical series in fixture data — render only when meaningful)
   const activeTrend: "up" | "down" | undefined = kpis.active > 0 ? "up" : undefined;
