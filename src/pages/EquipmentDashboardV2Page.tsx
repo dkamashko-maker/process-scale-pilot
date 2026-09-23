@@ -564,7 +564,6 @@ function EquipmentDrawer({
 
 // ── Page ─────────────────────────────────────────────────────────────────
 
-type StatusFilter = "all" | EquipmentStatus;
 type EquipmentTab = "all" | EquipmentCategory;
 type KpiFilter = "all" | "active" | "idle" | "withAlerts";
 const STATUS_LABEL: Record<StatusFilter, string> = {
