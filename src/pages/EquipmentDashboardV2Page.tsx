@@ -182,7 +182,7 @@ function EquipmentImage({
           width={768}
           height={512}
           onError={() => setFailed(true)}
-          className="h-full w-full object-cover"
+          className={variant === "card" ? "h-full w-full object-cover" : "h-full w-full object-contain"}
         />
       ) : (
         <div className="flex h-full w-full items-center justify-center text-text-tertiary" role="img" aria-label={`${equipmentName} image unavailable`}>
