@@ -8,8 +8,7 @@ import {
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { ACTIVE_RUNS } from "@/data/runData";
-import dataVestLogo from "@/assets/brand/datavest-logo.png";
-import dataVestMark from "@/assets/brand/datavest-mark.png";
+import { DataVestLogo } from "@/components/brand/DataVestLogo";
 import {
   Sidebar,
   SidebarContent,
@@ -77,11 +76,11 @@ export function AppSidebar() {
               title="Equipment Dashboard"
               className={collapsed ? "block cursor-pointer rounded-md p-0.5 transition-opacity hover:opacity-80" : "block w-full cursor-pointer rounded-md p-0.5 transition-opacity hover:opacity-80"}
             >
-              <img
-                src={collapsed ? dataVestMark : dataVestLogo}
-                alt="DataVest"
-                className={collapsed ? "h-8 w-8 object-contain" : "block h-auto w-full object-contain"}
-              />
+              {collapsed ? (
+                <DataVestLogo variant="mark" className="h-8 w-8 object-contain" />
+              ) : (
+                <DataVestLogo className="w-full" />
+              )}
             </button>
           </div>
           <SidebarGroupContent>
