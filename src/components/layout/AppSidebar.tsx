@@ -68,7 +68,7 @@ export function AppSidebar() {
       <SidebarContent>
         <SidebarGroup>
           <div
-            className={collapsed ? "flex h-14 items-center justify-center border-b border-sidebar-border" : "px-4 py-4 border-b border-sidebar-border"}
+            className={collapsed ? "flex h-14 items-center justify-center border-b border-sidebar-border" : "px-4 pt-1.5 pb-4 border-b border-sidebar-border"}
           >
             <img
               src={collapsed ? dataVestMark : dataVestLogo}
