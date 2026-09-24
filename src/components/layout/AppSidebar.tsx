@@ -70,11 +70,19 @@ export function AppSidebar() {
           <div
             className={collapsed ? "flex h-14 items-center justify-center border-b border-sidebar-border" : "px-4 pt-1.5 pb-4 border-b border-sidebar-border"}
           >
-            <img
-              src={collapsed ? dataVestMark : dataVestLogo}
-              alt="DataVest"
-              className={collapsed ? "h-8 w-8 object-contain" : "block h-auto w-full object-contain"}
-            />
+            <button
+              type="button"
+              onClick={() => navigate("/equipment")}
+              aria-label="Go to Equipment Dashboard"
+              title="Equipment Dashboard"
+              className={collapsed ? "block cursor-pointer rounded-md p-0.5 transition-opacity hover:opacity-80" : "block w-full cursor-pointer rounded-md p-0.5 transition-opacity hover:opacity-80"}
+            >
+              <img
+                src={collapsed ? dataVestMark : dataVestLogo}
+                alt="DataVest"
+                className={collapsed ? "h-8 w-8 object-contain" : "block h-auto w-full object-contain"}
+              />
+            </button>
           </div>
           <SidebarGroupContent>
             <SidebarMenu>
