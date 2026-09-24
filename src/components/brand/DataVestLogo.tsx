@@ -35,20 +35,20 @@ export function DataVestLogo({
     >
       <img src={dataVestWordmark} alt="" className="block h-auto w-full" />
       <svg
-        viewBox="0 0 424 19"
+        viewBox="0 0 424 20"
         className="block h-auto w-full"
         aria-hidden="true"
         focusable="false"
       >
         <text
           x="212"
-          y="15"
+          y="16"
           textAnchor="middle"
           textLength="424"
           lengthAdjust="spacing"
           fontFamily="Arial, Helvetica, 'Liberation Sans', sans-serif"
-          fontSize="18"
-          fontWeight="400"
+          fontSize="21"
+          fontWeight="500"
           fill={TAGLINE_INK}
         >
           {TAGLINE}
