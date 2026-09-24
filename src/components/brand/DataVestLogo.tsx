@@ -36,7 +36,7 @@ export function DataVestLogo({
       <img src={dataVestWordmark} alt="" className="block h-auto w-full" />
       <svg
         viewBox="0 0 424 20"
-        className="block h-auto w-full"
+        className="mt-[5px] block h-auto w-full"
         aria-hidden="true"
         focusable="false"
       >
