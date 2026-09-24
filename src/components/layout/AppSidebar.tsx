@@ -90,7 +90,7 @@ export function AppSidebar() {
                     Data Vest
                   </text>
                 </svg>
-                <p className="text-[11px] text-text-secondary mt-1.5">
+                <p className="text-[10px] whitespace-nowrap text-text-secondary mt-1.5">
                   Instrumental Data Collection &amp; Analytics
                 </p>
               </>
