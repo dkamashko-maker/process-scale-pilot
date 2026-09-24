@@ -8,6 +8,8 @@ import {
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { ACTIVE_RUNS } from "@/data/runData";
+import dataVestLogo from "@/assets/brand/datavest-logo.png";
+import dataVestMark from "@/assets/brand/datavest-mark.png";
 import {
   Sidebar,
   SidebarContent,
@@ -66,35 +68,13 @@ export function AppSidebar() {
       <SidebarContent>
         <SidebarGroup>
           <div
-            className={collapsed ? "h-14 border-b border-sidebar-border" : "px-4 py-4 border-b border-sidebar-border"}
+            className={collapsed ? "flex h-14 items-center justify-center border-b border-sidebar-border" : "px-4 py-4 border-b border-sidebar-border"}
           >
-            {!collapsed && (
-              <>
-                {/* Wordmark scaled to fill the sidebar column width, aspect preserved */}
-                <svg
-                  viewBox="0 0 224 62"
-                  className="w-full h-auto block"
-                  role="img"
-                  aria-label="Data Vest"
-                >
-                  <text
-                    x="0"
-                    y="50"
-                    fontSize="66"
-                    fontWeight={500}
-                    letterSpacing="-0.025em"
-                    textLength="224"
-                    lengthAdjust="spacingAndGlyphs"
-                    className="fill-foreground"
-                  >
-                    Data Vest
-                  </text>
-                </svg>
-                <p className="text-[10px] whitespace-nowrap text-text-secondary mt-1.5">
-                  Instrumental Data Collection &amp; Analytics
-                </p>
-              </>
-            )}
+            <img
+              src={collapsed ? dataVestMark : dataVestLogo}
+              alt="DataVest"
+              className={collapsed ? "h-8 w-8 object-contain" : "block h-auto w-full object-contain"}
+            />
           </div>
           <SidebarGroupContent>
             <SidebarMenu>

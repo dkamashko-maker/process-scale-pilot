@@ -5,8 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Database } from "lucide-react";
 import type { UserRole } from "@/data/runTypes";
+import dataVestLogo from "@/assets/brand/datavest-logo.png";
 
 export default function LoginPage() {
   const [name, setName] = useState("");
@@ -30,10 +30,12 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md animate-fade-in">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-4 h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
-            <Database className="h-6 w-6 text-primary" />
-          </div>
-          <CardTitle className="text-2xl">Data Vest</CardTitle>
+          <img
+            src={dataVestLogo}
+            alt="DataVest — Interfaces-first lab platform"
+            className="mx-auto mb-4 h-auto w-full max-w-xs"
+          />
+          <CardTitle className="sr-only">DataVest</CardTitle>
           <CardDescription>AI-based Integrated Instrumental Data Collection &amp; Analytics</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
