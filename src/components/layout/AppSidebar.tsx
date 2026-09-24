@@ -70,8 +70,27 @@ export function AppSidebar() {
           >
             {!collapsed && (
               <>
-                <h2 className="text-xl font-semibold tracking-tight text-foreground">Data Vest</h2>
-                <p className="text-[11px] text-text-secondary mt-1">
+                {/* Wordmark scaled to fill the sidebar column width, aspect preserved */}
+                <svg
+                  viewBox="0 0 224 62"
+                  className="w-full h-auto block"
+                  role="img"
+                  aria-label="Data Vest"
+                >
+                  <text
+                    x="0"
+                    y="50"
+                    fontSize="66"
+                    fontWeight={500}
+                    letterSpacing="-0.025em"
+                    textLength="224"
+                    lengthAdjust="spacingAndGlyphs"
+                    className="fill-foreground"
+                  >
+                    Data Vest
+                  </text>
+                </svg>
+                <p className="text-[11px] text-text-secondary mt-1.5">
                   Instrumental Data Collection &amp; Analytics
                 </p>
               </>
