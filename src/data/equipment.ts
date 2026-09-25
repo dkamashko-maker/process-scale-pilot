@@ -29,7 +29,6 @@ import uvVisImage from "@/assets/equipment/uv-vis.jpg";
 import qpcrImage from "@/assets/equipment/qpcr.jpg";
 import endotoxinReaderImage from "@/assets/equipment/endotoxin-reader.jpg";
 import cellAnalyzerImage from "@/assets/equipment/cell-analyzer.jpg";
-import ionChromatographyImage from "@/assets/equipment/ion-chromatography.jpg";
 
 export type EquipmentCategory = "upstream" | "downstream" | "analytical";
 export type IntegrationMode = "online" | "manual";
