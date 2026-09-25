@@ -13,6 +13,7 @@
  */
 
 import bioreactorImage from "@/assets/equipment/bioreactor.jpg";
+import seedBioreactorImage from "@/assets/equipment/seed-bioreactor.jpg";
 import centrifugeImage from "@/assets/equipment/centrifuge.jpg";
 import ultrafiltrationImage from "@/assets/equipment/ultrafiltration.jpg";
 import fplcImage from "@/assets/equipment/fplc.jpg";
@@ -91,7 +92,7 @@ export const EQUIPMENT: Equipment[] = [
   {
     equipmentId: "UP-001",
     equipmentName: "Seed Bioreactor (#001)",
-    imageUrl: bioreactorImage,
+    imageUrl: seedBioreactorImage,
     equipmentCategory: "upstream",
     integrationMode: "online",
     status: "idle",
@@ -483,7 +484,7 @@ export const EQUIPMENT: Equipment[] = [
   {
     equipmentId: "AN-111",
     equipmentName: "HPAEC-PAD",
-    imageUrl: ionChromatographyImage,
+    imageUrl: hplcImage,
     equipmentCategory: "analytical",
     integrationMode: "online",
     status: "active",
